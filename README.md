@@ -1,2 +1,3 @@
 # familytimeline
-Generates a family timeline graph
+
+Family timeline visualization with D3.js
