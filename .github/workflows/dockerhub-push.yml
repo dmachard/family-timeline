@@ -31,24 +31,20 @@ jobs:
       - name: Get version from backend package.json
         id: get_version_backend
         run: |
-          VERSION=$(node -p "require('./backend-server/package.json').version")
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          echo "::set-output name=version::${VERSION}"
+          echo "VERSION=$(node -p "require('./backend-server/package.json').version")" >> $GITHUB_ENV
 
       - name: Get version from frontend package.json
         id: get_version_frontend
         run: |
-          VERSION=$(node -p "require('./vuejs-client/package.json').version")
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          echo "::set-output name=version::${VERSION}"
+          echo "VERSION=$(node -p "require('./vuejs-client/package.json').version")" >> $GITHUB_ENV
 
       - name: Build Docker image for Backend
         run: |
-          docker build -t familytimeline-server:${{ steps.get_version_backend.outputs.version }} -f backend-server/Dockerfile familytimeline-server
+          docker build -t familytimeline-server:${{ steps.get_version_backend.outputs.version }} -f backend-server/Dockerfile backend-server
 
       - name: Build Docker image for Frontend
         run: |
-          docker build -t familytimeline-client:${{ steps.get_version_frontend.outputs.version }} -f vuejs-client/Dockerfile familytimeline-client
+          docker build -t familytimeline-client:${{ steps.get_version_frontend.outputs.version }} -f vuejs-client/Dockerfile vuejs-client
 
   push_server:
     runs-on: ubuntu-latest
