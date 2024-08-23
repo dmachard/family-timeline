@@ -35,6 +35,7 @@ jobs:
 
       - name: Push Docker image for Backend to Docker Hub
         run: |
+          docker tag familytimeline-server ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-server:latest
           docker tag familytimeline-server ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-server:${{ steps.get_version_backend.outputs.version }}
           docker push ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-server:${{ steps.get_version_backend.outputs.version }}
           docker push ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-server:latest
@@ -66,6 +67,7 @@ jobs:
 
       - name: Push Docker image for Frontend to Docker Hub
         run: |
+          docker tag familytimeline-client ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-client:latest
           docker tag familytimeline-client ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-client:${{ steps.get_version_frontend.outputs.version }}
           docker push ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-client:${{ steps.get_version_frontend.outputs.version }}
           docker push ${{ secrets.DOCKERHUB_LOGIN }}/familytimeline-client:latest
