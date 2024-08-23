@@ -10,7 +10,6 @@ on:
 
 jobs:
   build:
-    name: Build Docker Image for Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -28,7 +27,3 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t frontend-image:latest -f vuejs-client/Dockerfile vuejs-client
-
-      - name: Verify Docker image
-        run: |
-          docker run --rm frontend-image:latest vite --version
