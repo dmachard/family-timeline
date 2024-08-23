@@ -1,0 +1,25 @@
+name: Build Backend Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Docker Image for Backend
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: |
+        docker build -t backend-image:latest -f backend-server/Dockerfile backend-server
+
+    - name: Verify Docker image
+      run: |
+        docker run --rm backend-image:latest node --version

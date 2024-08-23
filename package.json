@@ -1,0 +1,21 @@
+{
+  "scripts": {
+    "start": "concurrently \"npm run server_start\" \"npm run client_start\"",
+    "install": "concurrently \"npm run client_install\" \"npm run server_install\"",
+    "lint": "concurrently \"npm run client_lint\" \"npm run server_lint\"",
+    "test": "concurrently \"npm run client_test\" \"npm run server_test\"",
+    "client_install": "cd vuejs-client && npm install",
+    "server_install": "cd backend-server && npm install",
+    "client_start": "cd vuejs-client && npm run dev",
+    "server_start": "cd backend-server && node src/app.js",
+    "client_lint": "cd vuejs-client && npm run lint",
+    "server_lint": "cd backend-server && npm run lint",
+    "client_test": "cd vuejs-client && npm run test",
+    "server_test": "cd backend-server && npm run test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^9.9.0",
+    "eslint-plugin-vue": "^9.27.0"
+  }
+}

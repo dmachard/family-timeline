@@ -1,0 +1,34 @@
+name: Build Frontend Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Docker Image for Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: vuejs-client
+
+      - name: Build Docker image
+        run: |
+          docker build -t frontend-image:latest -f vuejs-client/Dockerfile vuejs-client
+
+      - name: Verify Docker image
+        run: |
+          docker run --rm frontend-image:latest vite --version
