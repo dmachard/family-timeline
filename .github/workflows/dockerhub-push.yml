@@ -30,7 +30,7 @@ jobs:
 
       - name: Get version from backend package.json
         id: get_version_backend
-        run: echo "data=$(node -p "require('./backend-server/package.json').version")" >> $GITHUB_OUTPUT
+        run: echo "version=$(node -p "require('./backend-server/package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Get version from frontend package.json
         id: get_version_frontend
