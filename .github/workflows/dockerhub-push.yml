@@ -30,13 +30,11 @@ jobs:
 
       - name: Get version from backend package.json
         id: get_version_backend
-        run: |
-          echo "VERSION=$(node -p "require('./backend-server/package.json').version")" >> $GITHUB_ENV
+        run: echo "data=$(node -p "require('./backend-server/package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Get version from frontend package.json
         id: get_version_frontend
-        run: |
-          echo "VERSION=$(node -p "require('./vuejs-client/package.json').version")" >> $GITHUB_ENV
+        run: echo "version=$(node -p "require('./vuejs-client/package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Build Docker image for Backend
         run: |
