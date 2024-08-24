@@ -1,25 +1,25 @@
+
 services:
   familytimeline-server:
-    build:
-      context: ./backend-server
-    environment:
-      - NODE_ENV=development
+    image: dmachard/familytimeline-server:${FAMILYTIMELINE_SERVER_VERSION:-latest}
     volumes:
       - ./userdata/database.sqlite3:/app/src/db/database.sqlite3
       - ./userdata/data/:/app/src/data/
-      
+    restart: always
+
   familytimeline-client:
-    build:
-      context: ./vuejs-client
+    image: dmachard/familytimeline-client:${FAMILYTIMELINE_CLIENT_VERSION:-latest}
     volumes:
       - ./userdata/config.js:/usr/share/nginx/html/config.js
-      
+    restart: always
+
   familytimeline-nginx:
     image: nginx:1.24.0-alpine
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./userdata/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - familytimeline-server
       - familytimeline-client
+    restart: always

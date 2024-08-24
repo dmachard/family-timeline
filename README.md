@@ -2,7 +2,57 @@
 
 Manage your family data with timeline.
 
+## Quick start
+
+The recommanded way to start this application is docker compose.
+
+Create a directory of your choice (e.g. ./familytimeline) to hold the docker-compose.yml and .env files.
+
+```bash
+mkdir ./familytimeline
+cd ./familytimeline
+```
+
+Download docker-compose.yml and docker-example.env, either by running the following commands:
+And update the .env file with custom values if you want
+
+```bash
+wget https://github.com/dmachard/familytimeline/releases/latest/download/docker-compose.yml
+wget -O .env https://github.com/dmachard/familytimeline/releases/latest/download/docker-example.env
+```
+
+Create data folders
+
+```bash
+mkdir -p userdata/ userdata/data userdata/data/profles userdata/data/attachments
+cd userdata/
+```
+
+Copy default configs
+
+```bash
+cp ../backend-server/nginx.conf .
+cp ../vuejs-client/public/config.js .
+```
+
+Create empty database
+
+```bash
+sqlite3 database.sqlite3 < ../backend-server/src/db/schema.sql
+```
+
+Start the containers using docker compose command
+
+```bash
+docker compose up -d
+```
+
 ## For developers
+
+This project is based on the following frameworks
+- VueJS 3
+- Boostrap 5
+- NodeJS
 
 ### Project Setup
 
@@ -75,7 +125,13 @@ Init data folder, database and default config for client
 ```bash
 mkdir -p userdata/ userdata/data userdata/data/profles userdata/data/attachments
 cd userdata/
+```
+
+Copy config
+
+```bash
 sqlite3 database.sqlite3 < ../backend-server/src/db/schema.sql
+cp ../backend-server/nginx.conf .
 cp ../vuejs-client/public/config.js .
 ```
 
