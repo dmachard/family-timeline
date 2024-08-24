@@ -118,7 +118,7 @@ Run container
 sudo docker run -d -p 80:80 --name familytimeline-client familytimeline-client
 ```
 
-## Build and run with docker compose 
+### Build and run with docker compose 
 
 Init data folder, database and default config for client
 

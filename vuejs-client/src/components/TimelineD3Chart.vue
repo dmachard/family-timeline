@@ -30,6 +30,7 @@
 
       <ModalProfile
         ref="profileModal"
+        class="px-0"
         :person="selectedPerson"
         :data-persons="dataPersons"
         @refresh-profile="refreshPersonProfile"

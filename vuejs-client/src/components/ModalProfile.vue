@@ -1,18 +1,18 @@
 <template>
   <div
-    id="staticBackdrop"
+    id="profileModal"
     class="modal fade"
     data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
-    aria-labelledby="staticBackdropLabel"
+    aria-labelledby="profileLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
           <h1
-            id="staticBackdropLabel"
+            id="profileLabel"
             class="modal-title fs-5"
           >
             {{ $t('profile') }}
@@ -327,12 +327,12 @@ export default {
       }
     },
     show () {
-      const modalElement = document.getElementById('staticBackdrop')
+      const modalElement = document.getElementById('profileModal')
       const modal = new Modal(modalElement)
       modal.show()
     },
     hide () {
-      const modalElement = document.getElementById('staticBackdrop')
+      const modalElement = document.getElementById('profileModal')
       const modal = Modal.getInstance(modalElement)
       if (modal) {
         modal.hide()
