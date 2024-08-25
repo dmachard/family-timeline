@@ -433,20 +433,11 @@ export default {
         .attr('in', 'SourceGraphic')
         .attr('stdDeviation', '6') // Adjust the blur amount
 
-         // d3.select('#timeline-graph-container')
-         // .call(d3.drag()
-         //   .on('start', (event) => this.onDragStart(event, svg, xViewScale))
-         //   .on('drag', (event) => this.onDrag(event, svg, xViewScale, timelineWidth))
-         //   .on('ontouchstart', (event) => this.onTouchStart(event, svg, xViewScale, timelineWidth))
-         // );
-
       return { svg, margin }
     },
 
     onPointerEnd() {
-      const svg = d3.select('#timeline-graph');
-      svg.attr('transform', `translate(${this.newTranslateX}, 0)`);
-
+      this.drawTimeline();
       this.moveGraphStarted = false;
     },
 
@@ -834,8 +825,10 @@ export default {
 }
 
 #timeline-header {
+  cursor: pointer;
   width: 100%;
   height: 60px;
+  background-color: rgb(238, 238, 238);
 }
 
 #timeline-header-container {
