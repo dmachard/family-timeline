@@ -27,18 +27,20 @@
 
         <!-- Container for the timeline header and graph with scroll -->
         <div id="timeline-wrapper">
-          <div id="timeline-header-container">
-            <svg id="timeline-header" />
-          </div>
           <div 
-            id="timeline-graph-container"
+            id="timeline-header-container"
             @mousedown="onPointerStart($event, 'mouse')" 
             @touchstart="onPointerStart($event, 'touch')"
-            @mouseup="onPointerEnd()" 
+            @mouseup="onPointerEnd()"
+            @mouseout="onPointerEnd()" 
             @mousemove="onPointerMove($event, 'mouse')" 
             @touchmove="onPointerMove($event, 'touch')"
-            @ontouchend="onPointerEnd()"
+            @touchend="onPointerEnd()"
+            @touchcancel="onPointerEnd()"
           >
+            <svg id="timeline-header" />
+          </div>
+          <div id="timeline-graph-container">
             <div id="timeline-scroll-container">
               <svg id="timeline-graph" />
             </div>
@@ -92,6 +94,7 @@ export default {
       displayedPersons: new Set(),
       initialPointerX: 0,
       initialTranslateX: 0,
+      newTranslateX: 0,
       initialDomain: 0,
       xViewScale: null,
       timelineWidth: 0,
@@ -441,6 +444,9 @@ export default {
     },
 
     onPointerEnd() {
+      const svg = d3.select('#timeline-graph');
+      svg.attr('transform', `translate(${this.newTranslateX}, 0)`);
+
       this.moveGraphStarted = false;
     },
 
@@ -462,6 +468,7 @@ export default {
         this.initialPointerX = event.touches[0].clientX;
       }
       this.initialDomain = this.xViewScale.domain();
+
     },
 
     onPointerMove(event, type) {
@@ -492,9 +499,9 @@ export default {
       }
 
       // Move the svg group accordingly
-      const newTranslateX = this.initialTranslateX + dx;
-      const svg = d3.select('#timeline-graph');
-      svg.attr('transform', `translate(${newTranslateX}, 0)`);
+      this.newTranslateX = this.initialTranslateX + dx;
+      // const svg = d3.select('#timeline-graph');
+      // svg.attr('transform', `translate(${this.newTranslateX}, 0)`);
 
       // Update the xViewScale domain
       this.xViewScale.domain([newDomainStart, newDomainEnd]);
@@ -504,7 +511,7 @@ export default {
 
       // Update initial values for the next drag event
       this.initialPointerX = currentPointerX;
-      this.initialTranslateX = newTranslateX;
+      this.initialTranslateX = this.newTranslateX;
       this.initialDomain = [newDomainStart, newDomainEnd];
       this.viewStartYear = newDomainStart;
       this.viewStopYear = newDomainEnd;
@@ -600,7 +607,7 @@ export default {
     drawTimelineHeader (width, margin, yearStart, yearStop) {
       const timelineHeader = d3.select('#timeline-header')
         .attr('width', width)
-        .attr('height', 30)
+        .attr('height', 60)
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`)
 
@@ -803,12 +810,6 @@ export default {
 
 <style>
 
-#timeline-wrapper, #timeline-graph-container, #timeline-scroll-container {
-  overflow-x: auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; 
-}
-
 #timeline-content {
   margin-top: 56px;
   padding: 0;
@@ -834,13 +835,19 @@ export default {
 
 #timeline-header {
   width: 100%;
-  height: 100%;
+  height: 60px;
+}
+
+#timeline-header-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; 
 }
 
 #timeline-graph-container {
   flex: 1;
   overflow-y: auto;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 #timeline-graph {
