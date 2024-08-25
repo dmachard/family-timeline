@@ -26,5 +26,7 @@
     "divorcedFrom": "Divorced from",
     "child": "Child",
     "marriage": "Marriage",
-    "attachmentView": "Attachment overview"
+    "attachmentView": "Attachment overview",
+    "startYear": "Start year",
+    "endYear": "End year"
 } 

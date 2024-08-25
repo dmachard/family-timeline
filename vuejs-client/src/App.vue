@@ -120,13 +120,35 @@
                 </ul>
               </li>
             </ul>
+
+            <!-- Dropdowns for years -->
+            <div class="mt-3">
+              <label for="startViewYear" class="form-label text-light">{{ $t('startYear') }}</label>
+              <select id="startViewYear" class="form-select" v-model="startViewYear">
+                <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+              </select>
+
+              <label for="stopViewYear" class="form-label text-light mt-3">{{ $t('endYear') }}</label>
+              <select id="stopViewYear" class="form-select" v-model="stopViewYear">
+                <option
+                  v-for="year in availableYears"
+                  :key="year"
+                  :value="year"
+                >
+                  {{ year }}
+                </option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
     </nav>
 
     <!-- Main content area -->
-    <TimelineD3Chart />
+    <TimelineD3Chart 
+      :start-view-year="startViewYear"
+      :stop-view-year="stopViewYear"
+    />
 
     <!-- Modals -->
     <ModalActivity />
@@ -148,6 +170,8 @@ import ModalAttachments from './components/ModalAttachments.vue'
 
 import TimelineD3Chart from './components/TimelineD3Chart.vue'
 
+import config from './config'
+
 export default {
   components: {
     TimelineD3Chart,
@@ -159,7 +183,21 @@ export default {
   },
   data () {
     return {
-      selectedLanguage: 'en'
+      selectedLanguage: 'en',
+      startViewYear: config.startViewYear || 1800,
+      stopViewYear: config.endViewYear || 2050,
+      minYear: 1500,
+      maxYear: 2100 
+    }
+  },
+  computed: {
+    availableYears() {
+      // Generate an array of years from minYear to maxYear, in steps of 10 years
+      const years = [];
+      for (let year = this.minYear; year <= this.maxYear; year += 10) {
+        years.push(year);
+      }
+      return years;
     }
   },
   methods: {
