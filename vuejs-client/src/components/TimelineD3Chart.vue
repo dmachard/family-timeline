@@ -116,10 +116,12 @@ export default {
   watch: {
     startViewYear(newValue) {
       this.localStartViewYear = newValue;
+      this.localStopViewYear = this.stopViewYear;
       this.drawTimeline()
     },
     stopViewYear(newValue) {
       this.localStopViewYear = newValue;
+      this.localStartViewYear = this.startViewYear;
       this.drawTimeline()
     }
   },
