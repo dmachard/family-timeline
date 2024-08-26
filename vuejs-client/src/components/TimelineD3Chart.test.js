@@ -4,6 +4,7 @@ import TimelineD3Chart from './TimelineD3Chart.vue'
 
 vi.mock('@/services/personsService', () => ({
   fetchPersons: vi.fn().mockResolvedValue([
+    // Root person, oldest
     {
       id: 1,
       birth_date: '1980-01-01',
@@ -27,6 +28,7 @@ vi.mock('@/services/personsService', () => ({
         }
       ]
     },
+    // Root person, middle
     {
       id: 2,
       birth_date: '1982-01-01',
@@ -43,7 +45,9 @@ vi.mock('@/services/personsService', () => ({
         { id: 2, relation_type: 'mother' }
       ],
       events: []
-    }
+    },
+    // Root person, youngest
+    { id: 4, birthdate: '1990-01-01', relatives: [] }
   ])
 }))
 
@@ -51,13 +55,20 @@ describe('Timeline Methods', () => {
   let wrapper
 
   beforeEach(async () => {
-    wrapper = shallowMount(TimelineD3Chart)
+    wrapper = shallowMount(TimelineD3Chart, {
+      props: {
+        minYear: 1600,
+        maxYear: 2020,
+        startViewYear: 2000,
+        stopViewYear: 2020
+      }
+    })
     await wrapper.vm.$nextTick()
   })
 
   test('filterRootPersons should filter out persons with parents', () => {
     const rootPersons = wrapper.vm.filterRootPersons()
-    expect(rootPersons.length).toBe(2)
+    expect(rootPersons.length).toBe(3)
     expect(rootPersons[0].id).toBe(1)
   })
 

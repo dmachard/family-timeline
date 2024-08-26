@@ -123,13 +123,17 @@
 
             <!-- Dropdowns for years -->
             <div class="mt-3">
-              <label for="startViewYear" class="form-label text-light">{{ $t('startYear') }}</label>
-              <select id="startViewYear" class="form-select" v-model="startViewYear">
-                <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-              </select>
-
-              <label for="stopViewYear" class="form-label text-light mt-3">{{ $t('endYear') }}</label>
-              <select id="stopViewYear" class="form-select" v-model="stopViewYear">
+              <label
+                for="startViewYear"
+                class="form-label text-ligth"
+              >
+                {{ $t('startYear') }}
+              </label>
+              <select
+                id="startViewYear"
+                v-model="startViewYear"
+                class="form-select"
+              >
                 <option
                   v-for="year in availableYears"
                   :key="year"
@@ -138,6 +142,32 @@
                   {{ year }}
                 </option>
               </select>
+
+              <label
+                for="stopViewYear"
+                class="form-label text-light mt-3"
+              >
+                {{ $t('endYear') }}
+              </label>
+              <select
+                id="stopViewYear"
+                v-model="stopViewYear"
+                class="form-select"
+              >
+                <option
+                  v-for="year in filteredEndYears"
+                  :key="year"
+                  :value="year"
+                >
+                  {{ year }}
+                </option>
+              </select>
+            </div>
+
+
+            <!-- Adding the client version -->
+            <div class="mt-4 text-end">
+              <span class="text-ligth">v{{ clientVersion }}</span>
             </div>
           </div>
         </div>
@@ -146,6 +176,8 @@
 
     <!-- Main content area -->
     <TimelineD3Chart 
+      :min-year="minYear"
+      :max-year="maxYear"
       :start-view-year="startViewYear"
       :stop-view-year="stopViewYear"
     />
@@ -186,18 +218,32 @@ export default {
       selectedLanguage: 'en',
       startViewYear: config.startViewYear || 1800,
       stopViewYear: config.endViewYear || 2050,
-      minYear: 1500,
-      maxYear: 2100 
+      minYear: config.minYear || 1800,
+      maxYear: config.maxYear || 2050,
+      clientVersion: import.meta.env.VITE_APP_VERSION
     }
   },
   computed: {
+    // Generate an array of years from minYear to maxYear, in steps of 50 years
     availableYears() {
-      // Generate an array of years from minYear to maxYear, in steps of 10 years
       const years = [];
-      for (let year = this.minYear; year <= this.maxYear; year += 10) {
+      for (let year = this.minYear; year <= this.maxYear; year += 50) {
         years.push(year);
       }
       return years;
+    },
+
+    // Filter the availableYears to only include years greater than to startViewYear
+    filteredEndYears() {
+      return this.availableYears.filter(year => year > this.startViewYear);
+    }
+  },
+  watch: {
+    // Automatically adjust stopViewYear if it becomes invalid
+    startViewYear(newStartYear) {
+      if (this.stopViewYear < newStartYear) {
+        this.stopViewYear = this.maxYear;
+      }
     }
   },
   methods: {

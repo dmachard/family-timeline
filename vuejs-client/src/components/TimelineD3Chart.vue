@@ -42,9 +42,7 @@
             <svg id="timeline-header" />
           </div>
           <div id="timeline-graph-container">
-            <div id="timeline-scroll-container">
-              <svg id="timeline-graph" />
-            </div>
+            <svg id="timeline-graph" />
           </div>
         </div>
       </div>
@@ -68,7 +66,6 @@ import fetchDataMixin from '@/mixins/fetchDataMixin'
 import { fetchPersons } from '@/services/personsService.js'
 
 import ModalProfile from './ModalProfile.vue'
-import config from '../config'
 
 export default {
   components: {
@@ -76,6 +73,14 @@ export default {
   },
   mixins: [fetchDataMixin],
   props: {
+    minYear: {
+      type: Number,
+      required: true
+    },
+    maxYear: {
+      type: Number,
+      required: true
+    },
     startViewYear: {
       type: Number,
       required: true
@@ -87,6 +92,7 @@ export default {
   },
   data () {
     return {
+      graphMargin: { top: 20, right: 20, left: 20 },
       selectedPerson: null,
       dataPersons: [],
       rootPersons: [],
@@ -94,8 +100,6 @@ export default {
       previousWidth: null,
       previousHeight: null,
       barHeight: 60,
-      yearStart: config.startYear || 1800,
-      yearStop: config.endYear || 2050,
       localStartViewYear: this.startViewYear,
       localStopViewYear: this.stopViewYear,
       defaultColor: '#e5e5e5',
@@ -117,11 +121,15 @@ export default {
     startViewYear(newValue) {
       this.localStartViewYear = newValue;
       this.localStopViewYear = this.stopViewYear;
+
+      // redraw timeline
       this.drawTimeline()
     },
     stopViewYear(newValue) {
       this.localStopViewYear = newValue;
       this.localStartViewYear = this.startViewYear;
+
+      // redraw timeline
       this.drawTimeline()
     }
   },
@@ -147,6 +155,7 @@ export default {
           relative.relation_type === 'father' || relative.relation_type === 'mother'
         )
       })
+      .sort((a, b) => new Date(a.birth_date) - new Date(b.birth_date));
     },
 
     filterSpouses (personId) {
@@ -286,7 +295,7 @@ export default {
       // Extract birth and death years from the person object
       const birthYear = this.getYearFromDate(person.birth_date)
       const endYear = this.getYearFromDate(person.death_date)
-
+     
       // Default verification status for birth and death dates
       const birthDateVerified = person.birth_date_verified !== null ? person.birth_date_verified : true
       const deathDateVerified = person.death_date_verified !== null ? person.death_date_verified : true
@@ -300,10 +309,17 @@ export default {
 
       // Handle case where there are no spouses or children
       if (!spouses.length) {
+        let color = familyColor !== null ? familyColor : this.defaultColor;
+
+        // this period is too small, no background color for this case
+        if (birthYear == endYear){
+          color = "none";
+        }
+
         periods.push({
           start: birthYear,
           end: endYear,
-          color: familyColor !== null ? familyColor : this.defaultColor,
+          color: color,
           birthDateVerified,
           deathDateVerified,
           stillAlive: person.death_date === null
@@ -405,19 +421,18 @@ export default {
     },
 
     handleResize: debounce(function () {
-      this.isSmallScreen = window.innerWidth < 768
+      const { innerWidth: width, innerHeight: height } = window;
 
-      const width = window.innerWidth
-      const height = window.innerHeight
       if (width !== this.previousWidth || height !== this.previousHeight) {
         this.previousWidth = width
         this.previousHeight = height
+
+        // redraw the graph
         this.drawTimeline()
       }
     }, 300),
 
-    setupSvg () {
-      const margin = { top: 20, right: 20, left: 20 }
+    setupGraphSvg () {
       // Get the width of the 'timeline-content' element
       const timelineContent = document.getElementById('timeline-content')
       const timelineContentWidth = timelineContent
@@ -425,14 +440,10 @@ export default {
          : window.innerWidth
 
       // Calculate the available width for the timeline chart
-      this.timelineWidth = timelineContentWidth - margin.right - margin.left
+      this.timelineWidth = timelineContentWidth - this.graphMargin.right - this.graphMargin.left
 
       // Calculate the total height of the chart
       this.totalHeight = Math.max((this.dataPersons.length + 1) * this.barHeight, window.innerHeight)
-
-      //const xScale = d3.scaleLinear()
-      //  .domain([this.yearStart, this.yearStop])
-      //  .range([0, timelineWidth])
 
       this.xViewScale = d3.scaleLinear()
         .domain([this.localStartViewYear, this.localStopViewYear])
@@ -442,7 +453,7 @@ export default {
         .attr('width', this.timelineWidth)
         .attr('height', this.totalHeight)
         .append('g')
-        .attr('transform', `translate(${margin.left},0)`)
+        .attr('transform', `translate(${this.graphMargin.left},0)`)
 
       // add blur filter
       const defs = svg.append('defs')
@@ -456,7 +467,7 @@ export default {
         .attr('in', 'SourceGraphic')
         .attr('stdDeviation', '6') // Adjust the blur amount
 
-      return { svg, margin }
+      return { svg }
     },
 
     onPointerEnd() {
@@ -511,14 +522,12 @@ export default {
       let newDomainStart = this.initialDomain[0] - domainShift;
       let newDomainEnd = this.initialDomain[1] - domainShift;
 
-      if (newDomainStart < this.yearStart-5 || newDomainEnd > this.yearStop+5) {
+      if (newDomainStart < this.minYear-5 || newDomainEnd > this.maxYear+5) {
         return
       }
 
       // Move the svg group accordingly
       this.newTranslateX = this.initialTranslateX + dx;
-      // const svg = d3.select('#timeline-graph');
-      // svg.attr('transform', `translate(${this.newTranslateX}, 0)`);
 
       // Update the xViewScale domain
       this.xViewScale.domain([newDomainStart, newDomainEnd]);
@@ -536,13 +545,12 @@ export default {
 
     updateTimelineHeader(newDomain) {
       const width = parseFloat(d3.select('#timeline-header').attr('width'));
-      const margin = { top: 20, left: 20 }; // Update with actual margins if different
-      
+
       // Clear existing header content
       d3.select('#timeline-header').html('');
       
       // Create new header with updated domain
-      this.drawTimelineHeader(width, margin, newDomain[0], newDomain[1]);
+      this.drawTimelineHeader(width, this.graphMargin, newDomain[0], newDomain[1]);
     },
 
     clearTimeline () {
@@ -560,16 +568,16 @@ export default {
       this.clearTimeline()
 
       // Set up SVG dimensions and scales
-      const { svg, margin } = this.setupSvg()
+      this.setupGraphSvg()
 
       // Draw header
-      this.drawTimelineHeader(this.timelineWidth, margin, this.localStartViewYear, this.localStopViewYear)
+      this.drawTimelineHeader(this.timelineWidth, this.graphMargin, this.localStartViewYear, this.localStopViewYear)
 
       // draw background
-      this.drawTimelineBackground(svg, this.xViewScale, this.yearStart, this.yearStop, this.totalHeight, margin)
+      this.drawTimelineBackground(this.xViewScale, this.minYear, this.maxYear, this.totalHeight, this.graphMargin)
 
       // Draw persons and their periods
-      this.drawPersons(svg, this.xViewScale)
+      this.drawPersons(this.xViewScale)
     },
 
     drawTimelineHeader (width, margin, yearStart, yearStop) {
@@ -591,7 +599,7 @@ export default {
         .attr('transform', 'translate(0, 0)')
     },
 
-    drawTimelineBackground (svg, xScale, yearStart, yearStop, height, margin) {
+    drawTimelineBackground (xScale, yearStart, yearStop, height, margin) {
       // Create a scale for vertical lines every xx years
       let intervalYears = 5;
       if (window.innerWidth < 768) {
@@ -604,7 +612,8 @@ export default {
         .tickValues(d3.range(yearStart, yearStop+intervalYears, intervalYears))
 
       // Add a group for the vertic al lines
-      const xAxisTicksGroup = svg.append('g')
+      const grahSvg = d3.select('#timeline-graph');
+      const xAxisTicksGroup = grahSvg.append('g')
         .call(xAxisTicks)
 
       // remove border
@@ -648,22 +657,24 @@ export default {
       return path
     },
 
-    drawPersons (svg, xScale) {
+    drawPersons (xScale) {
+      const grahSvg = d3.select('#timeline-graph');
       let yPosition = 0
       const familyColor = null
       const isChild = false
 
       this.rootPersons = this.filterRootPersons()
+      console.log(this.rootPersons);
       for (const person of this.rootPersons) {
         if (!this.displayedPersons.has(person.id)) {
           const personPeriods = this.getPeriods(person, familyColor, isChild)
-          yPosition = this.drawPerson(person, personPeriods, svg, yPosition, xScale)
+          yPosition = this.drawPerson(person, personPeriods, grahSvg, yPosition, xScale)
           yPosition++
         }
       }
     },
 
-    drawPerson (person, periods, svg, yPosition, xScale) {
+    drawPerson (person, periods, grahSvg, yPosition, xScale) {
       if (this.displayedPersons.has(person.id)) { return yPosition }
 
       // Extract birth and death years from the person object
@@ -672,9 +683,8 @@ export default {
       // Draw each period as a segment of the timeline
       const y = yPosition * this.barHeight / 2 + 10
       const height = 40
-      const personGroup = svg.append('g')
+      const personGroup = grahSvg.append('g')
         .attr('class', 'person')
-      // .attr("data-id", person.id)
         .attr('transform', `translate(0, ${y})`)
         .datum(person)
 
@@ -710,7 +720,7 @@ export default {
       // Append the image inside the circle
       personGroup.append('image')
         .attr('xlink:href', imageUrl)
-        .attr('x', xScale(birthYear) + 10)
+        .attr('x', xScale(birthYear) + 5)
         .attr('y', y + height / 2 - 15)
         .attr('fill', 'none')
         .attr('width', 30)
@@ -744,14 +754,14 @@ export default {
         if (oldestAncestor.id !== spouse.id) {
           if (!this.displayedPersons.has(oldestAncestor.id)) {
             const oldestAncestorPeriods = this.getPeriods(oldestAncestor, familyColor, isChild)
-            yPosition = this.drawPerson(oldestAncestor, oldestAncestorPeriods, svg, yPosition + 1, xScale)
+            yPosition = this.drawPerson(oldestAncestor, oldestAncestorPeriods, grahSvg, yPosition + 1, xScale)
           }
         }
 
         // draw the spouse
         if (!this.displayedPersons.has(spouse.id)) {
           const spousePeriods = this.getPeriods(spouse, familyColor, isChild)
-          yPosition = this.drawPerson(spouse, spousePeriods, svg, yPosition + 1, xScale)
+          yPosition = this.drawPerson(spouse, spousePeriods, grahSvg, yPosition + 1, xScale)
         }
 
         // draw children
@@ -760,7 +770,7 @@ export default {
           if (!this.displayedPersons.has(child.id)) {
             isChild = true
             const childPeriods = this.getPeriods(child, familyColor, isChild)
-            yPosition = this.drawPerson(child, childPeriods, svg, yPosition + 1, xScale)
+            yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
           }
         }
       }
@@ -799,24 +809,23 @@ export default {
 #timeline-header-container {
   position: sticky;
   top: 0;
-  height: 40px;
-  width: 100%;
-  background-color: white;
-  z-index: 10;
-}
-
-#timeline-header {
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-  background-color: rgb(238, 238, 238);
-}
-
-#timeline-header-container {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch; 
   height: 60px;
+}
+
+#timeline-header-container:hover {
+  cursor: grab;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+#timeline-header {
+  width: 100%;
+  height: 100%;
+  background: #f0f0f0;
+  font-weight: bold;
+  color: #615e5e;
 }
 
 #timeline-graph-container {
