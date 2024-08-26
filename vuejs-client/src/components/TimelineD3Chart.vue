@@ -797,15 +797,9 @@ export default {
   position: relative;
 }
 
-#timeline-header {
-  width: 100%;
-  height: 100%;
-  background: #f0f0f0;
-  font-weight: bold;
-  color: #615e5e;
-}
-
 #timeline-header-container {
+  position: sticky;
+  top: 0;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch; 
@@ -815,6 +809,14 @@ export default {
 #timeline-header-container:hover {
   cursor: grab;
   filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+#timeline-header {
+  width: 100%;
+  height: 100%;
+  background: #f0f0f0;
+  font-weight: bold;
+  color: #615e5e;
 }
 
 #timeline-graph-container {
