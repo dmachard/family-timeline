@@ -8,7 +8,7 @@
     aria-labelledby="profileLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
           <h1
@@ -79,12 +79,12 @@
                 :key="section.label"
                 class="row mb-3"
               >
-                <div class="col-3">
+                <div class="col-4">
                   <p class="h6">
-                    {{ section.label }}:
+                    {{ section.label }}
                   </p>
                 </div>
-                <div class="col-9">
+                <div class="col-8">
                   <div v-if="section.items.length">
                     <p
                       v-for="item in section.items"
@@ -250,6 +250,8 @@ export default {
     },
     relativeSections () {
       return [
+        { label: this.$t('grandparents-paternal'), items: this.getGrandparents('father') },
+        { label: this.$t('grandparents-maternal'), items: this.getGrandparents('mother') },
         { label: this.$t('parents'), items: this.parents },
         { label: this.$t('spouses'), items: this.spouses },
         { label: this.$t('children'), items: this.children },
@@ -294,6 +296,36 @@ export default {
     }
   },
   methods: {
+    getGrandparents(relationType) {
+      if (!this.person || !this.person.relatives) return []
+
+      // Get the IDs of the parents
+      const parentIds = this.person.relatives
+        .filter(r => r.relation_type === relationType)
+        .map(p => p.id)
+      
+      if (parentIds.length === 0) return [];
+
+      const grandparentIds = new Set();
+          
+      parentIds.forEach(parentId => {
+        // Find the parent person
+        const parent = this.dataPersons.find(p => p.id === parentId);
+        if (parent && parent.relatives) {
+          // Add each relative's ID to the grandparentIds set
+            parent.relatives
+            .filter(r => r.relation_type === 'father' || r.relation_type === 'mother')
+            .forEach(r => grandparentIds.add(r.id));
+        }
+      });
+
+    // Map unique grandparent IDs to actual person objects
+    const uniqueGrandparents = Array.from(grandparentIds)
+      .map(id => this.dataPersons.find(person => person.id === id))
+      .filter(grandparent => grandparent); // Remove undefined values
+
+    return uniqueGrandparents;
+    },
     getDataUrl () {
       return import.meta.env.MODE === 'development'
         ? import.meta.env.VITE_DATA_URL
