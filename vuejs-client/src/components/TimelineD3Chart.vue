@@ -42,9 +42,7 @@
             <svg id="timeline-header" />
           </div>
           <div id="timeline-graph-container">
-            <div id="timeline-scroll-container">
-              <svg id="timeline-graph" />
-            </div>
+            <svg id="timeline-graph" />
           </div>
         </div>
       </div>
@@ -713,7 +711,7 @@ export default {
       // Append the image inside the circle
       personGroup.append('image')
         .attr('xlink:href', imageUrl)
-        .attr('x', xScale(birthYear) + 10)
+        .attr('x', xScale(birthYear) + 5)
         .attr('y', y + height / 2 - 15)
         .attr('fill', 'none')
         .attr('width', 30)

@@ -51,7 +51,14 @@ describe('Timeline Methods', () => {
   let wrapper
 
   beforeEach(async () => {
-    wrapper = shallowMount(TimelineD3Chart)
+    wrapper = shallowMount(TimelineD3Chart, {
+      props: {
+        minYear: 1600,
+        maxYear: 2020,
+        startViewYear: 2000,
+        stopViewYear: 2020
+      }
+    })
     await wrapper.vm.$nextTick()
   })
 

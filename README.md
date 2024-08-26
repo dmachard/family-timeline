@@ -86,8 +86,16 @@ npm run lint
 
 ### Test units
 
+Execute all tests
+
 ```bash
 npm run test
+```
+
+Example to execute one test
+
+```bash
+npx vitest run --environment jsdom App.test.js
 ```
 
 ### Docker build for server
