@@ -664,7 +664,6 @@ export default {
       const isChild = false
 
       this.rootPersons = this.filterRootPersons()
-      console.log(this.rootPersons);
       for (const person of this.rootPersons) {
         if (!this.displayedPersons.has(person.id)) {
           const personPeriods = this.getPeriods(person, familyColor, isChild)

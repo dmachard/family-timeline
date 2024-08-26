@@ -28,5 +28,7 @@
     "marriage": "Marriage",
     "attachmentView": "Attachment overview",
     "startYear": "Start year",
-    "endYear": "End year"
+    "endYear": "End year",
+    "grandparents-paternal": "Paternal Grandparents",
+    "grandparents-maternal": "Maternal Grandparents"
 } 
