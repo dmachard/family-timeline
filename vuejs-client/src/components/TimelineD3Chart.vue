@@ -155,6 +155,7 @@ export default {
           relative.relation_type === 'father' || relative.relation_type === 'mother'
         )
       })
+      .sort((a, b) => new Date(a.birth_date) - new Date(b.birth_date));
     },
 
     filterSpouses (personId) {
@@ -294,7 +295,7 @@ export default {
       // Extract birth and death years from the person object
       const birthYear = this.getYearFromDate(person.birth_date)
       const endYear = this.getYearFromDate(person.death_date)
-
+     
       // Default verification status for birth and death dates
       const birthDateVerified = person.birth_date_verified !== null ? person.birth_date_verified : true
       const deathDateVerified = person.death_date_verified !== null ? person.death_date_verified : true
@@ -308,10 +309,17 @@ export default {
 
       // Handle case where there are no spouses or children
       if (!spouses.length) {
+        let color = familyColor !== null ? familyColor : this.defaultColor;
+
+        // this period is too small, no background color for this case
+        if (birthYear == endYear){
+          color = "none";
+        }
+
         periods.push({
           start: birthYear,
           end: endYear,
-          color: familyColor !== null ? familyColor : this.defaultColor,
+          color: color,
           birthDateVerified,
           deathDateVerified,
           stillAlive: person.death_date === null
@@ -413,11 +421,13 @@ export default {
     },
 
     handleResize: debounce(function () {
-      const width = window.innerWidth
-      const height = window.innerHeight
+      const { innerWidth: width, innerHeight: height } = window;
+
       if (width !== this.previousWidth || height !== this.previousHeight) {
         this.previousWidth = width
         this.previousHeight = height
+
+        // redraw the graph
         this.drawTimeline()
       }
     }, 300),
@@ -654,6 +664,7 @@ export default {
       const isChild = false
 
       this.rootPersons = this.filterRootPersons()
+      console.log(this.rootPersons);
       for (const person of this.rootPersons) {
         if (!this.displayedPersons.has(person.id)) {
           const personPeriods = this.getPeriods(person, familyColor, isChild)
@@ -674,7 +685,6 @@ export default {
       const height = 40
       const personGroup = grahSvg.append('g')
         .attr('class', 'person')
-      // .attr("data-id", person.id)
         .attr('transform', `translate(0, ${y})`)
         .datum(person)
 
