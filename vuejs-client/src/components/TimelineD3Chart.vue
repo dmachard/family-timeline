@@ -68,7 +68,6 @@ import fetchDataMixin from '@/mixins/fetchDataMixin'
 import { fetchPersons } from '@/services/personsService.js'
 
 import ModalProfile from './ModalProfile.vue'
-import config from '../config'
 
 export default {
   components: {
@@ -76,6 +75,14 @@ export default {
   },
   mixins: [fetchDataMixin],
   props: {
+    minYear: {
+      type: Number,
+      required: true
+    },
+    maxYear: {
+      type: Number,
+      required: true
+    },
     startViewYear: {
       type: Number,
       required: true
@@ -94,8 +101,6 @@ export default {
       previousWidth: null,
       previousHeight: null,
       barHeight: 60,
-      yearStart: config.startYear || 1800,
-      yearStop: config.endYear || 2050,
       localStartViewYear: this.startViewYear,
       localStopViewYear: this.stopViewYear,
       defaultColor: '#e5e5e5',
@@ -117,11 +122,15 @@ export default {
     startViewYear(newValue) {
       this.localStartViewYear = newValue;
       this.localStopViewYear = this.stopViewYear;
+
+      // redraw timeline
       this.drawTimeline()
     },
     stopViewYear(newValue) {
       this.localStopViewYear = newValue;
       this.localStartViewYear = this.startViewYear;
+
+      // redraw timeline
       this.drawTimeline()
     }
   },
@@ -430,10 +439,6 @@ export default {
       // Calculate the total height of the chart
       this.totalHeight = Math.max((this.dataPersons.length + 1) * this.barHeight, window.innerHeight)
 
-      //const xScale = d3.scaleLinear()
-      //  .domain([this.yearStart, this.yearStop])
-      //  .range([0, timelineWidth])
-
       this.xViewScale = d3.scaleLinear()
         .domain([this.localStartViewYear, this.localStopViewYear])
         .range([0, this.timelineWidth]);
@@ -511,14 +516,12 @@ export default {
       let newDomainStart = this.initialDomain[0] - domainShift;
       let newDomainEnd = this.initialDomain[1] - domainShift;
 
-      if (newDomainStart < this.yearStart-5 || newDomainEnd > this.yearStop+5) {
+      if (newDomainStart < this.minYear-5 || newDomainEnd > this.maxYear+5) {
         return
       }
 
       // Move the svg group accordingly
       this.newTranslateX = this.initialTranslateX + dx;
-      // const svg = d3.select('#timeline-graph');
-      // svg.attr('transform', `translate(${this.newTranslateX}, 0)`);
 
       // Update the xViewScale domain
       this.xViewScale.domain([newDomainStart, newDomainEnd]);
@@ -566,7 +569,7 @@ export default {
       this.drawTimelineHeader(this.timelineWidth, margin, this.localStartViewYear, this.localStopViewYear)
 
       // draw background
-      this.drawTimelineBackground(svg, this.xViewScale, this.yearStart, this.yearStop, this.totalHeight, margin)
+      this.drawTimelineBackground(svg, this.xViewScale, this.minYear, this.maxYear, this.totalHeight, margin)
 
       // Draw persons and their periods
       this.drawPersons(svg, this.xViewScale)
@@ -796,20 +799,12 @@ export default {
   position: relative;
 }
 
-#timeline-header-container {
-  position: sticky;
-  top: 0;
-  height: 40px;
-  width: 100%;
-  background-color: white;
-  z-index: 10;
-}
-
 #timeline-header {
-  cursor: pointer;
   width: 100%;
   height: 100%;
-  background-color: rgb(238, 238, 238);
+  background: #f0f0f0;
+  font-weight: bold;
+  color: #615e5e;
 }
 
 #timeline-header-container {
@@ -817,6 +812,11 @@ export default {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch; 
   height: 60px;
+}
+
+#timeline-header-container:hover {
+  cursor: grab;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
 }
 
 #timeline-graph-container {
