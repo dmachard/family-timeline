@@ -92,6 +92,7 @@ export default {
   },
   data () {
     return {
+      graphMargin: { top: 20, right: 20, left: 20 },
       selectedPerson: null,
       dataPersons: [],
       rootPersons: [],
@@ -412,8 +413,6 @@ export default {
     },
 
     handleResize: debounce(function () {
-      this.isSmallScreen = window.innerWidth < 768
-
       const width = window.innerWidth
       const height = window.innerHeight
       if (width !== this.previousWidth || height !== this.previousHeight) {
@@ -423,8 +422,7 @@ export default {
       }
     }, 300),
 
-    setupSvg () {
-      const margin = { top: 20, right: 20, left: 20 }
+    setupGraphSvg () {
       // Get the width of the 'timeline-content' element
       const timelineContent = document.getElementById('timeline-content')
       const timelineContentWidth = timelineContent
@@ -432,7 +430,7 @@ export default {
          : window.innerWidth
 
       // Calculate the available width for the timeline chart
-      this.timelineWidth = timelineContentWidth - margin.right - margin.left
+      this.timelineWidth = timelineContentWidth - this.graphMargin.right - this.graphMargin.left
 
       // Calculate the total height of the chart
       this.totalHeight = Math.max((this.dataPersons.length + 1) * this.barHeight, window.innerHeight)
@@ -445,7 +443,7 @@ export default {
         .attr('width', this.timelineWidth)
         .attr('height', this.totalHeight)
         .append('g')
-        .attr('transform', `translate(${margin.left},0)`)
+        .attr('transform', `translate(${this.graphMargin.left},0)`)
 
       // add blur filter
       const defs = svg.append('defs')
@@ -459,7 +457,7 @@ export default {
         .attr('in', 'SourceGraphic')
         .attr('stdDeviation', '6') // Adjust the blur amount
 
-      return { svg, margin }
+      return { svg }
     },
 
     onPointerEnd() {
@@ -537,13 +535,12 @@ export default {
 
     updateTimelineHeader(newDomain) {
       const width = parseFloat(d3.select('#timeline-header').attr('width'));
-      const margin = { top: 20, left: 20 }; // Update with actual margins if different
-      
+
       // Clear existing header content
       d3.select('#timeline-header').html('');
       
       // Create new header with updated domain
-      this.drawTimelineHeader(width, margin, newDomain[0], newDomain[1]);
+      this.drawTimelineHeader(width, this.graphMargin, newDomain[0], newDomain[1]);
     },
 
     clearTimeline () {
@@ -561,16 +558,16 @@ export default {
       this.clearTimeline()
 
       // Set up SVG dimensions and scales
-      const { svg, margin } = this.setupSvg()
+      this.setupGraphSvg()
 
       // Draw header
-      this.drawTimelineHeader(this.timelineWidth, margin, this.localStartViewYear, this.localStopViewYear)
+      this.drawTimelineHeader(this.timelineWidth, this.graphMargin, this.localStartViewYear, this.localStopViewYear)
 
       // draw background
-      this.drawTimelineBackground(svg, this.xViewScale, this.minYear, this.maxYear, this.totalHeight, margin)
+      this.drawTimelineBackground(this.xViewScale, this.minYear, this.maxYear, this.totalHeight, this.graphMargin)
 
       // Draw persons and their periods
-      this.drawPersons(svg, this.xViewScale)
+      this.drawPersons(this.xViewScale)
     },
 
     drawTimelineHeader (width, margin, yearStart, yearStop) {
@@ -592,7 +589,7 @@ export default {
         .attr('transform', 'translate(0, 0)')
     },
 
-    drawTimelineBackground (svg, xScale, yearStart, yearStop, height, margin) {
+    drawTimelineBackground (xScale, yearStart, yearStop, height, margin) {
       // Create a scale for vertical lines every xx years
       let intervalYears = 5;
       if (window.innerWidth < 768) {
@@ -605,7 +602,8 @@ export default {
         .tickValues(d3.range(yearStart, yearStop+intervalYears, intervalYears))
 
       // Add a group for the vertic al lines
-      const xAxisTicksGroup = svg.append('g')
+      const grahSvg = d3.select('#timeline-graph');
+      const xAxisTicksGroup = grahSvg.append('g')
         .call(xAxisTicks)
 
       // remove border
@@ -649,7 +647,8 @@ export default {
       return path
     },
 
-    drawPersons (svg, xScale) {
+    drawPersons (xScale) {
+      const grahSvg = d3.select('#timeline-graph');
       let yPosition = 0
       const familyColor = null
       const isChild = false
@@ -658,13 +657,13 @@ export default {
       for (const person of this.rootPersons) {
         if (!this.displayedPersons.has(person.id)) {
           const personPeriods = this.getPeriods(person, familyColor, isChild)
-          yPosition = this.drawPerson(person, personPeriods, svg, yPosition, xScale)
+          yPosition = this.drawPerson(person, personPeriods, grahSvg, yPosition, xScale)
           yPosition++
         }
       }
     },
 
-    drawPerson (person, periods, svg, yPosition, xScale) {
+    drawPerson (person, periods, grahSvg, yPosition, xScale) {
       if (this.displayedPersons.has(person.id)) { return yPosition }
 
       // Extract birth and death years from the person object
@@ -673,7 +672,7 @@ export default {
       // Draw each period as a segment of the timeline
       const y = yPosition * this.barHeight / 2 + 10
       const height = 40
-      const personGroup = svg.append('g')
+      const personGroup = grahSvg.append('g')
         .attr('class', 'person')
       // .attr("data-id", person.id)
         .attr('transform', `translate(0, ${y})`)
@@ -745,14 +744,14 @@ export default {
         if (oldestAncestor.id !== spouse.id) {
           if (!this.displayedPersons.has(oldestAncestor.id)) {
             const oldestAncestorPeriods = this.getPeriods(oldestAncestor, familyColor, isChild)
-            yPosition = this.drawPerson(oldestAncestor, oldestAncestorPeriods, svg, yPosition + 1, xScale)
+            yPosition = this.drawPerson(oldestAncestor, oldestAncestorPeriods, grahSvg, yPosition + 1, xScale)
           }
         }
 
         // draw the spouse
         if (!this.displayedPersons.has(spouse.id)) {
           const spousePeriods = this.getPeriods(spouse, familyColor, isChild)
-          yPosition = this.drawPerson(spouse, spousePeriods, svg, yPosition + 1, xScale)
+          yPosition = this.drawPerson(spouse, spousePeriods, grahSvg, yPosition + 1, xScale)
         }
 
         // draw children
@@ -761,7 +760,7 @@ export default {
           if (!this.displayedPersons.has(child.id)) {
             isChild = true
             const childPeriods = this.getPeriods(child, familyColor, isChild)
-            yPosition = this.drawPerson(child, childPeriods, svg, yPosition + 1, xScale)
+            yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
           }
         }
       }
