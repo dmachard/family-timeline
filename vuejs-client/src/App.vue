@@ -125,7 +125,7 @@
             <div class="mt-3">
               <label
                 for="startViewYear"
-                class="form-label text-light"
+                class="form-label text-ligth"
               >
                 {{ $t('startYear') }}
               </label>
@@ -162,6 +162,12 @@
                   {{ year }}
                 </option>
               </select>
+            </div>
+
+
+            <!-- Adding the client version -->
+            <div class="mt-4 text-end">
+              <span class="text-ligth">v{{ clientVersion }}</span>
             </div>
           </div>
         </div>
@@ -213,7 +219,8 @@ export default {
       startViewYear: config.startViewYear || 1800,
       stopViewYear: config.endViewYear || 2050,
       minYear: config.minYear || 1800,
-      maxYear: config.maxYear || 2050
+      maxYear: config.maxYear || 2050,
+      clientVersion: import.meta.env.VITE_APP_VERSION
     }
   },
   computed: {
