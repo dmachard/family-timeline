@@ -1,6 +1,14 @@
 -- schema.sql
 
 -- Table People
+CREATE TABLE Users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE
+);
+
+-- Table People
 CREATE TABLE IF NOT EXISTS Persons (
     id INTEGER PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,

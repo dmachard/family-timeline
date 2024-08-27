@@ -11,5 +11,12 @@ export default {
   },
   db: {
     filename: process.env.DATABASE_FILENAME || './src/db/database.sqlite3',
+  },
+  jwt: {
+    // JWT secret
+    secret: process.env.JWT_SECRET || "default_1234567890abcdef",
+    // Token expiration time
+    access_token_expires_in: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN ||  "1h",
+    refresh_token_expires_in: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN ||  "24h"
   }
 };

@@ -30,6 +30,10 @@
     "startYear": "Année de début",
     "endYear": "Année de fin",
     "grandparents-paternal": "Grands-parents paternels",
-    "grandparents-maternal": "Grands-parents maternels"
+    "grandparents-maternal": "Grands-parents maternels",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "login": "Connection",
+    "logout": "Déconnection"
 }
   

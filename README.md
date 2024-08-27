@@ -47,6 +47,8 @@ Start the containers using docker compose command
 docker compose up -d
 ```
 
+The default user is `admin` with password `admin`.
+
 ## For developers
 
 This project is based on the following frameworks
@@ -64,9 +66,15 @@ npm run install
 ### Init demo database
 
 ```bash
-cd backend-server/src
-sqlite3 database.sqlite3 < db/schema.sql
-sqlite3 database.sqlite3 < db/royal_family.sql
+cd backend-server/src/db
+sqlite3 database.sqlite3 < ../utils/schema.sql
+sqlite3 database.sqlite3 < ../utils/user.sql
+```
+
+Add some data
+
+```bash
+sqlite3 database.sqlite3 < ../utils/royal_family.sql
 ```
 
 ### Compile and run
@@ -138,7 +146,8 @@ cd userdata/
 Copy config
 
 ```bash
-sqlite3 database.sqlite3 < ../backend-server/src/db/schema.sql
+sqlite3 database.sqlite3 < ../backend-server/src/utils/schema.sql
+sqlite3 database.sqlite3 < ../backend-server/src/utils/user.sql
 cp ../backend-server/nginx.conf .
 cp ../vuejs-client/public/config.js .
 ```
@@ -151,3 +160,12 @@ sudo docker compose -f docker-compose.dev.yml up --build
 
 The frontend is reachable  at `http://localhost/`
 The API serveur is available on `http://localhost/api/`
+
+The default user is `admin` with password `admin`.
+
+### Hash password for default user
+
+```bash
+$ node src/utils/hashPassword.js
+Hashed password: $2b$10$gz5
+```

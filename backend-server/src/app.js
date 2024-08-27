@@ -1,7 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+
 import personsRoutes from './routes/personsRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+
+import authenticateToken from './middleware/authMiddleware.js'; 
+
 import path from 'path';
 import { fileURLToPath } from 'url';
 import config from './config.js';
@@ -19,8 +24,11 @@ app.use(bodyParser.json());
 // Serve static files from the "data" directory
 app.use('/data', express.static(path.join(__dirname, config.storage.data_path)));
 
-// Routes
-app.use('/api/persons', personsRoutes);
+// Login route
+app.use('/api/auth', authRoutes);
+
+// Protected routes
+app.use('/api/persons', authenticateToken, personsRoutes);
 
 app.listen(port, () => {
   logger.info(`Server running on port ${port}`);

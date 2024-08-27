@@ -18,6 +18,7 @@
         </a>
 
         <button
+          v-if="isAuthenticated"
           class="navbar-toggler"
           type="button"
           data-bs-toggle="offcanvas"
@@ -27,6 +28,7 @@
           <span class="navbar-toggler-icon" />
         </button>
         <div
+          v-if="isAuthenticated"
           id="offcanvasDarkNavbar"
           class="offcanvas offcanvas-end text-bg-dark"
           tabindex="-1"
@@ -47,6 +49,12 @@
             />
           </div>
           <div class="offcanvas-body">
+            <div
+              v-if="userName"
+              class="text-light mb-3"
+            >
+              <strong>{{ userName }}</strong>
+            </div>
             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
               <li class="nav-item">
                 <a
@@ -119,6 +127,15 @@
                   </li>
                 </ul>
               </li>
+              <li class="nav-item">
+                <a
+                  class="nav-link"
+                  href="#"
+                  @click="logout"
+                >
+                  {{ $t('logout') }}
+                </a>
+              </li>
             </ul>
 
             <!-- Dropdowns for years -->
@@ -175,44 +192,66 @@
     </nav>
 
     <!-- Main content area -->
-    <TimelineD3Chart 
+    <router-view 
       :min-year="minYear"
       :max-year="maxYear"
       :start-view-year="startViewYear"
       :stop-view-year="stopViewYear"
     />
+    
+    <!-- Main content area
+    <TimelineD3Chart 
+      v-if="isAuthenticated"
+      :min-year="minYear"
+      :max-year="maxYear"
+      :start-view-year="startViewYear"
+      :stop-view-year="stopViewYear"
+    />
+     -->
 
-    <!-- Modals -->
-    <ModalActivity />
-    <ModalPersons />
-    <ModalRelatives />
-    <ModalEvents />
-    <ModalAttachments />
+    <!-- Modals 
+    <ModalActivity 
+      v-if="isAuthenticated"
+    />
+    <ModalPersons 
+      v-if="isAuthenticated"
+    />
+    <ModalRelatives 
+      v-if="isAuthenticated"
+    />
+    <ModalEvents 
+      v-if="isAuthenticated"
+    />
+    <ModalAttachments
+      v-if="isAuthenticated"
+    />
+    -->
   </div>
 </template>
 
 <script>
+import { mapGetters, mapMutations } from 'vuex';
 import { Offcanvas, Modal } from 'bootstrap'
 
-import ModalActivity from './components/ModalActivity.vue'
-import ModalPersons from './components/ModalPersons.vue'
-import ModalRelatives from './components/ModalRelatives.vue'
-import ModalEvents from './components/ModalEvents.vue'
-import ModalAttachments from './components/ModalAttachments.vue'
+// import ModalActivity from './components/ModalActivity.vue'
+// import ModalPersons from './components/ModalPersons.vue'
+// import ModalRelatives from './components/ModalRelatives.vue'
+// import ModalEvents from './components/ModalEvents.vue'
+// import ModalAttachments from './components/ModalAttachments.vue'
 
-import TimelineD3Chart from './components/TimelineD3Chart.vue'
+// import TimelineD3Chart from './components/TimelineD3Chart.vue'
 
 import config from './config'
 
 export default {
-  components: {
-    TimelineD3Chart,
-    ModalActivity,
-    ModalPersons,
-    ModalRelatives,
-    ModalEvents,
-    ModalAttachments
-  },
+  // components: {
+  //   TimelineD3Chart,
+  //   ModalActivity,
+  //   ModalPersons,
+  //   ModalRelatives,
+  //   ModalEvents,
+  //   ModalAttachments
+  // },
   data () {
     return {
       selectedLanguage: 'en',
@@ -224,6 +263,8 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['isAuthenticated', 'userName']),
+
     // Generate an array of years from minYear to maxYear, in steps of 50 years
     availableYears() {
       const years = [];
@@ -247,6 +288,7 @@ export default {
     }
   },
   methods: {
+    ...mapMutations(['removeToken']),
     setLanguage (language) {
       this.selectedLanguage = language
       this.$i18n.locale = this.selectedLanguage
@@ -256,10 +298,28 @@ export default {
       modal.show()
 
       // close menu
+      this.closeMenu()
+    },
+    closeMenu(){
+      // close menu
       const offcanvasElement = document.getElementById('offcanvasDarkNavbar')
       const bsOffcanvas = Offcanvas.getInstance(offcanvasElement)
       if (bsOffcanvas) {
         bsOffcanvas.hide()
+      }
+    },
+    async logout() {
+      try {
+        this.removeToken();
+        localStorage.removeItem('refreshToken');
+
+        // close menu
+        this.closeMenu()
+
+        // Redirect to login page
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('Logout failed:', error);
       }
     }
   }

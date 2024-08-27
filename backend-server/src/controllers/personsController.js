@@ -1,7 +1,11 @@
 import getAllPersons from '../services/personsService.js';
 import logger from '../logger.js'; 
 
-export const getPersons = async (req, res) => {
+export const fetchAllPersons = async (req, res) => {
+  // get authenticated user with req.user
+  const user = req.user;
+  logger.info(`user=${user.username} - fetch all persons`);
+
   try {
     const persons = await getAllPersons();
     res.json(persons);
