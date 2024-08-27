@@ -5,7 +5,7 @@ import TimelineD3Chart from '@/components/TimelineD3Chart.vue'
 import ModalActivity from '@/components/ModalActivity.vue'
 
 const routes = [
-  { path: '/', redirect: '/login' },
+  { path: '/', redirect: '/timeline' },
   { path: '/login', component: LoginForm },
   { path: '/timeline', component: TimelineD3Chart, meta: { requiresAuth: true } },
   { path: '/activity', component: ModalActivity, meta: { requiresAuth: true } }
