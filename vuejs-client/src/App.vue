@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <!-- Header / Top bar -->
-    <nav class="navbar navbar-dark bg-dark fixed-top">
+    <nav v-if="isAuthenticated" class="navbar navbar-dark bg-dark fixed-top">
       <div class="container-fluid">
         <a
           class="navbar-brand fw-bold"
@@ -198,16 +198,6 @@
       :start-view-year="startViewYear"
       :stop-view-year="stopViewYear"
     />
-    
-    <!-- Main content area
-    <TimelineD3Chart 
-      v-if="isAuthenticated"
-      :min-year="minYear"
-      :max-year="maxYear"
-      :start-view-year="startViewYear"
-      :stop-view-year="stopViewYear"
-    />
-     -->
 
     <!-- Modals 
     <ModalActivity 

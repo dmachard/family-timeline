@@ -2,9 +2,10 @@ import { describe, test, expect, beforeEach } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
 import App from '@/App.vue'
 
+import store from '@/store/index.js'
+
 describe('App.vue', () => {
   let wrapper
-
   beforeEach(() => {
     wrapper = shallowMount(App, {
       propsData: {
@@ -14,13 +15,17 @@ describe('App.vue', () => {
         stopViewYear: 2050,
       },
       global: {
+        plugins: [store],
         mocks: {
           $t: (msg) => msg, // Mock translation function
           $i18n: {
             locale: 'en'
           }
+        },
+        stubs: {
+          'router-view': true // Stub the router-view component
         }
-      }
+      },
     })
   })
 
