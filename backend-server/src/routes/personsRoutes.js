@@ -1,8 +1,8 @@
 import express from 'express';
-import { getPersons } from '../controllers/personsController.js';
+import { fetchAllPersons } from '../controllers/personsController.js';
 
 const router = express.Router();
 
-router.get('/', getPersons);
+router.get('/', fetchAllPersons);
 
 export default router;

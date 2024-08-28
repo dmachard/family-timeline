@@ -3,6 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import { createI18n } from 'vue-i18n'
 import router from './router'
+import store from './store'
 
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
@@ -27,4 +28,9 @@ const i18n = createI18n({
 const app = createApp(App)
 app.use(i18n)
 app.use(router)
+app.use(store)
+
+// Initialize Vuex store
+store.dispatch('initializeStore');
+
 app.mount('#app')

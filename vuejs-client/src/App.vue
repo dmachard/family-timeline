@@ -1,164 +1,83 @@
+<!-- eslint-disable vue/max-attributes-per-line -->
 <template>
   <div id="app">
     <!-- Header / Top bar -->
-    <nav class="navbar navbar-dark bg-dark fixed-top">
+    <nav v-if="isAuthenticated" class="navbar navbar-dark bg-dark fixed-top">
       <div class="container-fluid">
-        <a
-          class="navbar-brand fw-bold"
-          href="/"
-        >
-          <img
-            src="/favicon.png"
-            width="30"
-            height="30"
-            class="d-inline-block align-top"
-            alt=""
-          >
+        <a class="navbar-brand fw-bold" href="/">
+          <img src="/favicon.png" width="30" height="30" class="d-inline-block align-top" alt="">
           Family Timeline
         </a>
 
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#offcanvasDarkNavbar"
-          aria-controls="offcanvasDarkNavbar"
-        >
+        <button v-if="isAuthenticated" class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
           <span class="navbar-toggler-icon" />
         </button>
-        <div
-          id="offcanvasDarkNavbar"
-          class="offcanvas offcanvas-end text-bg-dark"
-          tabindex="-1"
-          aria-labelledby="offcanvasDarkNavbarLabel"
-        >
+        <div v-if="isAuthenticated" id="offcanvasDarkNavbar" class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" aria-labelledby="offcanvasDarkNavbarLabel">
           <div class="offcanvas-header">
-            <h5
-              id="offcanvasDarkNavbarLabel"
-              class="offcanvas-title"
-            >
+            <h5 id="offcanvasDarkNavbarLabel" class="offcanvas-title">
               {{ $t('menu') }}
             </h5>
-            <button
-              type="button"
-              class="btn-close btn-close-white"
-              data-bs-dismiss="offcanvas"
-              aria-label="Close"
-            />
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close" />
           </div>
           <div class="offcanvas-body">
+            <div v-if="userName" class="text-light mb-3">
+              <strong>{{ userName }}</strong>
+            </div>
             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
               <li class="nav-item">
-                <a
-                  class="nav-link"
-                  href="#"
-                  @click="openModal('activity')"
-                >{{ $t('activity') }}</a>
+                <a class="nav-link" href="#" @click="openModal('activity')">{{ $t('activity') }}</a>
               </li>
               <li class="nav-item dropdown">
-                <a
-                  class="nav-link dropdown-toggle"
-                  href="#"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >{{ $t('manage') }}</a>
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ $t('manage') }}</a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click="openModal('persons')"
-                    >{{ $t('persons') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('persons')">{{ $t('persons') }}</a>
                   </li>
                   <li>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click="openModal('relatives')"
-                    >{{ $t('relatives') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('relatives')">{{ $t('relatives') }}</a>
                   </li>
                   <li>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click="openModal('events')"
-                    >{{ $t('events') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('events')">{{ $t('events') }}</a>
                   </li>
                   <li>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click="openModal('attachments')"
-                    >{{ $t('attachments') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('attachments')" >{{ $t('attachments') }}</a>
                   </li>
                 </ul>
               </li>
               <li class="nav-item dropdown">
-                <a
-                  class="nav-link dropdown-toggle"
-                  href="#"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >{{ $t('language') }}</a>
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ $t('language') }}</a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click="setLanguage('en')"
-                    >{{ $t('english') }}</a>
+                    <a class="dropdown-item" href="#" @click="setLanguage('en')">{{ $t('english') }}</a>
                   </li>
                   <li>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click="setLanguage('fr')"
-                    >{{ $t('french') }}</a>
+                    <a class="dropdown-item" href="#" @click="setLanguage('fr')">{{ $t('french') }}</a>
                   </li>
                 </ul>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" @click="logout">
+                  {{ $t('logout') }}
+                </a>
               </li>
             </ul>
 
             <!-- Dropdowns for years -->
             <div class="mt-3">
-              <label
-                for="startViewYear"
-                class="form-label text-ligth"
-              >
+              <label for="startViewYear" class="form-label text-ligth">
                 {{ $t('startYear') }}
               </label>
-              <select
-                id="startViewYear"
-                v-model="startViewYear"
-                class="form-select"
-              >
-                <option
-                  v-for="year in availableYears"
-                  :key="year"
-                  :value="year"
-                >
+              <select id="startViewYear" v-model="startViewYear" class="form-select">
+                <option v-for="year in availableYears" :key="year" :value="year">
                   {{ year }}
                 </option>
               </select>
 
-              <label
-                for="stopViewYear"
-                class="form-label text-light mt-3"
-              >
+              <label for="stopViewYear" class="form-label text-light mt-3">
                 {{ $t('endYear') }}
               </label>
-              <select
-                id="stopViewYear"
-                v-model="stopViewYear"
-                class="form-select"
-              >
-                <option
-                  v-for="year in filteredEndYears"
-                  :key="year"
-                  :value="year"
-                >
+              <select id="stopViewYear" v-model="stopViewYear" class="form-select">
+                <option v-for="year in filteredEndYears" :key="year" :value="year">
                   {{ year }}
                 </option>
               </select>
@@ -175,23 +94,19 @@
     </nav>
 
     <!-- Main content area -->
-    <TimelineD3Chart 
-      :min-year="minYear"
-      :max-year="maxYear"
-      :start-view-year="startViewYear"
-      :stop-view-year="stopViewYear"
-    />
+    <router-view :min-year="minYear" :max-year="maxYear" :start-view-year="startViewYear" :stop-view-year="stopViewYear" />
 
     <!-- Modals -->
-    <ModalActivity />
-    <ModalPersons />
-    <ModalRelatives />
-    <ModalEvents />
-    <ModalAttachments />
+    <ModalActivity v-if="isAuthenticated" />
+    <ModalPersons v-if="isAuthenticated" />
+    <ModalRelatives v-if="isAuthenticated" />
+    <ModalEvents v-if="isAuthenticated" />
+    <ModalAttachments v-if="isAuthenticated" />
   </div>
 </template>
 
 <script>
+import { mapGetters, mapMutations } from 'vuex';
 import { Offcanvas, Modal } from 'bootstrap'
 
 import ModalActivity from './components/ModalActivity.vue'
@@ -200,19 +115,16 @@ import ModalRelatives from './components/ModalRelatives.vue'
 import ModalEvents from './components/ModalEvents.vue'
 import ModalAttachments from './components/ModalAttachments.vue'
 
-import TimelineD3Chart from './components/TimelineD3Chart.vue'
-
 import config from './config'
 
 export default {
-  components: {
-    TimelineD3Chart,
+   components: {
     ModalActivity,
     ModalPersons,
     ModalRelatives,
     ModalEvents,
     ModalAttachments
-  },
+   },
   data () {
     return {
       selectedLanguage: 'en',
@@ -224,6 +136,8 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['isAuthenticated', 'userName']),
+
     // Generate an array of years from minYear to maxYear, in steps of 50 years
     availableYears() {
       const years = [];
@@ -247,6 +161,7 @@ export default {
     }
   },
   methods: {
+    ...mapMutations(['removeToken']),
     setLanguage (language) {
       this.selectedLanguage = language
       this.$i18n.locale = this.selectedLanguage
@@ -256,10 +171,28 @@ export default {
       modal.show()
 
       // close menu
+      this.closeMenu()
+    },
+    closeMenu(){
+      // close menu
       const offcanvasElement = document.getElementById('offcanvasDarkNavbar')
       const bsOffcanvas = Offcanvas.getInstance(offcanvasElement)
       if (bsOffcanvas) {
         bsOffcanvas.hide()
+      }
+    },
+    async logout() {
+      try {
+        this.removeToken();
+        localStorage.removeItem('refreshToken');
+
+        // close menu
+        this.closeMenu()
+
+        // Redirect to login page
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('Logout failed:', error);
       }
     }
   }
