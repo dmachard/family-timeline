@@ -2,9 +2,13 @@ import { createApp } from 'vue'
 
 import App from './App.vue'
 import { createI18n } from 'vue-i18n'
+import { createVuetify } from 'vuetify'
+import 'vuetify/styles'  // Ensure you import Vuetify styles
 import router from './router'
 import store from './store'
 
+
+import '@mdi/font/css/materialdesignicons.css' // Import Material Design Icons
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 
@@ -26,6 +30,8 @@ const i18n = createI18n({
 })
 
 const app = createApp(App)
+const vuetify = createVuetify()
+app.use(vuetify)
 app.use(i18n)
 app.use(router)
 app.use(store)

@@ -25,39 +25,57 @@
             </div>
             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
               <li class="nav-item">
-                <a class="nav-link" href="#" @click="openModal('activity')">{{ $t('activity') }}</a>
+                <a class="nav-link" href="#" @click="openModal('activity')">
+                  <i class="mdi mdi-calendar mr-2" /> {{ $t('activity') }}
+                </a>
               </li>
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ $t('manage') }}</a>
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="mdi mdi-cog mr-2" /> {{ $t('manage') }}
+                </a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('persons')">{{ $t('persons') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('persons')">
+                      <i class="mdi mdi-account-group mr-2"></i> {{ $t('persons') }}
+                    </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('relatives')">{{ $t('relatives') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('relatives')">
+                      <i class="mdi mdi-account-multiple mr-2"></i> {{ $t('relatives') }}
+                    </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('events')">{{ $t('events') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('events')">
+                      <i class="mdi mdi-calendar-multiple mr-2"></i> {{ $t('events') }}
+                    </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('attachments')">{{ $t('attachments') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('attachments')">
+                      <i class="mdi mdi-attachment mr-2"></i> {{ $t('attachments') }}
+                    </a>
                   </li>
                 </ul>
               </li>
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{{ $t('language') }}</a>
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="mdi mdi-earth mr-2"></i> {{ $t('language') }}
+                </a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
-                    <a class="dropdown-item" href="#" @click="setLanguage('en')">{{ $t('english') }}</a>
+                    <a class="dropdown-item" href="#" @click="setLanguage('en')">
+                      {{ $t('english') }}
+                    </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="setLanguage('fr')">{{ $t('french') }}</a>
+                    <a class="dropdown-item" href="#" @click="setLanguage('fr')">
+                      {{ $t('french') }}
+                    </a>
                   </li>
                 </ul>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#" @click="logout">
-                  {{ $t('logout') }}
+                  <i class="mdi mdi-logout mr-2"></i> {{ $t('logout') }}
                 </a>
               </li>
             </ul>
