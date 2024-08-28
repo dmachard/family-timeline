@@ -4,13 +4,14 @@ dotenv.config();
 
 export default {
   server: {
-    listen_port: process.env.SERVER_LISTEN_PORT || 5000
+    listen_port: process.env.SERVER_LISTEN_PORT || 5000,
+    log_level : process.env.SERVER_LOG_LEVEL || "info"
   },
   storage: {
     data_path: process.env.STORAGE_DATA_PATH || "./data"
   },
   db: {
-    filename: process.env.DATABASE_FILENAME || './src/db/database.sqlite3',
+    filename: process.env.DATABASE_FILENAME || './src/utils/database.sqlite3',
   },
   jwt: {
     // JWT secret

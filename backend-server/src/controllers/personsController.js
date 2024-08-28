@@ -1,4 +1,4 @@
-import getAllPersons from '../services/personsService.js';
+import { getPersons } from '../services/personsService.js';
 import logger from '../logger.js'; 
 
 export const fetchAllPersons = async (req, res) => {
@@ -7,7 +7,7 @@ export const fetchAllPersons = async (req, res) => {
   logger.info(`user=${user.username} - fetch all persons`);
 
   try {
-    const persons = await getAllPersons();
+    const persons = await getPersons();
     res.json(persons);
   } catch (error) {
     logger.error(`Error in getPersons: ${error.message}`);

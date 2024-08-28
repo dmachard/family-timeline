@@ -40,7 +40,7 @@
                     <a class="dropdown-item" href="#" @click="openModal('events')">{{ $t('events') }}</a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('attachments')" >{{ $t('attachments') }}</a>
+                    <a class="dropdown-item" href="#" @click="openModal('attachments')">{{ $t('attachments') }}</a>
                   </li>
                 </ul>
               </li>
