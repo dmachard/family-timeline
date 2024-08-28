@@ -36,29 +36,29 @@
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('persons')">
-                      <i class="mdi mdi-account-group mr-2"></i> {{ $t('persons') }}
+                      <i class="mdi mdi-account-group mr-2" /> {{ $t('persons') }}
                     </a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('relatives')">
-                      <i class="mdi mdi-account-multiple mr-2"></i> {{ $t('relatives') }}
+                      <i class="mdi mdi-account-multiple mr-2" /> {{ $t('relatives') }}
                     </a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('events')">
-                      <i class="mdi mdi-calendar-multiple mr-2"></i> {{ $t('events') }}
+                      <i class="mdi mdi-calendar-multiple mr-2" /> {{ $t('events') }}
                     </a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('attachments')">
-                      <i class="mdi mdi-attachment mr-2"></i> {{ $t('attachments') }}
+                      <i class="mdi mdi-attachment mr-2" /> {{ $t('attachments') }}
                     </a>
                   </li>
                 </ul>
               </li>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="mdi mdi-earth mr-2"></i> {{ $t('language') }}
+                  <i class="mdi mdi-earth mr-2" /> {{ $t('language') }}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
@@ -75,7 +75,7 @@
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#" @click="logout">
-                  <i class="mdi mdi-logout mr-2"></i> {{ $t('logout') }}
+                  <i class="mdi mdi-logout mr-2" /> {{ $t('logout') }}
                 </a>
               </li>
             </ul>
