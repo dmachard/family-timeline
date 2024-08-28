@@ -1,42 +1,19 @@
 <template>
-  <div
-    id="profileModal"
-    class="modal fade"
-    data-bs-backdrop="static"
-    data-bs-keyboard="false"
-    tabindex="-1"
-    aria-labelledby="profileLabel"
-    aria-hidden="true"
-  >
+  <div id="profileModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="profileLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
-          <h1
-            id="profileLabel"
-            class="modal-title fs-5"
-          >
+          <h1 id="profileLabel" class="modal-title fs-5">
             {{ $t('profile') }}
           </h1>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          />
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
         </div>
         <div class="modal-body">
           <!-- Resume display -->
-          <div
-            class="card border-0 mb-3"
-            style="max-width: 540px;"
-          >
+          <div class="card border-0 mb-3" style="max-width: 540px;">
             <div class="row g-0">
               <div class="col-4 d-flex align-items-center justify-content-center">
-                <img
-                  :src="profileImage"
-                  class="img-fluid rounded-start"
-                  alt="Profile image"
-                >
+                <img :src="profileImage" class="img-fluid rounded-start" alt="Profile image">
               </div>
               <div class="col-8">
                 <div class="card-body">
@@ -50,16 +27,10 @@
                   <p class="card-text mb-0 text-muted">
                     {{ $t('birth') }} : {{ person?.birth_date }}
                   </p>
-                  <p
-                    v-if="person?.death_date"
-                    class="card-text mb-0 text-muted"
-                  >
+                  <p v-if="person?.death_date" class="card-text mb-0 text-muted">
                     {{ $t('death') }} : {{ person?.death_date }}
                   </p>
-                  <p
-                    v-if="age"
-                    class="card-text text-muted"
-                  >
+                  <p v-if="age" class="card-text text-muted">
                     {{ ageText }}
                   </p>
                 </div>
@@ -74,11 +45,7 @@
                 {{ $t('relatives') }}
               </h5>
               <hr>
-              <div
-                v-for="section in relativeSections"
-                :key="section.label"
-                class="row mb-3"
-              >
+              <div v-for="section in relativeSections" :key="section.label" class="row mb-3">
                 <div class="col-4">
                   <p class="h6">
                     {{ section.label }}
@@ -86,15 +53,8 @@
                 </div>
                 <div class="col-8">
                   <div v-if="section.items.length">
-                    <p
-                      v-for="item in section.items"
-                      :key="item.id"
-                      class="mb-0"
-                    >
-                      <a
-                        href="#"
-                        @click.prevent="refreshProfile(item.id)"
-                      >
+                    <p v-for="item in section.items" :key="item.id" class="mb-0">
+                      <a href="#" @click.prevent="refreshProfile(item.id)">
                         {{ getPersonName(item.id) }}
                       </a>
                     </p>
@@ -114,19 +74,12 @@
                 {{ $t('events') }}
               </h5>
               <hr>
-              <div
-                v-for="event in person?.events"
-                :key="event.id"
-                class="row mb-3"
-              >
+              <div v-for="event in person?.events" :key="event.id" class="row mb-3">
                 <div class="col-3">
                   <p class="text-start h6">
                     {{ new Date(event.event_date).getFullYear() }}
                   </p>
-                  <p
-                    v-if="calculateAgeAtEvent(person.birth_date, event.event_date) > 0"
-                    class="text-start text-muted mb-0"
-                  >
+                  <p v-if="calculateAgeAtEvent(person.birth_date, event.event_date) > 0" class="text-start text-muted mb-0">
                     ~{{ calculateAgeAtEvent(person.birth_date, event.event_date) }} {{ $t('yearsOld') }}
                   </p>
                 </div>
@@ -134,36 +87,18 @@
                   <p class="text-start mb-0">
                     <span v-if="event.event_type === 'birth' || event.event_type === 'death'">{{ $t(event.event_type) }}</span>
                     <span v-if="event.event_type === 'marriage'">
-                      {{ $t('marriedTo') }} <span
-                        v-for="related in event.related_persons"
-                        :key="related.id"
-                      >
-                        <a
-                          href="#"
-                          @click.prevent="refreshProfile(related.id)"
-                        >{{ getPersonName(related.id) }}</a>
+                      {{ $t('marriedTo') }} <span v-for="related in event.related_persons" :key="related.id">
+                        <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
                       </span>
                     </span>
                     <span v-if="event.event_type === 'child'">
-                      {{ $t('hasAChild') }} <span
-                        v-for="related in event.related_persons"
-                        :key="related.id"
-                      >
-                        <a
-                          href="#"
-                          @click.prevent="refreshProfile(related.id)"
-                        >{{ getPersonName(related.id) }}</a>
+                      {{ $t('hasAChild') }} <span v-for="related in event.related_persons" :key="related.id">
+                        <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
                       </span>
                     </span>
                     <span v-if="event.event_type === 'divorce'">
-                      {{ $t('divorcedFrom') }} <span
-                        v-for="related in event.related_persons"
-                        :key="related.id"
-                      >
-                        <a
-                          href="#"
-                          @click.prevent="refreshProfile(related.id)"
-                        >{{ getPersonName(related.id) }}</a>
+                      {{ $t('divorcedFrom') }} <span v-for="related in event.related_persons" :key="related.id">
+                        <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
                       </span>
                     </span>
                   </p>
@@ -173,30 +108,15 @@
                   <p class="card-text mb-0">
                     {{ event.event_place }}
                   </p>
-                  <p
-                    v-if="event.event_notes"
-                    class="card-text mb-0"
-                  >
+                  <p v-if="event.event_notes" class="card-text mb-0">
                     {{ event.event_notes }}
                   </p>
 
                   <!-- Display attachment previews -->
-                  <div
-                    v-if="event.related_attachments && event.related_attachments.length"
-                    class="mt-2"
-                  >
+                  <div v-if="event.related_attachments && event.related_attachments.length" class="mt-2">
                     <div class="d-flex flex-wrap">
-                      <div
-                        v-for="attachment in event.related_attachments"
-                        :key="attachment.id"
-                        class="me-2 mb-2"
-                      >
-                        <img
-                          :src="getAttachmentPath(attachment.filepath)"
-                          alt="Attachment preview"
-                          class="img-thumbnail"
-                          @click="openAttachmentModal(attachment.filepath)"
-                        >
+                      <div v-for="attachment in event.related_attachments" :key="attachment.id" class="me-2 mb-2">
+                        <img :src="getAttachmentPath(attachment.filepath)" alt="Attachment preview" class="img-thumbnail" @click="openAttachmentModal(attachment.filepath)">
                       </div>
                     </div>
                   </div>
@@ -209,10 +129,7 @@
     </div>
 
     <!-- Attachment Modal Component -->
-    <AttachmentViewModal
-      ref="attachmentModal"
-      :attachment-path="currentAttachment"
-    />
+    <AttachmentViewModal ref="attachmentModal" :attachment-path="currentAttachment" />
   </div>
 </template>
 

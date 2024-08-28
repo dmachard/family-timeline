@@ -1,18 +1,9 @@
 <template>
-  <div
-    id="relativesModal"
-    class="modal fade"
-    tabindex="-1"
-    aria-labelledby="relativesModalLabel"
-    aria-hidden="true"
-  >
+  <div id="relativesModal" class="modal fade" tabindex="-1" aria-labelledby="relativesModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5
-            id="relativesModalLabel"
-            class="modal-title"
-          >
+          <h5 id="relativesModalLabel" class="modal-title">
             Manage Relatives
           </h5>
           <button

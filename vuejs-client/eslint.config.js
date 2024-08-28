@@ -7,7 +7,7 @@ export default [
     ...pluginVue.configs['flat/recommended'], 
   {
     rules: {
-        // 'no-unused-vars': 'error',
+      'vue/max-attributes-per-line': 'off',
     }
   }
 ]

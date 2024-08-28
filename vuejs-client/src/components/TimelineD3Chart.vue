@@ -3,42 +3,21 @@
     <div class="row">
       <div id="timeline-content">
         <!-- Loading Spinner -->
-        <div
-          v-if="loading"
-          class="text-center my-4"
-        >
-          <div
-            class="spinner-border text-primary"
-            role="status"
-          >
+        <div v-if="loading" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
           <p>Loading data, please wait...</p>
         </div>
 
         <!-- Error Message -->
-        <div
-          v-if="error"
-          class="alert alert-danger"
-          role="alert"
-        >
+        <div v-if="error" class="alert alert-danger" role="alert">
           <p>Error: {{ error }}</p>
         </div>
 
         <!-- Container for the timeline header and graph with scroll -->
         <div id="timeline-wrapper">
-          <div 
-            id="timeline-header-container"
-            @mousedown="onPointerStart($event, 'mouse')" 
-            @mousemove="onPointerMove($event, 'mouse')" 
-            @mouseup="onPointerEnd()"
-            @mouseleave="onPointerEnd()" 
-
-            @touchstart="onPointerStart($event, 'touch')"
-            @touchmove="onPointerMove($event, 'touch')"
-            @touchend="onPointerEnd()"
-            @touchcancel="onPointerEnd()"
-          >
+          <div id="timeline-header-container" @mousedown="onPointerStart($event, 'mouse')" @mousemove="onPointerMove($event, 'mouse')" @mouseup="onPointerEnd()" @mouseleave="onPointerEnd()" @touchstart="onPointerStart($event, 'touch')" @touchmove="onPointerMove($event, 'touch')" @touchend="onPointerEnd()" @touchcancel="onPointerEnd()">
             <svg id="timeline-header" />
           </div>
           <div id="timeline-graph-container">
@@ -47,13 +26,7 @@
         </div>
       </div>
 
-      <ModalProfile
-        ref="profileModal"
-        class="px-0"
-        :person="selectedPerson"
-        :data-persons="dataPersons"
-        @refresh-profile="refreshPersonProfile"
-      />
+      <ModalProfile ref="profileModal" class="px-0" :person="selectedPerson" :data-persons="dataPersons" @refresh-profile="refreshPersonProfile" />
     </div>
   </div>
 </template>

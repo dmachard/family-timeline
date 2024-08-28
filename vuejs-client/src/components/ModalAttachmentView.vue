@@ -1,58 +1,24 @@
 <template>
-  <div
-    id="attachmentModal"
-    class="modal"
-    tabindex="-1"
-    aria-labelledby="attachmentModalLabel"
-    aria-hidden="true"
-  >
+  <div id="attachmentModal" class="modal" tabindex="-1" aria-labelledby="attachmentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen">
       <div class="modal-content">
         <div class="modal-header">
-          <h5
-            id="attachmentModalLabel"
-            class="modal-title"
-          >
+          <h5 id="attachmentModalLabel" class="modal-title">
             {{ $t('attachmentView') }}
           </h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          />
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
         </div>
 
         <div class="modal-body d-flex justify-content-center align-items-center">
-          <div
-            id="image-container"
-            class="w-100 h-100 position-relative overflow-hidden"
-          >
-            <img
-              id="zoomable-image"
-              :src="attachmentPath"
-              class="img-fluid"
-              alt="Profile image"
-              style="transform: scale(1);"
-              @mousedown="startDragging"
-              @mousemove="dragImage"
-              @mouseup="stopDragging"
-              @mouseleave="stopDragging"
-              @dragstart.prevent
-            >
+          <div id="image-container" class="w-100 h-100 position-relative overflow-hidden">
+            <img id="zoomable-image" :src="attachmentPath" class="img-fluid" alt="Profile image" style="transform: scale(1);" @mousedown="startDragging" @mousemove="dragImage" @mouseup="stopDragging" @mouseleave="stopDragging" @dragstart.prevent>
           </div>
         </div>
         <div class="modal-footer d-flex justify-content-center">
-          <button
-            class="btn btn-primary"
-            @click="zoomIn"
-          >
+          <button class="btn btn-primary" @click="zoomIn">
             +
           </button>
-          <button
-            class="btn btn-secondary"
-            @click="zoomOut"
-          >
+          <button class="btn btn-secondary" @click="zoomOut">
             -
           </button>
         </div>
