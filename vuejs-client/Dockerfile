@@ -22,6 +22,17 @@ FROM nginx:1.24.0-alpine
 # Copy built files from the build stage to Nginx's directory
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Add a simple command to handle the history mode
+RUN echo 'server { \
+    listen 80; \
+    server_name localhost; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
 # Expose port 80 for Nginx
 EXPOSE 80
 
