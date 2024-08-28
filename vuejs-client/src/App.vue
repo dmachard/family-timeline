@@ -24,41 +24,75 @@
               <strong>{{ userName }}</strong>
             </div>
             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+              <!-- Activity -->
               <li class="nav-item">
                 <a class="nav-link" href="#" @click="openModal('activity')">
-                  <i class="mdi mdi-calendar mr-2" /> {{ $t('activity') }}
+                  <i class="bi bi-calendar-event-fill me-2" /> {{ $t('activity') }}
                 </a>
               </li>
+
+              <!-- Genealogy -->
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="mdi mdi-cog mr-2" /> {{ $t('manage') }}
+                  <i class="bi bi-gear-fill me-2" /> {{ $t('genealogy') }}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('persons')">
-                      <i class="mdi mdi-account-group mr-2" /> {{ $t('persons') }}
+                      <i class="bi bi-people-fill me-2" /> {{ $t('persons') }}
                     </a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('relatives')">
-                      <i class="mdi mdi-account-multiple mr-2" /> {{ $t('relatives') }}
+                      <i class="bi bi-people me-2" /> {{ $t('relatives') }}
                     </a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('events')">
-                      <i class="mdi mdi-calendar-multiple mr-2" /> {{ $t('events') }}
+                      <i class="bi bi-calendar3 me-2" /> {{ $t('events') }}
                     </a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="#" @click="openModal('attachments')">
-                      <i class="mdi mdi-attachment mr-2" /> {{ $t('attachments') }}
+                      <i class="bi bi-paperclip me-2" /> {{ $t('attachments') }}
                     </a>
                   </li>
                 </ul>
               </li>
+
+              <!-- Timeline -->
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="mdi mdi-earth mr-2" /> {{ $t('language') }}
+                  <i class="bi bi-clock-history me-2" /> {{ $t('timeline') }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark">
+                  <li>
+                    <label for="startViewYear" class="dropdown-item text-light">
+                      {{ $t('startYear') }}
+                      <select id="startViewYear" v-model="startViewYear" class="form-select mt-1">
+                        <option v-for="year in availableYears" :key="year" :value="year">
+                          {{ year }}
+                        </option>
+                      </select>
+                    </label>
+                  </li>
+                  <li>
+                    <label for="stopViewYear" class="dropdown-item text-light mt-2">
+                      {{ $t('endYear') }}
+                      <select id="stopViewYear" v-model="stopViewYear" class="form-select mt-1">
+                        <option v-for="year in filteredEndYears" :key="year" :value="year">
+                          {{ year }}
+                        </option>
+                      </select>
+                    </label>
+                  </li>
+                </ul>
+              </li>
+
+              <!-- Language -->
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-globe me-2" /> {{ $t('language') }}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
@@ -73,34 +107,14 @@
                   </li>
                 </ul>
               </li>
+
+              <!-- Logout -->
               <li class="nav-item">
                 <a class="nav-link" href="#" @click="logout">
-                  <i class="mdi mdi-logout mr-2" /> {{ $t('logout') }}
+                  <i class="bi bi-box-arrow-right me-2" /> {{ $t('logout') }}
                 </a>
               </li>
             </ul>
-
-            <!-- Dropdowns for years -->
-            <div class="mt-3">
-              <label for="startViewYear" class="form-label text-ligth">
-                {{ $t('startYear') }}
-              </label>
-              <select id="startViewYear" v-model="startViewYear" class="form-select">
-                <option v-for="year in availableYears" :key="year" :value="year">
-                  {{ year }}
-                </option>
-              </select>
-
-              <label for="stopViewYear" class="form-label text-light mt-3">
-                {{ $t('endYear') }}
-              </label>
-              <select id="stopViewYear" v-model="stopViewYear" class="form-select">
-                <option v-for="year in filteredEndYears" :key="year" :value="year">
-                  {{ year }}
-                </option>
-              </select>
-            </div>
-
 
             <!-- Adding the client version -->
             <div class="mt-4 text-end">

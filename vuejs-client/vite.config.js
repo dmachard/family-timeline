@@ -15,16 +15,5 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(version)
-  },
-  server: {
-    fs: {
-      // Allow serving files from one level up to the project root
-      allow: ['..'],
-    },
-  },
-  build: {
-    rollupOptions: {
-      external: ['@mdi/font/css/materialdesignicons.css']
-    }
   }
 })
