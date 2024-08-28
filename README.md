@@ -38,7 +38,8 @@ cp ../vuejs-client/public/config.js .
 Create empty database
 
 ```bash
-sqlite3 database.sqlite3 < ../backend-server/src/db/schema.sql
+sqlite3 database.sqlite3 < ../backend-server/src/utils/schema.sql
+sqlite3 database.sqlite3 < ../backend-server/src/utils/user.sql
 ```
 
 Start the containers using docker compose command

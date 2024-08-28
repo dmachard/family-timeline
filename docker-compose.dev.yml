@@ -5,7 +5,7 @@ services:
     environment:
       - NODE_ENV=development
     volumes:
-      - ./userdata/database.sqlite3:/app/src/db/database.sqlite3
+      - ./userdata/database.sqlite3:/app/src/utils/database.sqlite3
       - ./userdata/data/:/app/src/data/
       
   familytimeline-client:
