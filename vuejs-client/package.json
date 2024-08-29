@@ -20,7 +20,7 @@
     "vue": "^3.4.38",
     "vue-i18n": "^9.14.0",
     "vue-router": "^4.3.3",
-    "vuex": "^4.0.2"
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
     "@vue/test-utils": "^2.4.6",
