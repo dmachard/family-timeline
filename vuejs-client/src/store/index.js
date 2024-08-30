@@ -7,6 +7,7 @@ export default createStore({
       token: localStorage.getItem('token') || null,
       userName: null,
       userId: 0,
+      shouldReloadTimeline: false
     };
   },
   mutations: {
@@ -40,11 +41,23 @@ export default createStore({
             }
         }
     },
+    reloadTimeline(state) {
+      state.shouldReloadTimeline = true;
+    },
+    resetTimelineReload(state) {
+      state.shouldReloadTimeline = false;
+    }
   },
   actions: {
     initializeStore({ commit }) {
       commit('setInitialState');
     },
+    triggerTimelineReload({ commit }) {
+      commit('reloadTimeline');
+    },
+    resetTimelineReload({ commit }) {
+      commit('resetTimelineReload');
+    }
   },
   getters: {
     isAuthenticated(state) {
@@ -52,6 +65,9 @@ export default createStore({
     },
     userName(state) {
       return state.userName;
+    },
+    shouldReloadTimeline(state) {
+      return state.shouldReloadTimeline;
     },
   },
 });

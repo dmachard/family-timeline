@@ -26,7 +26,7 @@
             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
               <!-- Activity -->
               <li class="nav-item">
-                <a class="nav-link" href="#" @click="openModal('activity')">
+                <a class="nav-link" href="#" @click.prevent="openModal('activity')">
                   <i class="bi bi-calendar-event-fill me-2" /> {{ $t('activity') }}
                 </a>
               </li>
@@ -38,22 +38,22 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('persons')">
+                    <a class="dropdown-item" href="#" @click.prevent="openModal('persons')">
                       <i class="bi bi-people-fill me-2" /> {{ $t('persons') }}
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('relatives')">
+                    <a class="dropdown-item" href="#" @click.prevent="openModal('relatives')">
                       <i class="bi bi-people me-2" /> {{ $t('relatives') }}
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('events')">
+                    <a class="dropdown-item" href="#" @click.prevent="openModal('events')">
                       <i class="bi bi-calendar3 me-2" /> {{ $t('events') }}
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="openModal('attachments')">
+                    <a class="dropdown-item" href="#" @click.prevent="openModal('attachments')">
                       <i class="bi bi-paperclip me-2" /> {{ $t('attachments') }}
                     </a>
                   </li>
@@ -96,12 +96,12 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark">
                   <li>
-                    <a class="dropdown-item" href="#" @click="setLanguage('en')">
+                    <a class="dropdown-item" href="#" @click.prevent="setLanguage('en')">
                       {{ $t('english') }}
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click="setLanguage('fr')">
+                    <a class="dropdown-item" href="#" @click.prevent="setLanguage('fr')">
                       {{ $t('french') }}
                     </a>
                   </li>
@@ -125,15 +125,18 @@
       </div>
     </nav>
 
+    <!-- Loading Modal -->
+    <LoadingModal v-if="loading && isAuthenticated" />
+        
     <!-- Main content area -->
-    <router-view :min-year="minYear" :max-year="maxYear" :start-view-year="startViewYear" :stop-view-year="stopViewYear" />
+    <router-view :min-year="minYear" :max-year="maxYear" :start-view-year="startViewYear" :stop-view-year="stopViewYear" @data-loaded="onDataLoaded" />
 
     <!-- Modals -->
-    <ModalActivity v-if="isAuthenticated" />
-    <ModalPersons v-if="isAuthenticated" />
-    <ModalRelatives v-if="isAuthenticated" />
-    <ModalEvents v-if="isAuthenticated" />
-    <ModalAttachments v-if="isAuthenticated" />
+    <ModalActivity v-if="isAuthenticated" ref="modalActivity" @data-loaded="onDataLoaded" />
+    <ModalPersons v-if="isAuthenticated" ref="modalPersons" @data-loaded="onDataLoaded" />
+    <ModalRelatives v-if="isAuthenticated" ref="modalRelatives" @data-loaded="onDataLoaded" />
+    <ModalEvents v-if="isAuthenticated" ref="modalEvents" @data-loaded="onDataLoaded" />
+    <ModalAttachments v-if="isAuthenticated" ref="modalAttachments" @data-loaded="onDataLoaded" />
   </div>
 </template>
 
@@ -141,6 +144,7 @@
 import { mapGetters, mapMutations } from 'vuex';
 import { Offcanvas, Modal } from 'bootstrap'
 
+import LoadingModal from './components/ModalLoading.vue';
 import ModalActivity from './components/ModalActivity.vue'
 import ModalPersons from './components/ModalPersons.vue'
 import ModalRelatives from './components/ModalRelatives.vue'
@@ -151,6 +155,7 @@ import config from './config'
 
 export default {
    components: {
+    LoadingModal,
     ModalActivity,
     ModalPersons,
     ModalRelatives,
@@ -159,6 +164,7 @@ export default {
    },
   data () {
     return {
+      loading: true,
       selectedLanguage: 'en',
       startViewYear: config.startViewYear || 1800,
       stopViewYear: config.endViewYear || 2050,
@@ -198,12 +204,25 @@ export default {
       this.selectedLanguage = language
       this.$i18n.locale = this.selectedLanguage
     },
-    openModal (modalId) {
-      const modal = new Modal(document.getElementById(`${modalId}Modal`))
-      modal.show()
+    async openModal(modalId) {
+      this.closeMenu();
+      this.loading = true;
+      try {
+        if (modalId === 'persons') {
+          await this.$refs.modalPersons.fetchInitialData();
+        }
+      } catch (err) {
+        console.error('Failed to fetch data:', err.message);
+        this.loading = false;
+      } 
+    },
+    onDataLoaded(modalId) {
+      this.loading = false;
 
-      // close menu
-      this.closeMenu()
+      if (modalId !== 'timeline') {
+        const contentModal = new Modal(document.getElementById(`${modalId}Modal`));
+        contentModal.show();
+      }
     },
     closeMenu(){
       // close menu

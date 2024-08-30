@@ -2,14 +2,6 @@
   <div class="container-fluid">
     <div class="row">
       <div id="timeline-content">
-        <!-- Loading Spinner -->
-        <div v-if="loading" class="text-center my-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p>Loading data, please wait...</p>
-        </div>
-
         <!-- Error Message -->
         <div v-if="error" class="alert alert-danger" role="alert">
           <p>Error: {{ error }}</p>
@@ -32,11 +24,13 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 import * as d3 from 'd3'
 import debounce from 'lodash/debounce'
 
 import fetchDataMixin from '@/mixins/fetchDataMixin'
-import { fetchPersons } from '@/services/personsService.js'
+import { fetchEnrichedPersons } from '@/services/personsService.js'
 
 import ModalProfile from './ModalProfile.vue'
 
@@ -63,6 +57,7 @@ export default {
       required: true
     }
   },
+  emits: ['data-loaded'],
   data () {
     return {
       graphMargin: { top: 20, right: 20, left: 20 },
@@ -90,6 +85,9 @@ export default {
       moveGraphStarted: false,
     }
   },
+  computed: {
+    ...mapGetters(['shouldReloadTimeline']),
+  },
   watch: {
     startViewYear(newValue) {
       this.localStartViewYear = newValue;
@@ -104,11 +102,23 @@ export default {
 
       // redraw timeline
       this.drawTimeline()
-    }
+    },
+    async shouldReloadTimeline(newValue) {
+      if (newValue) {      
+        // get refreshed data
+        await this.fetchInitialData();
+        
+        // redraw timeline
+        this.drawTimeline()
+
+        this.$store.dispatch('resetTimelineReload');
+      }
+    },
   },
   async created () {
-    this.dataPersons = await this.fetchData(fetchPersons)
+    this.dataPersons = await this.fetchData(fetchEnrichedPersons)
     this.isDataLoaded = true
+    this.$emit('data-loaded', 'timeline'); 
   },
   mounted () {
     window.addEventListener('resize', this.handleResize)
@@ -122,6 +132,20 @@ export default {
     window.removeEventListener('resize', this.handleResize)
   },
   methods: {
+    async fetchInitialData() {
+      try {
+        // Use Promise.all to fetch data concurrently
+        const [persons] = await Promise.all([
+          fetchEnrichedPersons(),
+        ]);
+        
+        this.dataPersons = persons;
+      } catch (err) {
+        console.error('Failed to fetch enriched persons', err.message);
+        this.error = 'Failed to load enriched persons';
+      }
+      this.$emit('data-loaded', 'timeline'); 
+    },
     filterRootPersons () {
       return this.dataPersons.filter(person => {
         return !person.relatives.some(relative =>
