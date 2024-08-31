@@ -3,7 +3,7 @@ import sqlite3 from 'sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { setDbConnection } from '../utils/db.js';
-import { getEnrichedPersons, getPerson, getMiddleNames, getEvents, getRelatives, getChildren, getEventRelations, getEventAttachments } from './personsService.js';
+import { getEnrichedPersons, getEnrichedPerson, getMiddleNames, getEvents, getRelatives, getChildren, getEventRelations, getEventAttachments } from './personsService.js';
 
 let db;
 
@@ -50,7 +50,7 @@ describe('User Service Tests', () => {
   });
 
   it('should get person by ID', async () => {
-    const person = await getPerson(1);
+    const person = await getEnrichedPerson(1);
     
     expect(person).toBeTruthy();
 

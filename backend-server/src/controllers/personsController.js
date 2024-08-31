@@ -2,7 +2,7 @@
 import { getConnection, beginTransaction, commitTransaction, rollbackTransaction} from '../utils/db.js';
 import logger from '../logger.js'; 
 
-import { profilePictureUpload } from '../services/uploadService.js';
+import { profilePictureUpload, deleteProfilePicture } from '../services/uploadService.js';
 import { getEnrichedPersons, getAllPersons, getAllMiddleNames, getPersonById } from '../services/personsService.js';
 import { addPerson, addMiddleName } from '../services/personsService.js';
 import { editPerson } from '../services/personsService.js';
@@ -137,6 +137,12 @@ export const deletePerson = async (req, res) => {
     await beginTransaction(dbConnection);
 
     const personId = req.params.id;
+
+    // Fetch person data to get the profile picture path
+    const person = await getPersonById(personId);
+    if (person && person.picture) {
+      deleteProfilePicture(person.picture);
+    }
 
     // Perform deletions
     await delPersonById(personId); 
