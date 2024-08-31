@@ -4,12 +4,12 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="personsModalLabel" class="modal-title">
-            Manage Persons
+            {{ $t('manage-persons') }}
             <span v-if="isEditing">
               - {{ personBeingEdited.id ? 'Edit' : 'Add' }}
             </span>
             <span v-if="personToDelete">
-              - Delete
+              - {{ $t('delete') }}
             </span>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
@@ -26,42 +26,42 @@
             <form @submit.prevent="savePerson">
               <div class="row mb-3">
                 <div class="col-md-6">
-                  <label for="firstName" class="form-label">First Name</label>
+                  <label for="firstName" class="form-label">{{ $t('first-name') }}</label>
                   <input id="firstName" v-model="personBeingEdited.first_name" type="text" class="form-control" required>
                 </div>
                 <div class="col-md-6">
-                  <label for="lastName" class="form-label">Last Name</label>
+                  <label for="lastName" class="form-label">{{ $t('last-name') }}</label>
                   <input id="lastName" v-model="personBeingEdited.last_name" type="text" class="form-control" required>
                 </div>
               </div>
 
               <div class="mb-3">
-                <label for="middleNames" class="form-label">Middle Names</label>
-                <input id="middleNames" v-model="personBeingEdited.middle_names_display" type="text" class="form-control" placeholder="Enter middle names separated by commas">
+                <label for="middleNames" class="form-label">{{ $t('middle-names') }}</label>
+                <input id="middleNames" v-model="personBeingEdited.middle_names_display" type="text" class="form-control" :placeholder="$t('middle-names-placeholder')">
               </div>
 
               <div class="mb-3">
-                <label for="notes" class="form-label">Notes</label>
+                <label for="notes" class="form-label">{{ $t('notes') }}</label>
                 <textarea id="notes" v-model="personBeingEdited.notes" class="form-control" rows="3" />
               </div>
 
               <div class="mb-3">
-                <label for="gender" class="form-label">Gender</label>
+                <label for="gender" class="form-label">{{ $t('gender') }}</label>
                 <select id="gender" v-model="personBeingEdited.gender" class="form-select">
                   <option value="Female">
-                    Female
+                    {{ $t('female') }}
                   </option>
                   <option value="Male">
-                    Male
+                    {{ $t('male') }}
                   </option>
                   <option value="Undefined">
-                    Undefined
+                    {{ $t('undefined') }}
                   </option>
                 </select>
               </div>
 
               <div class="mb-3">
-                <label for="picture" class="form-label">Picture</label>
+                <label for="picture" class="form-label">{{ $t('picture') }}</label>
                 <input id="picture" type="file" class="form-control" @change="handleFileUpload">
                 <div class="mt-2">
                   <img v-if="personBeingEdited.picture" :src="displayedPicture" alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
@@ -72,7 +72,7 @@
 
           <!-- Delete confirmation -->
           <div v-else-if="personToDelete">
-            <p>Are you sure you want to delete <strong>{{ personToDelete.first_name }} {{ personToDelete.last_name }}</strong>?</p>
+            <p>{{ $t('delete-warning') }} <strong>{{ personToDelete.first_name }} {{ personToDelete.last_name }}</strong> ?</p>
           </div>
 
           <!-- Persons List -->
@@ -81,11 +81,11 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
               <!-- Title -->
               <p class="text-muted mb-0">
-                Add, edit or delete your persons
+                {{ $t('crud-warning') }}
               </p>
               <!-- Add Button -->
               <button class="btn btn-primary d-flex align-items-center" type="button" @click="startAddPerson">
-                <span>Add</span>
+                <span>{{ $t('add') }}</span>
               </button>
             </div>
 
@@ -98,11 +98,11 @@
                       #
                     </th>
                     <th style="cursor: pointer;" @click="sortByLastName">
-                      Last Name <i :class="sortIcon" />
+                      {{ $t('last-name') }} <i :class="sortIcon" />
                     </th>
-                    <th>First Name</th>
-                    <th>Middle Names</th>
-                    <th>Actions</th>
+                    <th>{{ $t('first-name') }}</th>
+                    <th>{{ $t('middle-names') }}</th>
+                    <th>{{ $t('actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -135,13 +135,13 @@
               <div class="d-flex align-items-center me-3">
                 <div class="input-group me-2">
                   <span class="input-group-text"><i class="bi bi-search" /></span>
-                  <input v-model="searchQuery" type="text" class="form-control" placeholder="Search by name">
+                  <input v-model="searchQuery" type="text" class="form-control" :placeholder="$t('search-by-name')">
                 </div>
               </div>
 
               <!-- Items Per Page -->
               <div class="d-flex align-items-center me-3">
-                <label for="itemsPerPage" class="me-2 mb-0">Items per page:</label>
+                <label for="itemsPerPage" class="me-2 mb-0">{{ $t('items-per-page') }}</label>
                 <select id="itemsPerPage" v-model="itemsPerPage" class="form-select d-inline-block w-auto">
                   <option v-for="size in [5, 10, 15, 20]" :key="size" :value="size">
                     {{ size }}
@@ -175,18 +175,18 @@
         <div v-if="isEditing || personToDelete" class="modal-footer">
           <template v-if="isEditing">
             <button type="submit" class="btn btn-primary" @click="savePerson">
-              {{ personBeingEdited.id ? 'Save Changes' : 'Save Person' }}
+              {{ personBeingEdited.id ? $t('save-changes') : $t('save') }}
             </button>
             <button type="button" class="btn btn-secondary" @click="cancelEdit">
-              Cancel
+              {{ $t('cancel') }}
             </button>
           </template>
           <template v-else-if="personToDelete">
             <button type="button" class="btn btn-secondary" @click="cancelDelete">
-              Cancel
+              {{ $t('cancel') }}
             </button>
             <button type="button" class="btn btn-danger" @click="confirmDelete">
-              Delete
+              {{ $t('delete') }}
             </button>
           </template>
         </div>

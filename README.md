@@ -1,10 +1,14 @@
+# Family Timeline
+
+Manage your family data with timeline approach.
 
 <p align="center">
     <img src="vuejs-client/public/favicon.png" alt="Family-Timeline" style="max-width: 150px;"/>
-    <h1>Family Timeline</h1>
 </p>
 
-Manage your family data with timeline approach.
+Supported languages:
+- [x] English
+- [x] Français
 
 ## Quick start
 

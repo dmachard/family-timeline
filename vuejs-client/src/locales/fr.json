@@ -36,6 +36,27 @@
     "username": "Nom d'utilisateur",
     "password": "Mot de passe",
     "login": "Connection",
-    "logout": "Déconnection"
+    "logout": "Déconnection",
+    "delete": "Suppression",
+    "cancel": "Annuler",
+    "save-changes": "Sauvegarde des changements",
+    "save": "Enregistrement",
+    "items-per-page": "Lignes par page",
+    "search-by-name": "Recherche par nom",
+    "actions": "Actions",
+    "middle-names": "Autres prénoms",
+    "middle-names-placeholder": "Séparés par des virgules",
+    "first-name": "Prénom",
+    "last-name": "Nom de famille",
+    "add": "Ajouter",
+    "delete-warning": "Etes-vous sûr de vouloir supprimer",
+    "crud-warning": "Ajoutez, modifiez ou supprimez vos données",
+    "female": "Femme",
+    "male": "Homme",
+    "undefined": "Indéterminé",
+    "picture": "Photo de profil",
+    "notes": "Notes",
+    "gender": "Genre",
+    "manage-persons": "Gérer les personnes"
 }
   
