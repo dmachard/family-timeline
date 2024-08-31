@@ -64,7 +64,7 @@
                 <label for="picture" class="form-label">Picture</label>
                 <input id="picture" type="file" class="form-control" @change="handleFileUpload">
                 <div class="mt-2">
-                  <img v-if="personBeingEdited.picture" :src="personBeingEdited.picture" alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
+                  <img v-if="personBeingEdited.picture" :src="displayedPicture" alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
                 </div>
               </div>
             </form>
@@ -198,7 +198,7 @@
 <script>
 import { mapActions } from 'vuex';
 import fetchDataMixin from '@/mixins/fetchDataMixin'
-import { fetchPersons, fetchMiddleNames, addPerson, deletePerson } from '@/services/personsService.js'
+import { fetchPersons, fetchMiddleNames, addPerson, deletePerson, editPerson } from '@/services/personsService.js'
 
 export default {
   mixins: [fetchDataMixin],
@@ -214,6 +214,7 @@ export default {
       personToDelete: null,
       personBeingEdited: null,
       isEditing: false,
+      uploadedPicture: null
     };
   },
   computed: {
@@ -255,7 +256,18 @@ export default {
     },
     sortIcon() {
       return this.sortAsc ? 'bi bi-arrow-down' : 'bi bi-arrow-up';
-    }
+    },
+    getDataUrl() {
+      return import.meta.env.MODE === 'development'
+        ? import.meta.env.VITE_DATA_URL
+        : '/data';
+    },
+    // Show the uploaded image preview if a new file is selected
+    displayedPicture() {
+      return this.uploadedPicture 
+        ? URL.createObjectURL(this.uploadedPicture) 
+        : (this.personBeingEdited.picture ? this.getDataUrl + '/' + this.personBeingEdited.picture : '');
+    },
   },
   mounted() {
     const modalElement = document.getElementById('personsModal');
@@ -269,6 +281,9 @@ export default {
     ...mapActions(['triggerTimelineReload']),
     handleModalClose() {
       this.triggerTimelineReload();
+    },
+    handleFileUpload(event) {
+      this.uploadedPicture = event.target.files[0];
     },
     async fetchInitialData() {
       try {
@@ -315,6 +330,7 @@ export default {
         gender: 'Undefined',
         picture: null
        };
+       this.uploadedPicture = null; 
       this.isEditing = true;
       this.error = null;
     },
@@ -323,6 +339,7 @@ export default {
         ...person, 
         middle_names_display: this.getMiddleNames(person.id).map(mn => mn.middle_name).join(', ')
       };
+      this.uploadedPicture = null; 
       this.isEditing = true;
       this.error = null;
     },
@@ -331,46 +348,67 @@ export default {
       this.isEditing = false;
     },
     async savePerson() {
-      // prepare person data sent to server
-      const personData = {
-          ...this.personBeingEdited,
-          middle_names: this.personBeingEdited.middle_names_display.split(',').map(name => name.trim())
-        };
+      // Create form data to handle file upload
+      const formData = new FormData();
+      formData.append('first_name', this.personBeingEdited.first_name);
+      formData.append('last_name', this.personBeingEdited.last_name);
+      formData.append('middle_names', this.personBeingEdited.middle_names_display.split(',').map(name => name.trim()));
+      formData.append('notes', this.personBeingEdited.notes);
+      formData.append('gender', this.personBeingEdited.gender);
 
-      // Update person
-      if (this.personBeingEdited.id) {
-        // Edit existing person
-        const index = this.persons.findIndex(p => p.id === this.personBeingEdited.id);
-        if (index !== -1) {
-          this.persons.splice(index, 1, {
-            ...this.personBeingEdited,
-            middle_names: this.personBeingEdited.middle_names_display.split(',').map(name => name.trim())
-          });
-        }
-        this.cancelEdit();
+      // Append picture if a new one was uploaded
+      if (this.uploadedPicture) {
+        formData.append('picture', this.uploadedPicture);
+      }
+      
+      // created person returned by server
+      let currentPerson;
 
-      // create new person
-      } else {
-        try {
-          // call api
-          const createdPerson = await addPerson(personData);
-          this.persons.push(createdPerson);
+      // Update/Add
+      try {
+        if (this.personBeingEdited.id) {
+          // Update existing person
+          currentPerson = await editPerson(this.personBeingEdited.id, formData);
 
-          // update middle names list
-          personData.middle_names.forEach((middleName) => {
+          // Update the person in the local state
+          const index = this.persons.findIndex(p => p.id === this.personBeingEdited.id);
+          if (index !== -1) {
+            this.persons.splice(index, 1, currentPerson);
+          }
+
+          // Update the middle names list
+          // First, remove all existing middle names for the person
+          this.middleNames = this.middleNames.filter(mn => mn.person_id !== currentPerson.id);
+ 
+           // Then, add the updated middle names
+           currentPerson.middle_names.forEach(item => {
             this.middleNames.push({
-              id: `${createdPerson.id}-${middleName}`,
-              person_id: createdPerson.id,
-              middle_name: middleName
+              id: item.id,
+              person_id: currentPerson.id,
+              middle_name: item.middle_name
             });
           });
           
-          this.cancelEdit();
-        } catch (err) {
-          this.error = err;
-          console.error('Failed to fetch data:', err.message);
+        } else {
+          // Add new person
+          currentPerson = await addPerson(formData);
+          this.persons.push(currentPerson);
+
+          // update middle names list
+          currentPerson.middle_names.forEach(item => {
+            this.middleNames.push({
+              id: item.id,
+              person_id: currentPerson.id,
+              middle_name: item.middle_name
+            });
+          });
         }
+      } catch (err) {
+        this.error = err;
+        console.error('Failed to fetch data:', err.message);
       }
+
+      this.cancelEdit();
     },
     deletePerson(person) {
       this.personToDelete = person;
@@ -380,8 +418,11 @@ export default {
         // call api
         await deletePerson(this.personToDelete.id);
 
-        // remove the person from the list
+        // remove the person from lists
         this.persons = this.persons.filter(p => p.id !== this.personToDelete.id);
+        this.middleNames = this.middleNames.filter(mn => mn.person_id !== this.personToDelete.id);
+
+        // reset
         this.personToDelete = null;
       } catch (err) {
         this.error = err;

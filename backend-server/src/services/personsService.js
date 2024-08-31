@@ -25,7 +25,7 @@ const addMiddleName = async (personId, middleName) => {
 };
 
 // Function to get middle names for a person
-const getPerson = async (personId) => {
+const getPersonById = async (personId) => {
   logger.debug(`Get person with ID: ${personId}`);
   const query = `SELECT * FROM Persons WHERE id = ?`;
   const person = await runQuery(query, [personId]);
@@ -85,18 +85,23 @@ const editPerson = async (personId, person) => {
     personId
   ];
   
-  const result = await runQuery(query, values);
-  return result.affectedRows > 0;  // Return true if the update was successful
+  await runQuery(query, values);
+
+  // fetch the newly inserted person's details to return
+  const newPersonQuery = `SELECT * FROM Persons WHERE id = ?`;
+  const newPerson = await runQuery(newPersonQuery, [personId]);
+
+  return newPerson[0];
 };
 
 // Function to delete a person by ID
-const delPerson = async (personId) => {
+const delPersonById = async (personId) => {
   const query = 'DELETE FROM Persons WHERE id = ?';
   await runQuery(query, [personId]);
 };
 
 // Function to delete middle names associated with a person
-const delMiddleNames = async (personId) => {
+const deleteMiddleNamesByPersonId = async (personId) => {
   const query = 'DELETE FROM MiddleNames WHERE person_id = ?';
   await runQuery(query, [personId]);
 };
@@ -348,23 +353,10 @@ const getEventAttachments = async (eventId) => {
 };
 
 export { 
-  getAllPersons,
-  getAllMiddleNames,
-  getEnrichedPersons, 
-  getEnrichedPerson, 
-  getMiddleNames, 
-  getEvents, 
-  getRelatives, 
-  getChildren,
-  getEventRelations, 
-  getEventAttachments,
-  addPerson,
+  getAllPersons, getAllMiddleNames, getEnrichedPersons, getEnrichedPerson, getMiddleNames, 
+  getEvents, getRelatives, getChildren, getEventRelations, getEventAttachments, getPersonById,
+  addPerson, addMiddleName,
   editPerson,
-  getPerson,
-  addMiddleName,
-  delPerson,
-  delMiddleNames,
-  delRelatives,
-  delConnections
+  delPersonById, deleteMiddleNamesByPersonId, delRelatives, delConnections
 };
 

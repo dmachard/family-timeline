@@ -2,19 +2,11 @@
 import { getConnection, beginTransaction, commitTransaction, rollbackTransaction} from '../utils/db.js';
 import logger from '../logger.js'; 
 
-import {
-  getEnrichedPersons,
-  getAllPersons,
-  getAllMiddleNames, 
-  addPerson,
-  editPerson,
-  getPerson,
-  addMiddleName,
-  delPerson,
-  delMiddleNames,
-  delRelatives,
-  delConnections
-} from '../services/personsService.js';
+import { profilePictureUpload } from '../services/uploadService.js';
+import { getEnrichedPersons, getAllPersons, getAllMiddleNames, getPersonById } from '../services/personsService.js';
+import { addPerson, addMiddleName } from '../services/personsService.js';
+import { editPerson } from '../services/personsService.js';
+import { delPersonById, deleteMiddleNamesByPersonId, delRelatives, delConnections } from '../services/personsService.js';
 
 export const fetchEnrichedPersons = async (req, res) => {
   // get authenticated user with req.user
@@ -58,20 +50,30 @@ export const fetchMiddleNames = async (req, res) => {
 
 export const createPerson = async (req, res) => {
   const dbConnection = getConnection(); 
+  logger.info(`user=${req.user.username} - create person`);
+
   try {
     await beginTransaction(dbConnection);
 
     const newPerson = req.body; 
+
+    // If a new picture is uploaded, handle the upload
+    if (req.file) {
+      const newFilename = profilePictureUpload(req.file, newPerson.picture);
+      newPerson.picture = newFilename;
+    }
+
     const createdPerson = await addPerson(newPerson); 
 
-    if (newPerson.middle_names && newPerson.middle_names.length > 0) {
-      for (const middleName of newPerson.middle_names) {
-        await addMiddleName(createdPerson.id, middleName);
-      }
+    // Then, add the new middle names
+    const middleNames = newPerson.middle_names.split(',').map(name => name.trim());
+    for (const middleName of middleNames) {
+      await addMiddleName(createdPerson.id, middleName);
     }
+
     await commitTransaction(dbConnection);
 
-    const personWithMiddleNames = await getPerson(createdPerson.id, dbConnection);
+    const personWithMiddleNames = await getPersonById(createdPerson.id, dbConnection);
     res.status(201).json(personWithMiddleNames);
   } catch (error) {
     await rollbackTransaction(dbConnection);
@@ -82,16 +84,45 @@ export const createPerson = async (req, res) => {
 };
 
 export const updatePerson = async (req, res) => {
-  const personId = req.params.id;
+  const dbConnection = getConnection(); 
+  logger.info(`user=${req.user.username} - update person`);
+
   try {
-    const updated = await editPerson(personId, req.body);
-    if (updated) {
-      const updatedPerson = await getPerson(personId);
-      res.json(updatedPerson);
-    } else {
-      res.status(404).json({ error: 'Person not found' });
+    await beginTransaction(dbConnection);
+
+    const personId = req.params.id;
+    const person = await getPersonById(personId);
+    if (!person) {
+      return res.status(404).json({ message: 'Person not found' });
     }
+
+    // If a new picture is uploaded, handle the upload
+    if (req.file) {
+      const newFilename = profilePictureUpload(req.file, person.picture);
+      req.body.picture = newFilename;
+    }
+
+    // Update person's data in the database with the modified req.body
+    const updatedPerson = await editPerson(personId, req.body);
+
+    // Handle middle names update
+    // First, delete existing middle names for the person
+    await deleteMiddleNamesByPersonId(personId);
+
+    // Then, add the new middle names
+    const middleNames = req.body.middle_names.split(',').map(name => name.trim());
+    for (const middleName of middleNames) {
+        await addMiddleName(personId, middleName);
+    }
+
+    await commitTransaction(dbConnection);
+
+    // Return success
+    const personWithMiddleNames = await getPersonById(updatedPerson.id);
+    res.status(200).json(personWithMiddleNames);
   } catch (error) {
+    await rollbackTransaction(dbConnection);
+
     logger.error('Error updating person', error);
     res.status(500).json({ error: 'Failed to update person' });
   }
@@ -99,6 +130,8 @@ export const updatePerson = async (req, res) => {
 
 export const deletePerson = async (req, res) => {
   const dbConnection = getConnection(); 
+  logger.info(`user=${req.user.username} - delete person`);
+
   try {
     // Begin transaction
     await beginTransaction(dbConnection);
@@ -106,8 +139,8 @@ export const deletePerson = async (req, res) => {
     const personId = req.params.id;
 
     // Perform deletions
-    await delPerson(personId); 
-    await delMiddleNames(personId); 
+    await delPersonById(personId); 
+    await deleteMiddleNamesByPersonId(personId); 
     await delRelatives(personId); 
     await delConnections(personId);
 

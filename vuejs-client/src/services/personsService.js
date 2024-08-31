@@ -20,6 +20,10 @@ export async function addPerson(personData) {
   return response.data;
 }
 
+export async function editPerson(personId, personData) {
+  const response = await apiClient.put(`/persons/${personId}`, personData);
+  return response.data;
+}
 export async function deletePerson(personId) {
   const response = await apiClient.delete(`/persons/${personId}`);
   return response.data;
