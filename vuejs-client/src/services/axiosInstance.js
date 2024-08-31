@@ -5,8 +5,7 @@ const apiClient = axios.create({
   baseURL: import.meta.env.MODE === 'development'
     ? import.meta.env.VITE_API_URL
     : '/api',
-  timeout: config.axiosTimeout || 5000,
-  headers: { 'Content-Type': 'application/json' }
+  timeout: config.axiosTimeout || 5000
 })
 
 

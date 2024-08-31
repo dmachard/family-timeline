@@ -1,6 +1,12 @@
-# FamilyTimeline
+# Family Timeline
 
-Manage your family data with timeline.
+Manage your family data with timeline approach.
+
+<img src="vuejs-client/public/favicon.png" alt="Family-Timeline" style="max-width: 100px;"/>
+
+Supported languages:
+- [x] English
+- [x] Français
 
 ## Quick start
 
@@ -48,6 +54,7 @@ Start the containers using docker compose command
 docker compose up -d
 ```
 
+The FamilyTimeline application will be available on `http://localhost:8080/`.
 The default user is `admin` with password `admin`.
 
 ## For developers
@@ -160,7 +167,7 @@ sudo docker compose -f docker-compose.dev.yml up --build
 ```
 
 The frontend is reachable  at `http://localhost/`
-The API serveur is available on `http://localhost/api/`
+The API server is available on `http://localhost/api/`
 
 The default user is `admin` with password `admin`.
 

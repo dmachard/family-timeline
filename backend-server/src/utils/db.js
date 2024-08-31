@@ -17,22 +17,30 @@ export const createDbConnection = (filename = config.db.filename) => {
   });
 };
 
-
 // Create a default database connection
 let db;
 if (process.env.NODE_ENV !== 'test') {
   db = createDbConnection(config.db.filename);
 }
 
+// Get connection
+const getConnection = () => {
+  if (!db) {
+    // If db is not initialized, create a new connection
+    db = createDbConnection();
+  }
+  return db;
+};
+
 // Function to set a custom database connection (used in testing)
-export const setDbConnection = (customDb) => {
+const setDbConnection = (customDb) => {
   db = customDb;
 };
 
-// Function to run queries
-const runQuery = (query, params = []) => {
+// Function to run query
+const runQuery = (query, params = [], dbConnection = db) => {
   return new Promise((resolve, reject) => {
-    db.all(query, params, (err, rows) => {
+    dbConnection.all(query, params, (err, rows) => {
       if (err) {
         logger.error('Error executing query:', err.message);
         reject(err);
@@ -43,4 +51,62 @@ const runQuery = (query, params = []) => {
   });
 };
 
-export default runQuery;
+// Function to run an insert query
+const runInsertQuery = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function(err) {
+      if (err) {
+        logger.error('Error executing insert query:', err.message);
+        reject(err);
+      } else {
+        resolve(this.lastID); // Return the last inserted ID
+      }
+    });
+  });
+};
+
+
+// Function to begin a transaction
+const beginTransaction = (dbConnection = db) => {
+  return new Promise((resolve, reject) => {
+    dbConnection.run('BEGIN TRANSACTION', [], (err) => {
+      if (err) {
+        logger.error('Error beginning transaction:', err.message);
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+// Function to commit a transaction
+const commitTransaction = (dbConnection = db) => {
+  return new Promise((resolve, reject) => {
+    dbConnection.run('COMMIT', [], (err) => {
+      if (err) {
+        logger.error('Error committing transaction:', err.message);
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+// Function to rollback a transaction
+const rollbackTransaction = (dbConnection = db) => {
+  return new Promise((resolve, reject) => {
+    dbConnection.run('ROLLBACK', [], (err) => {
+      if (err) {
+        logger.error('Error rolling back transaction:', err.message);
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+export { getConnection, setDbConnection, runQuery, runInsertQuery, beginTransaction, commitTransaction, rollbackTransaction };
+

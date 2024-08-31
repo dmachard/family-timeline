@@ -1,4 +1,4 @@
-import runQuery from '../utils/db.js';
+import { runQuery } from '../utils/db.js';
 import logger from '../logger.js'; 
 
 // Function to get a user by username

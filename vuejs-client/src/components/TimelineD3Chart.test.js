@@ -3,7 +3,7 @@ import { shallowMount } from '@vue/test-utils'
 import TimelineD3Chart from './TimelineD3Chart.vue'
 
 vi.mock('@/services/personsService', () => ({
-  fetchPersons: vi.fn().mockResolvedValue([
+  fetchEnrichedPersons: vi.fn().mockResolvedValue([
     // Root person, oldest
     {
       id: 1,
@@ -51,6 +51,8 @@ vi.mock('@/services/personsService', () => ({
   ])
 }))
 
+import store from '@/store/index.js'
+
 describe('Timeline Methods', () => {
   let wrapper
 
@@ -61,6 +63,9 @@ describe('Timeline Methods', () => {
         maxYear: 2020,
         startViewYear: 2000,
         stopViewYear: 2020
+      },
+      global: {
+        plugins: [store]
       }
     })
     await wrapper.vm.$nextTick()

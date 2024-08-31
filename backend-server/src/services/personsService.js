@@ -1,8 +1,125 @@
-import runQuery from '../utils/db.js';
+import { runQuery, runInsertQuery } from '../utils/db.js';
 import logger from '../logger.js'; 
 
 // Function to get all persons
-const getPersons = async () => {
+const getAllPersons = async () => {
+  logger.debug(`get all persons`);
+  const query = `SELECT * FROM Persons`;
+  return await runQuery(query, []);
+};
+
+// Function to get middle names for a person
+const getAllMiddleNames = async () => {
+  logger.debug(`get all middle names`);
+  const query = `SELECT * FROM MiddleNames`;
+  return await runQuery(query, []);
+};
+
+// Function to get middle names for a person
+const addMiddleName = async (personId, middleName) => {
+  const query = `
+    INSERT INTO MiddleNames (person_id, middle_name) 
+    VALUES (?, ?)
+  `;
+  await runInsertQuery(query, [personId, middleName]);
+};
+
+// Function to get middle names for a person
+const getPersonById = async (personId) => {
+  logger.debug(`Get person with ID: ${personId}`);
+  const query = `SELECT * FROM Persons WHERE id = ?`;
+  const person = await runQuery(query, [personId]);
+  if (person.length === 0) {
+    throw new Error('Person not found');
+  }
+
+  // Query to get the middle names for the person
+  const middleNamesQuery = `SELECT * FROM MiddleNames WHERE person_id = ?`;
+  const middleNames = await runQuery(middleNamesQuery, [personId]);
+
+  return {
+    ...person[0], 
+    middle_names: middleNames
+  };
+};
+
+// Function to add a new person
+const addPerson = async (person) => {
+  logger.debug(`Adding a person: ${person.first_name} ${person.last_name}`);
+  const query = `
+    INSERT INTO Persons (first_name, last_name, notes, gender, picture)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  const values = [
+    person.first_name,
+    person.last_name,
+    person.notes || null,
+    person.gender || null,
+    person.picture || null
+  ];
+  
+  // insert person
+  const insertId = await runInsertQuery(query, values);
+
+  // fetch the newly inserted person's details to return
+  const newPersonQuery = `SELECT * FROM Persons WHERE id = ?`;
+  const newPerson = await runQuery(newPersonQuery, [insertId]);
+
+  return newPerson[0];
+};
+
+// Function to edit an existing person
+const editPerson = async (personId, person) => {
+  logger.debug(`Editing person with ID: ${personId}`);
+  const query = `
+    UPDATE Persons
+    SET first_name = ?, last_name = ?, notes = ?, gender = ?, picture = ?
+    WHERE id = ?
+  `;
+  const values = [
+    person.first_name,
+    person.last_name,
+    person.notes || null,
+    person.gender || null,
+    person.picture || null,
+    personId
+  ];
+  
+  await runQuery(query, values);
+
+  // fetch the newly inserted person's details to return
+  const newPersonQuery = `SELECT * FROM Persons WHERE id = ?`;
+  const newPerson = await runQuery(newPersonQuery, [personId]);
+
+  return newPerson[0];
+};
+
+// Function to delete a person by ID
+const delPersonById = async (personId) => {
+  const query = 'DELETE FROM Persons WHERE id = ?';
+  await runQuery(query, [personId]);
+};
+
+// Function to delete middle names associated with a person
+const deleteMiddleNamesByPersonId = async (personId) => {
+  const query = 'DELETE FROM MiddleNames WHERE person_id = ?';
+  await runQuery(query, [personId]);
+};
+
+// Function to delete relatives associated with a person
+const delRelatives = async (personId) => {
+  const query = 'DELETE FROM Relatives WHERE person_id = ?';
+  await runQuery(query, [personId]);
+};
+
+// Function to delete connections associated with a person
+const delConnections = async (personId) => {
+  const query = 'DELETE FROM Connections WHERE person_id = ?';
+  await runQuery(query, [personId]);
+};
+
+// Function to get all persons
+const getEnrichedPersons = async () => {
   logger.debug(`get all persons`);
   const personsQuery = `
     SELECT p.id, p.first_name, p.last_name, p.notes, p.gender, p.picture,
@@ -31,7 +148,7 @@ const getPersons = async () => {
 
   // Enrich each person with additional information (events, relations, etc.)
   const enrichedPersons = await Promise.all(persons.map(async (person) => {
-    const enrichedPerson = await getPerson(person.id);
+    const enrichedPerson = await getEnrichedPerson(person.id);
     return enrichedPerson;
   }));
 
@@ -39,7 +156,7 @@ const getPersons = async () => {
 };
 
 // Function to get person
-const getPerson = async (personId) => {
+const getEnrichedPerson = async (personId) => {
   logger.debug(`get details for person ${personId}`);
   const personQuery = `
           SELECT p.id, p.first_name, p.last_name, p.notes, p.gender, p.picture,
@@ -235,5 +352,11 @@ const getEventAttachments = async (eventId) => {
   return await runQuery(attachmentsQuery, [eventId]);
 };
 
-export { getPersons, getPerson, getMiddleNames, getEvents, getRelatives, getChildren, getEventRelations, getEventAttachments};
+export { 
+  getAllPersons, getAllMiddleNames, getEnrichedPersons, getEnrichedPerson, getMiddleNames, 
+  getEvents, getRelatives, getChildren, getEventRelations, getEventAttachments, getPersonById,
+  addPerson, addMiddleName,
+  editPerson,
+  delPersonById, deleteMiddleNamesByPersonId, delRelatives, delConnections
+};
 
