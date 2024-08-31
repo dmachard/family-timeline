@@ -2,9 +2,7 @@
 
 Manage your family data with timeline approach.
 
-<p align="center">
-    <img src="vuejs-client/public/favicon.png" alt="Family-Timeline" style="max-width: 150px;"/>
-</p>
+<img src="vuejs-client/public/favicon.png" alt="Family-Timeline" style="max-width: 100px;"/>
 
 Supported languages:
 - [x] English
