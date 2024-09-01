@@ -1,6 +1,7 @@
 
 import { getConnection, beginTransaction, commitTransaction, rollbackTransaction} from '../utils/db.js';
 import logger from '../logger.js'; 
+import { logActivity } from '../utils/activityLogger.js';
 
 import { profilePictureUpload, deleteProfilePicture } from '../services/uploadService.js';
 import { getEnrichedPersons, getAllPersons, getAllMiddleNames, getPersonById } from '../services/personsService.js';
@@ -71,6 +72,10 @@ export const createPerson = async (req, res) => {
       await addMiddleName(createdPerson.id, middleName);
     }
 
+    // Log the addition in the Activities table
+    await logActivity(req.user.userId, 'ADD', 'PERSON', createdPerson.id, `${newPerson.first_name} ${newPerson.last_name}`);
+
+    // Commit transaction
     await commitTransaction(dbConnection);
 
     const personWithMiddleNames = await getPersonById(createdPerson.id, dbConnection);
@@ -115,6 +120,10 @@ export const updatePerson = async (req, res) => {
         await addMiddleName(personId, middleName);
     }
 
+    // Log the addition in the Activities table
+    await logActivity(req.user.userId, 'UPDATE', 'PERSON', updatedPerson.id, `${updatedPerson.first_name} ${updatedPerson.last_name}`);
+
+    // COMMIT TRANSACTION
     await commitTransaction(dbConnection);
 
     // Return success
@@ -149,6 +158,9 @@ export const deletePerson = async (req, res) => {
     await deleteMiddleNamesByPersonId(personId); 
     await delRelatives(personId); 
     await delConnections(personId);
+
+    // Log the deletion in the Activities table
+    await logActivity(req.user.userId, 'DELETE', 'PERSON', personId, `${person.first_name} ${person.last_name}`);
 
     // Commit transaction
     await commitTransaction(dbConnection);

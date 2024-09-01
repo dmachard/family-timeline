@@ -26,8 +26,8 @@
             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
               <!-- Activity -->
               <li class="nav-item">
-                <a class="nav-link" href="#" @click.prevent="openModal('activity')">
-                  <i class="bi bi-calendar-event-fill me-2" /> {{ $t('activity') }}
+                <a class="nav-link" href="#" @click.prevent="openModal('activities')">
+                  <i class="bi bi-calendar-event-fill me-2" /> {{ $t('activity-logs') }}
                 </a>
               </li>
 
@@ -132,7 +132,7 @@
     <router-view :min-year="minYear" :max-year="maxYear" :start-view-year="startViewYear" :stop-view-year="stopViewYear" @data-loaded="onDataLoaded" />
 
     <!-- Modals -->
-    <ModalActivity v-if="isAuthenticated" ref="modalActivity" @data-loaded="onDataLoaded" />
+    <ModalActivities v-if="isAuthenticated" ref="modalActivities" @data-loaded="onDataLoaded" />
     <ModalPersons v-if="isAuthenticated" ref="modalPersons" @data-loaded="onDataLoaded" />
     <ModalRelatives v-if="isAuthenticated" ref="modalRelatives" @data-loaded="onDataLoaded" />
     <ModalEvents v-if="isAuthenticated" ref="modalEvents" @data-loaded="onDataLoaded" />
@@ -145,7 +145,7 @@ import { mapGetters, mapMutations } from 'vuex';
 import { Offcanvas, Modal } from 'bootstrap'
 
 import LoadingModal from './components/ModalLoading.vue';
-import ModalActivity from './components/ModalActivity.vue'
+import ModalActivities from './components/ModalActivities.vue'
 import ModalPersons from './components/ModalPersons.vue'
 import ModalRelatives from './components/ModalRelatives.vue'
 import ModalEvents from './components/ModalEvents.vue'
@@ -156,7 +156,7 @@ import config from './config'
 export default {
    components: {
     LoadingModal,
-    ModalActivity,
+    ModalActivities,
     ModalPersons,
     ModalRelatives,
     ModalEvents,
@@ -210,6 +210,9 @@ export default {
       try {
         if (modalId === 'persons') {
           await this.$refs.modalPersons.fetchInitialData();
+        }
+        if (modalId === 'activities') {
+          await this.$refs.modalActivities.fetchInitialData();
         }
       } catch (err) {
         console.error('Failed to fetch data:', err.message);
