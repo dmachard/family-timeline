@@ -79,9 +79,9 @@ const editPerson = async (personId, person) => {
   const values = [
     person.first_name,
     person.last_name,
-    person.notes || null,
-    person.gender || null,
-    person.picture || null,
+    person.notes || '',
+    person.gender || '',
+    person.picture || '',
     personId
   ];
   

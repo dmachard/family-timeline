@@ -52,11 +52,6 @@
                       <i class="bi bi-calendar3 me-2" /> {{ $t('events') }}
                     </a>
                   </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="openModal('attachments')">
-                      <i class="bi bi-paperclip me-2" /> {{ $t('attachments') }}
-                    </a>
-                  </li>
                 </ul>
               </li>
 
@@ -136,7 +131,6 @@
     <ModalPersons v-if="isAuthenticated" ref="modalPersons" @data-loaded="onDataLoaded" />
     <ModalRelatives v-if="isAuthenticated" ref="modalRelatives" @data-loaded="onDataLoaded" />
     <ModalEvents v-if="isAuthenticated" ref="modalEvents" @data-loaded="onDataLoaded" />
-    <ModalAttachments v-if="isAuthenticated" ref="modalAttachments" @data-loaded="onDataLoaded" />
   </div>
 </template>
 
@@ -149,7 +143,6 @@ import ModalActivities from './components/ModalActivities.vue'
 import ModalPersons from './components/ModalPersons.vue'
 import ModalRelatives from './components/ModalRelatives.vue'
 import ModalEvents from './components/ModalEvents.vue'
-import ModalAttachments from './components/ModalAttachments.vue'
 
 import config from './config'
 
@@ -159,8 +152,7 @@ export default {
     ModalActivities,
     ModalPersons,
     ModalRelatives,
-    ModalEvents,
-    ModalAttachments
+    ModalEvents
    },
   data () {
     return {

@@ -107,6 +107,11 @@ export const updatePerson = async (req, res) => {
       req.body.picture = newFilename;
     }
 
+    // keep original picture if exists
+    if (req.body.picture == null ) {
+      req.body.picture = person.picture
+    }
+
     // Update person's data in the database with the modified req.body
     const updatedPerson = await editPerson(personId, req.body);
 
