@@ -259,7 +259,7 @@ export default {
     },
     // Total number of pages
     totalPages() {
-      return Math.ceil(this.persons.length / this.itemsPerPage);
+      return Math.ceil(this.filteredPersons.length / this.itemsPerPage);
     },
     sortedPersons() {
       return this.persons.slice().sort((a, b) => {
@@ -296,6 +296,14 @@ export default {
         ? URL.createObjectURL(this.uploadedPicture) 
         : (this.personBeingEdited.picture ? this.getDataUrl + '/' + this.personBeingEdited.picture : '');
     },
+  },
+  watch: {
+    searchQuery() {
+      this.currentPage = 1;
+    },
+    itemsPerPage() {
+      this.currentPage = 1;
+    }
   },
   mounted() {
     const modalElement = document.getElementById('personsModal');
