@@ -98,6 +98,7 @@ export const updatePerson = async (req, res) => {
     const personId = req.params.id;
     const person = await getPersonById(personId);
     if (!person) {
+      await rollbackTransaction(dbConnection);
       return res.status(404).json({ message: 'Person not found' });
     }
 
