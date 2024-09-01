@@ -275,7 +275,9 @@ export default {
   },
   unmounted() {
     const modalElement = document.getElementById('personsModal');
-    modalElement.removeEventListener('hide.bs.modal', this.handleModalClose);
+    if (modalElement) {
+      modalElement.removeEventListener('hide.bs.modal', this.handleModalClose);
+    }
   },
   methods: {
     ...mapActions(['triggerTimelineReload']),

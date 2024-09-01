@@ -3,7 +3,7 @@
     "genealogy": "Généalogie",
     "timeline": "Chronologie",
     "profiles": "Profils",
-    "activity": "Activité",
+    "activity-logs": "Activité des journaux",
     "language": "Langue",
     "manage": "Gestion",
     "persons": "Personnes",
@@ -57,6 +57,16 @@
     "picture": "Photo de profil",
     "notes": "Notes",
     "gender": "Genre",
-    "manage-persons": "Gérer les personnes"
+    "manage-persons": "Gérer les personnes",
+    "activity-ADD": "Ajout",
+    "activity-UPDATE": "Mise à jour",
+    "activity-DELETE": "Suppression",
+    "activity-PERSON": "Personne",
+    "activity-RELATIVE": "Parent",
+    "activity-CONNECTION": "Connexion",
+    "activity-EVENT": "Événement",
+    "user": "Utilisateur",
+    "details": "Description",
+    "timestamp": "Quand"
 }
   
