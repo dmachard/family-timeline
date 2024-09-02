@@ -3,21 +3,18 @@ import logger from '../logger.js';
 
 // Function to get all relatives
 const getAllRelatives = async () => {
-    logger.debug('Fetching all relatives');
+    logger.debug('get all relatives');
     const query = `SELECT * FROM Relatives`;
     return await runQuery(query, []);
 };
 
 
 // Function to get a relative by ID
-const getRelativeById = async (id) => {
-    logger.debug(`Fetching relative with ID: ${id}`);
+const getRelativeById = async (relativeId) => {
+    logger.debug(`get relative with ID: ${relativeId}`);
     const query = `SELECT * FROM Relatives WHERE id = ?`;
-    const relative = await runQuery(query, [id]);
-    if (relative.length === 0) {
-      throw new Error('Relative not found');
-    }
-    return relative[0];
+    const [ relative ] = await runQuery(query, [relativeId]);
+    return relative;
 };
 
 // Function to create a new relative
@@ -48,6 +45,7 @@ const delRelativeByPersonId = async (personId, relatedPersonId) => {
 
     const query = `DELETE FROM Relatives WHERE person_id = ? AND related_person_id = ?`;
     const changes = await runQuery(query, [personId, relatedPersonId]);
+    console.log(changes);
     if (changes.changes === 0) {
       throw new Error('Relative not found');
     }

@@ -603,7 +603,6 @@ export default {
         intervalYears = 10;
       }
 
-      console.log(yearStart, yearStop, intervalYears);
       const xAxisTicks = d3.axisTop(xScale)
         .tickFormat('')
         .tickSize(-(height + margin.top))

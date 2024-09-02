@@ -7,7 +7,9 @@
           <div class="spinner-border" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
-          <p class="mt-3">Loading data, please wait...</p>
+          <p class="mt-3">
+            Loading data, please wait...
+          </p>
         </div>
       </div>
     </div>

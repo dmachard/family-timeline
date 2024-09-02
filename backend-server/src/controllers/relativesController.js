@@ -61,9 +61,9 @@ export const deleteRelative = async (req, res) => {
     const dbConnection = getConnection(); 
     logger.info(`user=${req.user.username} - delete relative`);
 
-    const { relativeId } = req.params;
     try {
         await beginTransaction(dbConnection);
+        const relativeId = req.params.id;
 
         // Get relationship details
         const relationship = await getRelativeById(relativeId);

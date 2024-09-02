@@ -67,5 +67,12 @@
     "activity-EVENT": "Event",
     "user": "User",
     "details": "Details",
-    "timestamp": "When"
+    "timestamp": "When",
+    "relative-ex-spouse": "ex-spouse of",
+    "relative-spouse": "spouse of",
+    "relative-brother": "brother of",
+    "relative-sister": "sister of",
+    "relative-child": "child of",
+    "relative-father": "father of",
+    "relative-mother": "mother of"
 } 

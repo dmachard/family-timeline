@@ -206,6 +206,9 @@ export default {
         if (modalId === 'activities') {
           await this.$refs.modalActivities.fetchInitialData();
         }
+        if (modalId === 'relatives') {
+          await this.$refs.modalRelatives.fetchInitialData();
+        }
       } catch (err) {
         console.error('Failed to fetch data:', err.message);
         this.loading = false;
