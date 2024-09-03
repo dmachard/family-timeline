@@ -52,7 +52,21 @@ const delRelativeByPersonId = async (personId, relatedPersonId) => {
     return changes;
 };
 
+// Function to check if a relative already exists
+const checkExistingRelation = async (person_id, relation_type, related_person_id) => {
+  const sql = `
+      SELECT 1 FROM relatives 
+      WHERE person_id = ? 
+      AND relation_type = ? 
+      AND related_person_id = ? 
+      LIMIT 1
+  `;
+  const rows = await runQuery(sql, [person_id, relation_type, related_person_id]);
+  return rows.length > 0;
+};
+
 export {
     getAllRelatives, getRelativeById,
-    addRelative, delRelativeById, delRelativeByPersonId
+    addRelative, delRelativeById, delRelativeByPersonId,
+    checkExistingRelation
 };

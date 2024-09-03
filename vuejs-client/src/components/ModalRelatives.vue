@@ -1,6 +1,6 @@
 <template>
   <div id="relativesModal" class="modal fade" tabindex="-1" aria-labelledby="relativesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="relativesModalLabel" class="modal-title">
@@ -93,17 +93,6 @@
                 </div>
               </div>
               <table class="table table-hover bg-white mb-4">
-                <thead>
-                  <tr>
-                    <th scope="col">
-                      #
-                    </th>
-                    <th>{{ $t('related-person-id') }}</th>
-                    <th>{{ $t('relation-type') }}</th>
-                    <th>{{ $t('person-id') }}</th>
-                    <th>{{ $t('actions') }}</th>
-                  </tr>
-                </thead>
                 <tbody>
                   <tr v-for="relative in paginatedRelatives" :key="relative.id">
                     <td>{{ relative.id }}</td>
@@ -174,6 +163,7 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex';
 import fetchDataMixin from '@/mixins/fetchDataMixin';
 import { fetchRelatives, deleteRelative, addRelative } from '@/services/relativesService.js';
 import { fetchPersons } from '@/services/personsService.js'; 
@@ -239,8 +229,27 @@ export default {
       return Math.ceil(this.filteredRelatives.length / this.itemsPerPage);
     }
   },
+  watch: {
+    searchQuery() {
+      this.currentPage = 1; 
+    }
+  },
+  mounted() {
+    const modalElement = document.getElementById('relativesModal');
+    modalElement.addEventListener('hide.bs.modal', this.handleModalClose);
+  },
+  unmounted() {
+    const modalElement = document.getElementById('relativesModal');
+    if (modalElement) {
+      modalElement.removeEventListener('hide.bs.modal', this.handleModalClose);
+    }
+  },
   methods: {
-    async fetchInitialData() {
+    ...mapActions(['triggerTimelineReload']),
+    handleModalClose() {
+      this.triggerTimelineReload();
+    },
+    async fetchInitialData(emitSignal=true) {
       try {
         const [relatives, persons] = await Promise.all([
           fetchRelatives(),
@@ -252,7 +261,9 @@ export default {
         console.error('Failed to fetch data:', err.message);
         this.error = 'Failed to load data';
       }
-      this.$emit('data-loaded', 'relatives'); 
+      if (emitSignal) {
+        this.$emit('data-loaded', 'relatives'); 
+      }
     },
     async deleteRelative(relative) {
       this.relativeToDelete = relative;
@@ -260,7 +271,7 @@ export default {
     async confirmDelete() {
       try {
         await deleteRelative(this.relativeToDelete.id);
-        await this.fetchInitialData();
+        await this.fetchInitialData(false);
         this.cancelAction();
       } catch (error) {
         this.error = error.message || 'An error occurred';
@@ -277,7 +288,7 @@ export default {
     async confirmAdd() {
       try {
         await addRelative(this.newRelative);
-        await this.fetchInitialData();
+        await this.fetchInitialData(false);
         this.cancelAction()
       } catch (error) {
         this.error = error.message || 'An error occurred';
@@ -286,6 +297,7 @@ export default {
     cancelAction() {
       this.isAddingRelative = false;
       this.relativeToDelete = null;
+      this.error = null;
       this.newRelative = { person_id: null, related_person_id: null, relation_type: '' };
     },
     getPersonName(personId) {
