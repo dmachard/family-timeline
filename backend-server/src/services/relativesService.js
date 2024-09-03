@@ -1,4 +1,4 @@
-import { runQuery, runInsertQuery } from '../utils/db.js';
+import { runQuery, runInsertQuery, runDeleteQuery } from '../utils/db.js';
 import logger from '../logger.js'; 
 
 // Function to get all relatives
@@ -32,8 +32,8 @@ const addRelative = async (person_id, relation_type, related_person_id) => {
 const delRelativeById = async (id) => {
     logger.debug(`Deleting relative with ID: ${id}`);
     const query = `DELETE FROM Relatives WHERE id = ?`;
-    const changes = await runQuery(query, [id]);
-    if (changes.changes === 0) {
+    const changes = await runDeleteQuery(query, [id]);
+    if (changes === 0) {
       throw new Error('Relative not found');
     }
     return changes;
@@ -44,9 +44,8 @@ const delRelativeByPersonId = async (personId, relatedPersonId) => {
     logger.debug(`Deleting relative relationship between ${personId} and ${relatedPersonId}`);
 
     const query = `DELETE FROM Relatives WHERE person_id = ? AND related_person_id = ?`;
-    const changes = await runQuery(query, [personId, relatedPersonId]);
-    console.log(changes);
-    if (changes.changes === 0) {
+    const changes = await runDeleteQuery(query, [personId, relatedPersonId]);
+    if (changes === 0) {
       throw new Error('Relative not found');
     }
     return changes;
