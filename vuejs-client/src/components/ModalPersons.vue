@@ -1,6 +1,6 @@
 <template>
   <div id="personsModal" class="modal fade" tabindex="-1" aria-labelledby="personsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="personsModalLabel" class="modal-title">
@@ -91,6 +91,13 @@
 
             <!-- Persons Table -->
             <div class="table-responsive">
+              <!-- Search Input -->
+              <div class="d-flex align-items-center mb-2">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search" /></span>
+                  <input v-model="searchQuery" type="text" class="form-control" :placeholder="$t('search-by-name')">
+                </div>
+              </div>
               <table class="table table-hover bg-white mb-4">
                 <thead>
                   <tr>
@@ -130,35 +137,23 @@
             </div>
 
             <!-- Pagination and Controls -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <!-- Search Input -->
-              <div class="d-flex align-items-center me-3">
-                <div class="input-group me-2">
-                  <span class="input-group-text"><i class="bi bi-search" /></span>
-                  <input v-model="searchQuery" type="text" class="form-control" :placeholder="$t('search-by-name')">
-                </div>
-              </div>
-
-              <!-- Items Per Page -->
-              <div class="d-flex align-items-center me-3">
-                <label for="itemsPerPage" class="me-2 mb-0">{{ $t('items-per-page') }}</label>
-                <select id="itemsPerPage" v-model="itemsPerPage" class="form-select d-inline-block w-auto">
-                  <option v-for="size in [5, 10, 15, 20]" :key="size" :value="size">
-                    {{ size }}
-                  </option>
-                </select>
-              </div>
-
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3">
               <!-- Pagination -->
               <nav aria-label="Page navigation">
-                <ul class="pagination mb-0">
+                <ul class="pagination mb-3 mb-sm-0">
                   <li class="page-item" :class="{ disabled: currentPage === 1 }">
                     <a class="page-link" href="#" aria-label="Previous" @click.prevent="previousPage">
                       <span aria-hidden="true">&laquo;</span>
                     </a>
                   </li>
-                  <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-                    <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+                  <li
+                    v-for="(page, index) in visiblePages" :key="index" class="page-item" 
+                    :class="{ active: currentPage === page, disabled: page === '...' }"
+                  >
+                    <a v-if="page !== '...'" class="page-link" href="#" @click.prevent="changePage(page)">
+                      {{ page }}
+                    </a>
+                    <span v-else class="page-link">...</span>
                   </li>
                   <li class="page-item" :class="{ disabled: currentPage === totalPages }">
                     <a class="page-link" href="#" aria-label="Next" @click.prevent="nextPage">
@@ -167,6 +162,16 @@
                   </li>
                 </ul>
               </nav>
+
+              <!-- Items Per Page -->
+              <div class="d-flex align-items-center mt-3 mt-sm-0">
+                <label for="itemsPerPage" class="me-2 mb-0">{{ $t('items-per-page') }}</label>
+                <select id="itemsPerPage" v-model="itemsPerPage" class="form-select d-inline-block w-auto">
+                  <option v-for="size in [5, 10, 15, 20]" :key="size" :value="size">
+                    {{ size }}
+                  </option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -218,6 +223,29 @@ export default {
     };
   },
   computed: {
+    visiblePages() {
+      const maxVisiblePages = 5;
+      const pages = [];
+
+      if (this.totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= this.totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        const start = Math.max(2, this.currentPage - 1);
+        const end = Math.min(this.totalPages - 1, this.currentPage + 1);
+
+        pages.push(1);
+        if (start > 2) pages.push('...');
+        for (let i = start; i <= end; i++) {
+          pages.push(i);
+        }
+        if (end < this.totalPages - 1) pages.push('...');
+        pages.push(this.totalPages);
+      }
+
+      return pages;
+    },
     filteredPersons() {
       return this.sortedPersons.filter(person => {
         const fullName = `${person.last_name} ${person.first_name}`.toLowerCase();
@@ -231,7 +259,7 @@ export default {
     },
     // Total number of pages
     totalPages() {
-      return Math.ceil(this.persons.length / this.itemsPerPage);
+      return Math.ceil(this.filteredPersons.length / this.itemsPerPage);
     },
     sortedPersons() {
       return this.persons.slice().sort((a, b) => {
@@ -268,6 +296,14 @@ export default {
         ? URL.createObjectURL(this.uploadedPicture) 
         : (this.personBeingEdited.picture ? this.getDataUrl + '/' + this.personBeingEdited.picture : '');
     },
+  },
+  watch: {
+    searchQuery() {
+      this.currentPage = 1;
+    },
+    itemsPerPage() {
+      this.currentPage = 1;
+    }
   },
   mounted() {
     const modalElement = document.getElementById('personsModal');

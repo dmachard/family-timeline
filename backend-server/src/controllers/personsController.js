@@ -98,6 +98,7 @@ export const updatePerson = async (req, res) => {
     const personId = req.params.id;
     const person = await getPersonById(personId);
     if (!person) {
+      await rollbackTransaction(dbConnection);
       return res.status(404).json({ message: 'Person not found' });
     }
 
@@ -105,6 +106,11 @@ export const updatePerson = async (req, res) => {
     if (req.file) {
       const newFilename = profilePictureUpload(req.file, person.picture);
       req.body.picture = newFilename;
+    }
+
+    // keep original picture if exists
+    if (req.body.picture == null ) {
+      req.body.picture = person.picture
     }
 
     // Update person's data in the database with the modified req.body

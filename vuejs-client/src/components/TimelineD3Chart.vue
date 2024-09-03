@@ -606,9 +606,9 @@ export default {
       const xAxisTicks = d3.axisTop(xScale)
         .tickFormat('')
         .tickSize(-(height + margin.top))
-        .tickValues(d3.range(yearStart, yearStop+intervalYears, intervalYears))
+        .tickValues(d3.range(yearStart-intervalYears*5, yearStop+intervalYears*5, intervalYears))
 
-      // Add a group for the vertic al lines
+      // Add a group for the vertical lines
       const grahSvg = d3.select('#timeline-graph');
       const xAxisTicksGroup = grahSvg.append('g')
         .call(xAxisTicks)

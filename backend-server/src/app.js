@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import authRoutes from './routes/authRoutes.js';
 import personsRoutes from './routes/personsRoutes.js';
 import activitiesRoutes from './routes/activitiesRoutes.js';
+import relativesRoutes from './routes/relativesRoutes.js';
 
 import authenticateToken from './middleware/authMiddleware.js'; 
 
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 // Protected routes
 app.use('/api/persons', authenticateToken, personsRoutes);
 app.use('/api/activities', authenticateToken, activitiesRoutes);
+app.use('/api/relatives', authenticateToken, relativesRoutes);
 
 app.listen(port, () => {
   logger.info(`Server running on port ${port}`);
