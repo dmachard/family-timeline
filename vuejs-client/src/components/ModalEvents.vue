@@ -605,10 +605,11 @@ export default {
           const newAttachment = await createAttachment(formData, this.selectedPersonId);
           this.attachments.push(newAttachment);
         }
-        // Optionally, filter attachments related to the filtered events
-        this.filteredAttachments = this.attachments.filter(attachment =>
-          this.filteredEvents.some(event => event.id === attachment.event_id)
+        // Filter attachments related to the selected event
+        this.filteredAttachments = this.attachments.filter(attachment => 
+          attachment.event_id === this.selectedEvent.id
         );
+        console.log(this.filteredAttachments);
 
         this.uploadInProgress = false;
         this.notification = 'Attachment uploaded successfully';
