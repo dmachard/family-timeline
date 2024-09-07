@@ -256,7 +256,7 @@
             <div class="d-flex flex-wrap">
               <div v-for="person in associatedPersons" :key="person.id" class="position-relative text-center m-2">
                 <!-- Logo or Placeholder Image -->
-                <img src="/profile_men.png" class="img-thumbnail mb-2" width="100" height="100" alt="Person Logo">
+                <img :src="person.gender === 'Male' ? '/profile_men.png' : '/profile_women.png'" class="img-thumbnail mb-2" width="100" height="100" alt="Person Logo">
 
                 <!-- Person's Name -->
                 <div>{{ person.first_name }} {{ person.last_name }}</div>
@@ -269,8 +269,6 @@
             </div>
           </div>
         </div>
-        
-        
 
         <!-- Footer -->
         <div class="modal-footer">

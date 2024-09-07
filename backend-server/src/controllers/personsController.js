@@ -9,6 +9,7 @@ import { addPerson, addMiddleName } from '../services/personsService.js';
 import { editPerson } from '../services/personsService.js';
 import { delPersonById, deleteMiddleNamesByPersonId, delRelatives } from '../services/personsService.js';
 import { delAssociationByPersonId } from '../services/associationsService.js';
+import { deleteLogsByPersonId } from '../services/activitiesService.js';
 
 export const fetchEnrichedPersons = async (req, res) => {
   // get authenticated user with req.user
@@ -168,6 +169,7 @@ export const deletePerson = async (req, res) => {
 
     // Log the deletion in the Activities table
     await logActivity(req.user.userId, 'DELETE', 'PERSON', personId, '');
+    await deleteLogsByPersonId(personId);
 
     // Commit transaction
     await commitTransaction(dbConnection);
