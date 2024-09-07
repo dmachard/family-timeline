@@ -1,6 +1,8 @@
 import { getAllAttachments, addAttachment, delAttachmentById, getAttachmentById  } from '../services/attachmentsService.js';
+import { getEventById } from '../services/eventsService.js';
 import { uploadFileAttachment } from '../services/uploadService.js';
 import logger from '../logger.js';
+import { logActivity } from '../utils/activityLogger.js'; 
 
 export const fetchAttachments = async (req, res) => {
     const user = req.user;
@@ -26,13 +28,20 @@ export const createAttachment = async (req, res) => {
             return res.status(400).json({ error: 'attachment file is missing' });
         }
 
-        // check if event id exist ?
+        // Check if event ID exists
+        const event = await getEventById(event_id);
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
 
         // upload file
         const attachmentPath = uploadFileAttachment(req.file);
 
         // add attachment in database
         const attachmentId = await addAttachment(event_id, attachmentPath, description);
+
+        // Log the addition in the Activities table
+        await logActivity(req.user.userId, 'ADD', 'ATTACHMENT', event_id, ``);
 
         // finnaly return the new attachment
         const newAttachment = await getAttachmentById(attachmentId);
@@ -50,6 +59,10 @@ export const deleteAttachment = async (req, res) => {
     const { id } = req.params;
     try {
         await delAttachmentById(id);
+
+        // Log the addition in the Activities table
+        await logActivity(req.user.userId, 'DELETE', 'ATTACHMENT', id, ``);
+
         res.json({ message: 'Attachment deleted successfully' });
     } catch (err) {
         logger.error(`Error in deleteAttachment: ${err.message}`);

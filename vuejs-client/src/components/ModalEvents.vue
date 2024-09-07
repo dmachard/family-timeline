@@ -18,11 +18,6 @@
 
         <!-- Modal Body -->
         <div class="modal-body">
-          <!-- Error Message -->
-          <div v-if="error" class="alert alert-danger" role="alert">
-            {{ error }}
-          </div>
-
           <!-- Events Table -->
           <div v-if="!isEditing && !eventToDelete && !isAttachmentsEditing && !isAssociatingPeople">
             <!-- Person Selector -->
@@ -298,7 +293,7 @@
           </template>
 
           <template v-else-if="isAttachmentsEditing">
-            <button type="submit" class="btn btn-primary" @click="cancelEditAttachment">
+            <button type="submit" class="btn btn-secondary" @click="cancelEditAttachment">
               {{ $t('terminate') }}
             </button>
           </template>
@@ -307,7 +302,7 @@
             <button type="button" class="btn btn-primary" :disabled="!selectedPersonToAssociate" @click="associatePerson">
               {{ $t('add') }}
             </button>
-            <button type="submit" class="btn btn-primary" @click="cancelEditAssociate">
+            <button type="submit" class="btn btn-secondary" @click="cancelEditAssociate">
               {{ $t('terminate') }}
             </button>
           </template>
@@ -362,7 +357,6 @@ export default {
       isAttachmentsEditing: false,
       isAssociatingPeople: false,
       eventToDelete: null,  // Event scheduled for deletion
-      error: null,          // Error message
       uploadInProgress: false,
       uploadProgress: 0,
       notification: null,
@@ -378,10 +372,6 @@ export default {
   },
   methods: {
     ...mapActions(['triggerTimelineReload']),
-
-    isEventVerified(){
-      return this.eventBeingEdited.event_verified === 1
-    },
     async fetchInitialData() {
       try {
         // Fetch all data in parallel
@@ -413,7 +403,7 @@ export default {
         }
 
       } catch (err) {
-        this.error = 'Failed to load data';
+        this.notification = 'Failed to load initial data';
         console.error(err.message);
       }
       this.$emit('data-loaded', 'events');
@@ -489,7 +479,7 @@ export default {
           this.onPersonSelected();
         }
       } catch (err) {
-        this.error = 'Failed to save event';
+        this.notification = 'Failed to save/add event';
         console.error(err.message);
         return;
       }
@@ -514,7 +504,7 @@ export default {
         // Refresh filtered events after deletion
         this.onPersonSelected();
       } catch (err) {
-        this.error = 'Failed to delete event';
+        this.notification = 'Failed to delete event';
         console.error(err.message);
       }
     },
@@ -569,7 +559,7 @@ export default {
 
         this.notification = 'Attachment deleted successfully';
       } catch (err) {
-        this.error = 'Failed to delete attachment';
+        this.notification = 'Failed to delete attachment';
         console.error(err.message);
       }
     },

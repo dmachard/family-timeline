@@ -5,7 +5,7 @@ CREATE TABLE Activities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     action_type TEXT NOT NULL CHECK(action_type IN ('ADD', 'UPDATE', 'DELETE')),
-    entity_type TEXT NOT NULL CHECK(entity_type IN ('PERSON', 'RELATIVE', 'CONNECTION', 'EVENT')),
+    entity_type TEXT NOT NULL CHECK(entity_type IN ('PERSON', 'RELATIVE', 'ASSOCIATION', 'EVENT', 'ATTACHMENT')),
     entity_id INTEGER NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     details TEXT,

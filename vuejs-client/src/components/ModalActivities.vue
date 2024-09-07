@@ -158,7 +158,7 @@ export default {
       }
     },
     formatDetails(activity) {
-      return `${this.$t("activity-"+activity.action_type)} ${this.$t("activity-"+activity.entity_type)}: ${activity.details}`;
+      return `${this.$t("activity-"+activity.action_type)} ${this.$t("activity-"+activity.entity_type)} ${activity.details}`;
     }
   }
 }

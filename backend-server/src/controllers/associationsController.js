@@ -2,6 +2,7 @@ import logger from '../logger.js';
 
 import { getAllAssociations, getAssociationById  } from '../services/associationsService.js';
 import { delAssociationById, addAssociation, checkExistingAssociation  } from '../services/associationsService.js';
+import { logActivity } from '../utils/activityLogger.js'; 
 
 export const fetchAssociations = async (req, res) => {
     const user = req.user;
@@ -24,6 +25,9 @@ export const deleteAssociation = async (req, res) => {
     try {
         // delete the event
         await delAssociationById(id);
+
+        // Log the addition in the Activities table
+        await logActivity(req.user.userId, 'DELETE', 'ASSOCIATION', id, ``);
 
         res.json({ message: 'Association deleted successfully' });
     } catch (err) {
@@ -49,7 +53,10 @@ export const createAssociation = async (req, res) => {
         // connect event to person
         const associationId = await addAssociation(eventId, person_id);
 
+        // Log the addition in the Activities table
+        await logActivity(req.user.userId, 'ADD', 'ASSOCIATION', person_id, ``);
 
+        // return association
         const newAssociation = await getAssociationById(associationId);
         res.status(201).json(newAssociation);
     } catch (err) {

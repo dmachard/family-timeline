@@ -22,6 +22,21 @@ export const getEventsByPersonId = async (personId) => {
     return events;
 };
 
+// Function to get events of a specific type for a person
+export const getEventsByTypeAndPersonId = async (personId, eventType) => {
+    logger.debug(`Get events of type '${eventType}' for person ID: ${personId}`);
+
+    const query = `
+        SELECT Events.*
+        FROM Events
+        INNER JOIN Associations ON Events.id = Associations.event_id
+        WHERE Associations.person_id = ? AND Events.event_type = ?
+    `;
+
+    const events = await runQuery(query, [personId, eventType]);
+    return events;
+};
+
 // Function to get an event by ID
 export const getEventById = async (eventId) => {
     logger.debug(`get event with ID: ${eventId}`);
@@ -58,14 +73,14 @@ export const addEvent = async (event_type, event_date, event_verified, event_pla
 };
 
 // Function to update an event
-export const editEvent = async (eventId, event_type, event_date, event_verified, event_place, event_notes) => {
+export const editEvent = async (eventId,  event_date, event_verified, event_place, event_notes) => {
     logger.debug(`Updating event with ID: ${eventId}`);
     const query = `
       UPDATE Events
-      SET event_type = ?, event_date = ?, event_verified = ?, event_place = ?, event_notes = ?
+      SET event_date = ?, event_verified = ?, event_place = ?, event_notes = ?
       WHERE id = ?
     `;
-    const changes = await runUpdateQuery(query, [event_type, event_date, event_verified, event_place, event_notes, eventId]);
+    const changes = await runUpdateQuery(query, [event_date, event_verified, event_place, event_notes, eventId]);
     if (changes === 0) {
         throw new Error('Event not found');
     }
