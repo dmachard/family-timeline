@@ -7,7 +7,9 @@ import { profilePictureUpload, deleteProfilePicture } from '../services/uploadSe
 import { getEnrichedPersons, getAllPersons, getAllMiddleNames, getPersonById } from '../services/personsService.js';
 import { addPerson, addMiddleName } from '../services/personsService.js';
 import { editPerson } from '../services/personsService.js';
-import { delPersonById, deleteMiddleNamesByPersonId, delRelatives, delConnections } from '../services/personsService.js';
+import { delPersonById, deleteMiddleNamesByPersonId, delRelatives } from '../services/personsService.js';
+import { delAssociationByPersonId } from '../services/associationsService.js';
+import { deleteLogsByPersonId } from '../services/activitiesService.js';
 
 export const fetchEnrichedPersons = async (req, res) => {
   // get authenticated user with req.user
@@ -73,7 +75,7 @@ export const createPerson = async (req, res) => {
     }
 
     // Log the addition in the Activities table
-    await logActivity(req.user.userId, 'ADD', 'PERSON', createdPerson.id, `${newPerson.first_name} ${newPerson.last_name}`);
+    await logActivity(req.user.userId, 'ADD', 'PERSON', createdPerson.id, '');
 
     // Commit transaction
     await commitTransaction(dbConnection);
@@ -127,7 +129,7 @@ export const updatePerson = async (req, res) => {
     }
 
     // Log the addition in the Activities table
-    await logActivity(req.user.userId, 'UPDATE', 'PERSON', updatedPerson.id, `${updatedPerson.first_name} ${updatedPerson.last_name}`);
+    await logActivity(req.user.userId, 'UPDATE', 'PERSON', updatedPerson.id, '');
 
     // COMMIT TRANSACTION
     await commitTransaction(dbConnection);
@@ -163,10 +165,11 @@ export const deletePerson = async (req, res) => {
     await delPersonById(personId); 
     await deleteMiddleNamesByPersonId(personId); 
     await delRelatives(personId); 
-    await delConnections(personId);
+    await delAssociationByPersonId(personId);
 
     // Log the deletion in the Activities table
-    await logActivity(req.user.userId, 'DELETE', 'PERSON', personId, `${person.first_name} ${person.last_name}`);
+    await logActivity(req.user.userId, 'DELETE', 'PERSON', personId, '');
+    await deleteLogsByPersonId(personId);
 
     // Commit transaction
     await commitTransaction(dbConnection);

@@ -24,7 +24,8 @@
                   </th>
                   <th>{{ $t('user') }}</th>
                   <th>{{ $t('timestamp') }}</th>
-                  <th>{{ $t('details') }}</th>
+                  <th>{{ $t('who') }}</th>
+                  <th>{{ $t('what') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -32,7 +33,8 @@
                   <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
                   <td>{{ activity.username }}</td>
                   <td>{{ new Date(activity.timestamp).toLocaleString() }}</td>
-                  <td>{{ formatDetails(activity) }}</td>
+                  <td>{{ formatWho(activity.person_id) }}</td>
+                  <td>{{ formatWhat(activity) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -83,7 +85,8 @@
 
 <script>
 import fetchDataMixin from '@/mixins/fetchDataMixin'
-import { fetchActivities } from '@/services/activtiesService.js'
+import { fetchActivities } from '@/services/activitiesService.js'
+import { fetchPersons } from '@/services/personsService.js'
 
 export default {
   mixins: [fetchDataMixin],
@@ -91,6 +94,7 @@ export default {
   data() {
     return {
       activities: [],
+      persons: [],
       currentPage: 1,
       itemsPerPage: 10,
       error: null,
@@ -133,11 +137,13 @@ export default {
     async fetchInitialData() {
       try {
         // Use Promise.all to fetch data concurrently
-        const [activities] = await Promise.all([
+        const [activities, persons] = await Promise.all([
           fetchActivities(),
+          fetchPersons(),
         ]);
         
         this.activities = activities;
+        this.persons = persons;
       } catch (err) {
         console.error('Failed to fetch data:', err.message);
         this.error = 'Failed to load initial data';
@@ -157,9 +163,16 @@ export default {
         this.currentPage++;
       }
     },
-    formatDetails(activity) {
-      return `${this.$t("activity-"+activity.action_type)} ${this.$t("activity-"+activity.entity_type)}: ${activity.details}`;
-    }
+    formatWhat(activity) {
+      return `${this.$t("activity-"+activity.action_type)} ${this.$t("activity-"+activity.entity_type)}`;
+    },
+    formatWho(personId) {
+      return this.getPersonName(personId);
+    },
+    getPersonName(personId) {
+      const person = this.persons.find(p => p.id === personId);
+      return person ? `${person.first_name} ${person.last_name}` : '';
+    },
   }
 }
 </script>

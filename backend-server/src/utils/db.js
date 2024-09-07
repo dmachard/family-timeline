@@ -79,6 +79,20 @@ const runDeleteQuery = (query, params = []) => {
   });
 };
 
+// Function to run an update query
+const runUpdateQuery = (query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function(err) {
+      if (err) {
+        logger.error('Error executing update query:', err.message);
+        reject(err);
+      } else {
+        resolve(this.changes);
+      }
+    });
+  });
+};
+
 // Function to begin a transaction
 const beginTransaction = (dbConnection = db) => {
   return new Promise((resolve, reject) => {
@@ -123,7 +137,7 @@ const rollbackTransaction = (dbConnection = db) => {
 
 export { 
     getConnection, setDbConnection, 
-    runQuery, runInsertQuery, runDeleteQuery,
+    runQuery, runInsertQuery, runDeleteQuery, runUpdateQuery,
     beginTransaction, commitTransaction, rollbackTransaction
 };
 

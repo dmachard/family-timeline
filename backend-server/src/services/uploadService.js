@@ -56,3 +56,21 @@ export const deleteProfilePicture = (filename) => {
     logger.warn(`Profile picture not found: ${filename}`);
   }
 };
+
+export const uploadFileAttachment = (file) => {
+  if (!file) {
+    throw new Error('No file provided');
+  }
+
+  logger.info("uploading attachment file");
+  
+  const ext = path.extname(file.originalname);
+  const uuid = uuidv4();
+  const newFilename = `/attachments/${uuid}${ext}`;
+  const uploadPath = path.join(__dirname, '..', config.storage.data_path, newFilename);
+  
+  // Move the new file to the profiles directory
+  fs.renameSync(file.path, uploadPath);
+
+  return newFilename;
+};

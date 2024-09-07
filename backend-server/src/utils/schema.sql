@@ -5,8 +5,8 @@ CREATE TABLE Activities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     action_type TEXT NOT NULL CHECK(action_type IN ('ADD', 'UPDATE', 'DELETE')),
-    entity_type TEXT NOT NULL CHECK(entity_type IN ('PERSON', 'RELATIVE', 'CONNECTION', 'EVENT')),
-    entity_id INTEGER NOT NULL,
+    entity_type TEXT NOT NULL CHECK(entity_type IN ('PERSON', 'RELATIVE', 'ASSOCIATION', 'EVENT', 'ATTACHMENT')),
+    person_id INTEGER NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     details TEXT,
     FOREIGN KEY (user_id) REFERENCES Users(id)
@@ -51,15 +51,15 @@ CREATE TABLE IF NOT EXISTS  Relatives (
 -- Table Events
 CREATE TABLE IF NOT EXISTS Events (
     id INTEGER PRIMARY KEY,
-    event_type TEXT CHECK(event_type IN ('birth', 'death', 'marriage', 'divorce', 'civil union', 'civil separation', 'other')),
+    event_type TEXT CHECK(event_type IN ('birth', 'death', 'marriage', 'divorce', 'civil union', 'civil separation', 'other') AND event_type <> ''),
     event_date DATE,
     event_verified BOOLEAN DEFAULT FALSE,
     event_place VARCHAR(255),
     event_notes TEXT
 );
 
--- Table Connections
-CREATE TABLE IF NOT EXISTS Connections (
+-- Table Associations
+CREATE TABLE IF NOT EXISTS Associations (
     id INTEGER PRIMARY KEY,
     event_id INTEGER,
     person_id INTEGER,

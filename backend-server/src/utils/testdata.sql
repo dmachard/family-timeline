@@ -36,8 +36,8 @@ INSERT INTO Relatives (person_id, related_person_id, relation_type) VALUES
 (1, 2, 'spouse'),
 (2, 1, 'spouse');
 
--- Insert test data into Connections
-INSERT INTO Connections (person_id, event_id) VALUES
+-- Insert test data into Associations
+INSERT INTO Associations (person_id, event_id) VALUES
 (1, 1),
 (1, 2),
 (2, 1),

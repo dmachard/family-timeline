@@ -147,14 +147,14 @@
         </div>
 
         <div v-if="relativeToDelete || isAddingRelative" class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="cancelAction">
-            {{ $t('cancel') }}
-          </button>
           <button v-if="relativeToDelete" type="button" class="btn btn-danger" @click="confirmDelete">
             {{ $t('delete') }}
           </button>
           <button v-if="isAddingRelative" type="submit" class="btn btn-primary" @click="confirmAdd">
             {{ $t('add') }}
+          </button>
+          <button type="button" class="btn btn-secondary" @click="cancelAction">
+            {{ $t('cancel') }}
           </button>
         </div>
       </div>

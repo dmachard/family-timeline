@@ -295,7 +295,9 @@ export default {
      
       // Default verification status for birth and death dates
       const birthDateVerified = person.birth_date_verified !== null ? person.birth_date_verified : true
-      const deathDateVerified = person.death_date_verified !== null ? person.death_date_verified : true
+      let deathDateVerified = person.death_date_verified !== null ? person.death_date_verified : true
+      // set as verified is death is not defined
+      if (person.death_date === null && deathDateVerified === false) { deathDateVerified = true }
 
       // Get spouses
       const spouses = this.filterSpouses(person.id)
