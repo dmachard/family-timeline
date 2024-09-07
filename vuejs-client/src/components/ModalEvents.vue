@@ -454,14 +454,12 @@ export default {
     startAddEvent() {
       this.eventBeingEdited = { id: 0, event_type: 'birth', event_date: '', event_place: '', event_verified: false, event_notes: '' };
       this.isEditing = true;
-      this.error = null;
     },
 
     // Start the process to edit an existing event
     startEditEvent(event) {
       this.eventBeingEdited = { ...event };
       this.isEditing = true;
-      this.error = null;
     },
 
     // Cancel the editing process
@@ -553,7 +551,6 @@ export default {
       this.isAssociatingPeople = false;
       this.selectedPersonId = null;
       this.selectedPersonToAssociate = null;
-      this.error = null;
       this.notification = null;
     },
 
@@ -594,26 +591,32 @@ export default {
     },
 
     async uploadFiles(files) {
-      this.uploadInProgress = true;
-      this.uploadProgress = 0;
+      try {
+        this.uploadInProgress = true;
+        this.uploadProgress = 0;
 
-      for (let i = 0; i < files.length; i++) {
-        const formData = new FormData();
-        formData.append('event_id', this.selectedEvent.id);
-        formData.append('description', "");
-        formData.append('attachment', files[i]);
+        for (let i = 0; i < files.length; i++) {
+          const formData = new FormData();
+          formData.append('event_id', this.selectedEvent.id);
+          formData.append('description', "");
+          formData.append('attachment', files[i]);
 
-        // Add new attachment
-        const newAttachment = await createAttachment(formData, this.selectedPersonId);
-        this.attachments.push(newAttachment);
+          // Add new attachment
+          const newAttachment = await createAttachment(formData, this.selectedPersonId);
+          this.attachments.push(newAttachment);
+        }
+        // Optionally, filter attachments related to the filtered events
+        this.filteredAttachments = this.attachments.filter(attachment =>
+          this.filteredEvents.some(event => event.id === attachment.event_id)
+        );
+
+        this.uploadInProgress = false;
+        this.notification = 'Attachment uploaded successfully';
+      } catch (err) {
+        this.uploadInProgress = false;
+        this.notification = 'Failed to updload attachment';
+        console.error(err.message);
       }
-      // Optionally, filter attachments related to the filtered events
-      this.filteredAttachments = this.attachments.filter(attachment =>
-        this.filteredEvents.some(event => event.id === attachment.event_id)
-      );
-
-      this.uploadInProgress = false;
-      this.notification = 'Files uploaded successfully';
     },
 
     refreshAssociatedPersons() {
@@ -655,7 +658,7 @@ export default {
         this.notification = 'Association deleted successfully';
         this.refreshAssociatedPersons()
       } catch (err) {
-        this.error = 'Failed to delete association';
+        this.notification = 'Failed to delete association';
         console.error(err.message);
       }
     },
