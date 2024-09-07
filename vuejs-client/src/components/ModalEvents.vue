@@ -25,7 +25,7 @@
               <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
               <select id="personSelect" v-model="selectedPersonId" class="form-select" @change="onPersonSelected">
                 <option v-for="person in persons" :key="person.id" :value="person.id">
-                  {{ person.first_name }} {{ person.last_name }}
+                  {{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}
                 </option>
               </select>
             </div>
@@ -62,7 +62,7 @@
               <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
               <select id="personSelect" v-model="selectedPersonId" :disabled="isEditing" class="form-select" @change="onPersonSelected">
                 <option v-for="person in persons" :key="person.id" :value="person.id">
-                  {{ person.first_name }} {{ person.last_name }}
+                  {{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}
                 </option>
               </select>
             </div>
@@ -141,7 +141,7 @@
                   <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
                   <select id="personSelect" v-model="selectedPersonId" :disabled="isAttachmentsEditing" class="form-select" @change="onPersonSelected">
                     <option v-for="person in persons" :key="person.id" :value="person.id">
-                      {{ person.first_name }} {{ person.last_name }}
+                      {{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}
                     </option>
                   </select>
                 </div>
@@ -209,7 +209,7 @@
                   <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
                   <select id="personSelect" v-model="selectedPersonId" :disabled="isAssociatingPeople" class="form-select" @change="onPersonSelected">
                     <option v-for="person in persons" :key="person.id" :value="person.id">
-                      {{ person.first_name }} {{ person.last_name }}
+                      {{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}
                     </option>
                   </select>
                 </div>
@@ -247,7 +247,7 @@
                 <label for="personSelect" class="form-label">{{ $t('select-person-to-add') }}</label>
                 <select id="personSelect" v-model="selectedPersonToAssociate" class="form-select">
                   <option v-for="person in persons" :key="person.id" :value="person.id">
-                    {{ person.first_name }} {{ person.last_name }}
+                    {{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}
                   </option>
                 </select>
               </div>
@@ -259,7 +259,7 @@
                 <img :src="person.gender === 'Male' ? '/profile_men.png' : '/profile_women.png'" class="img-thumbnail mb-2" width="100" height="100" alt="Person Logo">
 
                 <!-- Person's Name -->
-                <div>{{ person.first_name }} {{ person.last_name }}</div>
+                <div>{{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}</div>
 
                 <!-- Delete Icon -->
                 <div class="delete-icon position-absolute top-0 end-0" @click.prevent="removeAssociatedPerson(person.associationId)">
@@ -395,6 +395,27 @@ export default {
           };
         });
 
+        // Create a mapping of event_id to event data
+        const eventMap = this.events.reduce((map, event) => {
+          map[event.id] = event;
+          return map;
+        }, {});
+
+        // Enrich each person with birth_date based on associations and events
+        this.persons = this.persons.map(person => {
+          // Find all associations for the person
+          const personAssociations = this.associations.filter(association => association.person_id === person.id);
+          // Find all events for these associations
+          const personEvents = personAssociations.map(association => eventMap[association.event_id]);
+          // Find the birth event for the person
+          const birthEvent = personEvents.find(event => event.event_type === 'birth');
+
+          return {
+            ...person,
+            birth_date: birthEvent ? birthEvent.event_date : null // Add birth_date or set as null if not found
+          };
+        });
+        
         // Set the default selected person (e.g., the first person in the list)
         if (this.persons.length > 0) {
           this.selectedPersonId = this.persons[0].id;
@@ -408,7 +429,12 @@ export default {
       this.$emit('data-loaded', 'events');
     },
 
-    // Handle person selection and filter events
+    formatDate(date) {
+      if (!date) return 'N/A';
+      const year = new Date(date).getFullYear();
+      return year;
+    },
+      
     onPersonSelected() {
       this.filteredEvents = this.associations
         .filter(association => association.person_id === this.selectedPersonId)

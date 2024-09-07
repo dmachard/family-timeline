@@ -33,7 +33,7 @@
                 <label for="relatedPersonId" class="form-label">{{ $t('select-related-person') }}</label>
                 <select id="relatedPersonId" v-model="newRelative.related_person_id" class="form-select" required>
                   <option v-for="person in persons" :key="person.id" :value="person.id">
-                    {{ getPersonName(person.id) }}
+                    {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
                   </option>
                 </select>
               </div>
@@ -67,7 +67,7 @@
                 <label for="personId" class="form-label">{{ $t('select-primary-person') }}</label>
                 <select id="personId" v-model="newRelative.person_id" class="form-select" required>
                   <option v-for="person in persons" :key="person.id" :value="person.id">
-                    {{ getPersonName(person.id) }}
+                    {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
                   </option>
                 </select>
               </div>
@@ -166,7 +166,9 @@
 import { mapActions } from 'vuex';
 import fetchDataMixin from '@/mixins/fetchDataMixin';
 import { fetchRelatives, deleteRelative, addRelative } from '@/services/relativesService.js';
+import { fetchAssociations } from '@/services/associationsService.js';
 import { fetchPersons } from '@/services/personsService.js'; 
+import { fetchEvents } from '@/services/eventsService.js';
 
 export default {
   mixins: [fetchDataMixin],
@@ -175,6 +177,8 @@ export default {
     return {
       relatives: [],
       persons: [],
+      events: [],
+      associations: [],
       currentPage: 1,
       itemsPerPage: 10,
       searchQuery: '',
@@ -251,12 +255,37 @@ export default {
     },
     async fetchInitialData(emitSignal=true) {
       try {
-        const [relatives, persons] = await Promise.all([
+        const [relatives, persons, events, associations] = await Promise.all([
           fetchRelatives(),
-          fetchPersons() 
+          fetchPersons(),
+          fetchEvents(),
+          fetchAssociations(),
         ]);
         this.relatives = relatives;
-        this.persons = persons; 
+        this.persons = persons;
+        this.events = events; 
+        this.associations = associations;
+
+        // Create a mapping of event_id to event data
+        const eventMap = this.events.reduce((map, event) => {
+          map[event.id] = event;
+          return map;
+        }, {});
+
+        // Enrich each person with birth_date based on associations and events
+        this.persons = this.persons.map(person => {
+          // Find all associations for the person
+          const personAssociations = this.associations.filter(association => association.person_id === person.id);
+          // Find all events for these associations
+          const personEvents = personAssociations.map(association => eventMap[association.event_id]);
+          // Find the birth event for the person
+          const birthEvent = personEvents.find(event => event.event_type === 'birth');
+
+          return {
+            ...person,
+            birth_date: birthEvent ? birthEvent.event_date : null // Add birth_date or set as null if not found
+          };
+        });
       } catch (err) {
         console.error('Failed to fetch data:', err.message);
         this.error = 'Failed to load data';
@@ -264,6 +293,11 @@ export default {
       if (emitSignal) {
         this.$emit('data-loaded', 'relatives'); 
       }
+    },
+    formatDate(date) {
+      if (!date) return 'N/A';
+      const year = new Date(date).getFullYear();
+      return year;
     },
     async deleteRelative(relative) {
       this.relativeToDelete = relative;
