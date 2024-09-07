@@ -4,7 +4,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="personsModalLabel" class="modal-title">
-            {{ $t('manage-persons') }}
+            {{ $t('manage-persons') }} - {{ totalPersonsCount }} {{ $t('persons') }}
             <span v-if="isEditing">
               - {{ personBeingEdited.id ? 'Edit' : 'Add' }}
             </span>
@@ -223,6 +223,9 @@ export default {
     };
   },
   computed: {
+    totalPersonsCount() {
+      return this.persons.length;
+    },
     visiblePages() {
       const maxVisiblePages = 5;
       const pages = [];

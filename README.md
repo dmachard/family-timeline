@@ -8,6 +8,8 @@ Supported languages:
 - [x] English
 - [x] Français
 
+![overview](./docs/images/overview.png)
+
 ## Quick start
 
 The recommanded way to start this application is docker compose.
