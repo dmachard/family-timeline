@@ -65,13 +65,14 @@ export const updateEvent = async (req, res) => {
     logger.info(`user=${user.username} - update event`);
 
     const { id } = req.params;
+    const { personId } = req.query;
     const { event_type, event_date, event_verified, event_place, event_notes } = req.body;
     try {
         // edit event
         await editEvent(id, event_date, event_verified, event_place, event_notes);
         
         // Log the addition in the Activities table
-        await logActivity(req.user.userId, 'UPDATE', 'EVENT', id, `${event_type}`);
+        await logActivity(req.user.userId, 'UPDATE', 'EVENT', personId, `${event_type}`);
 
         // return event
         const newEvent = await getEventById(id);
@@ -87,6 +88,7 @@ export const deleteEvent = async (req, res) => {
     logger.info(`user=${user.username} - delete event`);
 
     const { id } = req.params;
+    const { personId } = req.query;
     try {
         // delete the event
         await deleteEventById(id);
@@ -95,7 +97,7 @@ export const deleteEvent = async (req, res) => {
         await delAssociationByEventId(id);
 
         // Log the addition in the Activities table
-        await logActivity(req.user.userId, 'DELETE', 'EVENT', id, ``);
+        await logActivity(req.user.userId, 'DELETE', 'EVENT', personId, ``);
 
         res.json({ message: 'Event deleted successfully' });
     } catch (err) {

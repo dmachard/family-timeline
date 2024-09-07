@@ -70,7 +70,7 @@
     "activity-ATTACHMENT": "pièce jointe",
     "user": "Utilisateur",
     "details": "Description",
-    "timestamp": "Quand",
+    "timestamp": "Date/Heure",
     "relative-ex-spouse": "ex-conjoint de",
     "relative-spouse": "conjoint de",
     "relative-brother": "frère de",
@@ -97,6 +97,8 @@
     "event-notes": "Description",
     "drag-drop-files-here": "Déposer vos fichiers ici.",
     "select-person-to-add": "Personne à associer à cet évènement",
-    "notification": "Notification"
+    "notification": "Notification",
+    "who": "Personne",
+    "what": "Action"
 }
   

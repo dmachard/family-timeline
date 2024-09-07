@@ -74,7 +74,7 @@ export const createPerson = async (req, res) => {
     }
 
     // Log the addition in the Activities table
-    await logActivity(req.user.userId, 'ADD', 'PERSON', createdPerson.id, `${newPerson.first_name} ${newPerson.last_name}`);
+    await logActivity(req.user.userId, 'ADD', 'PERSON', createdPerson.id, '');
 
     // Commit transaction
     await commitTransaction(dbConnection);
@@ -128,7 +128,7 @@ export const updatePerson = async (req, res) => {
     }
 
     // Log the addition in the Activities table
-    await logActivity(req.user.userId, 'UPDATE', 'PERSON', updatedPerson.id, `${updatedPerson.first_name} ${updatedPerson.last_name}`);
+    await logActivity(req.user.userId, 'UPDATE', 'PERSON', updatedPerson.id, '');
 
     // COMMIT TRANSACTION
     await commitTransaction(dbConnection);
@@ -167,7 +167,7 @@ export const deletePerson = async (req, res) => {
     await delAssociationByPersonId(personId);
 
     // Log the deletion in the Activities table
-    await logActivity(req.user.userId, 'DELETE', 'PERSON', personId, `${person.first_name} ${person.last_name}`);
+    await logActivity(req.user.userId, 'DELETE', 'PERSON', personId, '');
 
     // Commit transaction
     await commitTransaction(dbConnection);

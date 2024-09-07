@@ -21,6 +21,7 @@ export const createAttachment = async (req, res) => {
     const user = req.user;
     logger.info(`user=${user.username} - create attachment`);
 
+    const { personId } = req.query;
     const { event_id, description } = req.body;
     try {
         // check if a file is provided
@@ -41,7 +42,7 @@ export const createAttachment = async (req, res) => {
         const attachmentId = await addAttachment(event_id, attachmentPath, description);
 
         // Log the addition in the Activities table
-        await logActivity(req.user.userId, 'ADD', 'ATTACHMENT', event_id, ``);
+        await logActivity(req.user.userId, 'ADD', 'ATTACHMENT', personId, ``);
 
         // finnaly return the new attachment
         const newAttachment = await getAttachmentById(attachmentId);
@@ -57,11 +58,12 @@ export const deleteAttachment = async (req, res) => {
     logger.info(`user=${user.username} - delete attachment`);
 
     const { id } = req.params;
+    const { personId } = req.query;
     try {
         await delAttachmentById(id);
 
         // Log the addition in the Activities table
-        await logActivity(req.user.userId, 'DELETE', 'ATTACHMENT', id, ``);
+        await logActivity(req.user.userId, 'DELETE', 'ATTACHMENT', personId, ``);
 
         res.json({ message: 'Attachment deleted successfully' });
     } catch (err) {

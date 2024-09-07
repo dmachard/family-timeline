@@ -60,7 +60,7 @@ export const createRelative = async (req, res) => {
         }
 
         // Log the addition in the Activities table
-        await logActivity(req.user.userId, 'ADD', 'RELATIVE', person_id, `${person.first_name} ${person.last_name}`);
+        await logActivity(req.user.userId, 'ADD', 'RELATIVE', person_id, '');
 
         // Commit transaction
         await commitTransaction(dbConnection);
@@ -90,14 +90,13 @@ export const deleteRelative = async (req, res) => {
         }
 
         const { person_id, related_person_id } = relationship;
-        const person = await getPersonById(person_id);
-
+        
         // Delete the relationship and its reciprocal
         await delRelativeByPersonId(person_id, related_person_id);
         await delRelativeByPersonId(related_person_id, person_id);
 
         // Log the deletion in the Activities table
-        await logActivity(req.user.userId, 'DELETE', 'RELATIVE', person_id, `${person.first_name} ${person.last_name}`);
+        await logActivity(req.user.userId, 'DELETE', 'RELATIVE', person_id, '');
 
         // Commit transaction
         await commitTransaction(dbConnection);

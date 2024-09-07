@@ -6,7 +6,7 @@
         <div class="modal-header">
           <h5 id="eventsModalLabel" class="modal-title">
             {{ $t('manage-events') }}
-            <span v-if="eventToDelete">
+            <span v-if="isDeleting">
               - {{ $t('delete') }}
             </span>
             <span v-if="isAttachmentsEditing">
@@ -19,11 +19,11 @@
         <!-- Modal Body -->
         <div class="modal-body">
           <!-- Events Table -->
-          <div v-if="!isEditing && !eventToDelete && !isAttachmentsEditing && !isAssociatingPeople">
+          <div v-if="!isEditing && !isDeleting && !isAttachmentsEditing && !isAssociatingPeople">
             <!-- Person Selector -->
-            <div v-if="!eventToDelete" class="mb-3">
+            <div class="mb-3">
               <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
-              <select id="personSelect" v-model="selectedPersonId" :disabled="isEditing || eventToDelete || isAttachmentsEditing" class="form-select" @change="onPersonSelected">
+              <select id="personSelect" v-model="selectedPersonId" class="form-select" @change="onPersonSelected">
                 <option v-for="person in persons" :key="person.id" :value="person.id">
                   {{ person.first_name }} {{ person.last_name }}
                 </option>
@@ -58,9 +58,9 @@
           <!-- Event Form (Add/Edit) - Visible only during editing/adding -->
           <div v-if="isEditing">
             <!-- Person Selector -->
-            <div v-if="!eventToDelete" class="mb-3">
+            <div class="mb-3">
               <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
-              <select id="personSelect" v-model="selectedPersonId" :disabled="isEditing || eventToDelete || isAttachmentsEditing" class="form-select" @change="onPersonSelected">
+              <select id="personSelect" v-model="selectedPersonId" :disabled="isEditing" class="form-select" @change="onPersonSelected">
                 <option v-for="person in persons" :key="person.id" :value="person.id">
                   {{ person.first_name }} {{ person.last_name }}
                 </option>
@@ -126,7 +126,7 @@
           </div>
 
           <!-- Deletion Confirmation - Visible only when an event is selected for deletion -->
-          <div v-if="eventToDelete">
+          <div v-if="isDeleting">
             <div class="alert alert-warning" role="alert">
               {{ $t('delete-event-confirmation-message') }} "{{ $t(selectedEvent.event_type) }}" {{ $t('for') }} {{ getPersonName(selectedPersonId) }}?
             </div>
@@ -137,9 +137,9 @@
             <div class="row mb-3">
               <div class="col-md-6">
                 <!-- Person Selector -->
-                <div v-if="!eventToDelete" class="mb-3">
+                <div class="mb-3">
                   <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
-                  <select id="personSelect" v-model="selectedPersonId" :disabled="isEditing || eventToDelete || isAttachmentsEditing" class="form-select" @change="onPersonSelected">
+                  <select id="personSelect" v-model="selectedPersonId" :disabled="isAttachmentsEditing" class="form-select" @change="onPersonSelected">
                     <option v-for="person in persons" :key="person.id" :value="person.id">
                       {{ person.first_name }} {{ person.last_name }}
                     </option>
@@ -205,9 +205,9 @@
             <div class="row mb-3">
               <div class="col-md-6">
                 <!-- Person Selector -->
-                <div v-if="!eventToDelete" class="mb-3">
+                <div class="mb-3">
                   <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
-                  <select id="personSelect" v-model="selectedPersonId" :disabled="isEditing || eventToDelete || isAttachmentsEditing || isAssociatingPeople" class="form-select" @change="onPersonSelected">
+                  <select id="personSelect" v-model="selectedPersonId" :disabled="isAssociatingPeople" class="form-select" @change="onPersonSelected">
                     <option v-for="person in persons" :key="person.id" :value="person.id">
                       {{ person.first_name }} {{ person.last_name }}
                     </option>
@@ -245,7 +245,7 @@
             <div class="row mb-3">
               <div class="col-md-6">
                 <label for="personSelect" class="form-label">{{ $t('select-person-to-add') }}</label>
-                <select id="personSelect" v-model="selectedPersonToAssociate" class="form-select" @change="onPersonToAddSelected">
+                <select id="personSelect" v-model="selectedPersonToAssociate" class="form-select">
                   <option v-for="person in persons" :key="person.id" :value="person.id">
                     {{ person.first_name }} {{ person.last_name }}
                   </option>
@@ -283,7 +283,7 @@
             </button>
           </template>
 
-          <template v-else-if="eventToDelete">
+          <template v-else-if="isDeleting">
             <button type="button" class="btn btn-danger" @click="confirmDelete">
               {{ $t('delete') }}
             </button>
@@ -356,7 +356,7 @@ export default {
       isEditing: false,
       isAttachmentsEditing: false,
       isAssociatingPeople: false,
-      eventToDelete: null,  // Event scheduled for deletion
+      isDeleting: false,
       uploadInProgress: false,
       uploadProgress: 0,
       notification: null,
@@ -459,7 +459,7 @@ export default {
       try {
         if (this.eventBeingEdited.id) {
           // Edit existing event
-          currentEvent = await editEvent(this.eventBeingEdited.id, postData);
+          currentEvent = await editEvent(this.eventBeingEdited.id, postData, this.selectedPersonId);
 
           currentEvent.event_verified = currentEvent.event_verified === 1;
           const index = this.events.findIndex(e => e.id === this.eventBeingEdited.id);
@@ -489,19 +489,19 @@ export default {
     },
 
     deleteEvent(event) {
-      this.eventToDelete = event;
+      this.isDeleting = true;
       this.selectedEvent = event;
     },
 
     async confirmDelete() {
       try {
-        await deleteEvent(this.eventToDelete.id);
+        await deleteEvent(this.selectedEvent.id, this.selectedPersonId);
 
         // refresh list
-        this.events = this.events.filter(e => e.id !== this.eventToDelete.id);
-        this.eventToDelete = null;
+        this.events = this.events.filter(e => e.id !== this.selectedEvent.id);
 
         // Refresh filtered events after deletion
+        this.cancelDelete();
         this.onPersonSelected();
       } catch (err) {
         this.notification = 'Failed to delete event';
@@ -510,9 +510,8 @@ export default {
     },
 
     cancelDelete() {
-      this.eventToDelete = null;
+      this.isDeleting = false;
       this.selectedEvent = null;
-      this.error = null;
     },
 
     handleModalClose() {
@@ -526,7 +525,6 @@ export default {
       this.isEditing = false;
       this.isAttachmentsEditing = false;
       this.isAssociatingPeople = false;
-      this.eventToDelete = null;
       this.selectedPersonId = null;
       this.selectedPersonToAssociate = null;
       this.error = null;
@@ -551,7 +549,7 @@ export default {
 
     async deleteAttachment(attachment) {
       try {
-        await deleteAttachment(attachment.id);
+        await deleteAttachment(attachment.id, this.selectedPersonId);
 
         // remove from lists
         this.attachments = this.attachments.filter(p => p.id !== attachment.id);
@@ -580,7 +578,7 @@ export default {
         formData.append('attachment', files[i]);
 
         // Add new attachment
-        const newAttachment = await createAttachment(formData);
+        const newAttachment = await createAttachment(formData, this.selectedPersonId);
         this.attachments.push(newAttachment);
       }
       // Optionally, filter attachments related to the filtered events
@@ -623,7 +621,7 @@ export default {
 
     async removeAssociatedPerson(associationId) {
       try {
-        await deleteAssociation(associationId);
+        await deleteAssociation(associationId, this.selectedPersonId);
 
         // remove from lists
         this.associations = this.associations.filter(p => p.id !== associationId);
@@ -642,7 +640,7 @@ export default {
           'person_id':  this.selectedPersonToAssociate
         }
 
-        const newAssociation = await addAssociation(this.selectedEvent.id, postData);
+        const newAssociation = await addAssociation(this.selectedEvent.id, postData, this.selectedPersonId);
         this.associations.push(newAssociation);
 
         this.notification = 'Association added successfully';

@@ -5,7 +5,9 @@ export async function fetchAssociations () {
   return response.data
 }
 
-export async function deleteAssociation(associationId) {
-  const response = await apiClient.delete(`/associations/${associationId}`);
+export async function deleteAssociation(associationId, personId) {
+  const response = await apiClient.delete(`/associations/${associationId}`, {
+    params: { personId }
+  });
   return response.data;
 }

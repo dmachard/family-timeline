@@ -70,7 +70,7 @@
     "activity-ATTACHMENT": "attachment",
     "user": "User",
     "details": "Details",
-    "timestamp": "When",
+    "timestamp": "Date",
     "relative-ex-spouse": "ex-spouse of",
     "relative-spouse": "spouse of",
     "relative-brother": "brother of",
@@ -97,5 +97,7 @@
     "event-notes": "Description",
     "drag-drop-files-here": "Drag and drop your files here.",
     "select-person-to-add": "Person to associate to this event",
-    "notification": "Notification"
+    "notification": "Notification",
+    "who": "Who",
+    "what": "What"
 }

@@ -22,12 +22,13 @@ export const deleteAssociation = async (req, res) => {
     logger.info(`user=${user.username} - delete association`);
 
     const { id } = req.params;
+    const { personId } = req.query;
     try {
         // delete the event
         await delAssociationById(id);
 
         // Log the addition in the Activities table
-        await logActivity(req.user.userId, 'DELETE', 'ASSOCIATION', id, ``);
+        await logActivity(req.user.userId, 'DELETE', 'ASSOCIATION', personId, ``);
 
         res.json({ message: 'Association deleted successfully' });
     } catch (err) {
@@ -42,6 +43,7 @@ export const createAssociation = async (req, res) => {
     try {
         // get params
         const eventId = req.params.id;
+        const { personId } = req.query;
         const { person_id } = req.body;
 
         // Check if the association already exists
@@ -54,7 +56,7 @@ export const createAssociation = async (req, res) => {
         const associationId = await addAssociation(eventId, person_id);
 
         // Log the addition in the Activities table
-        await logActivity(req.user.userId, 'ADD', 'ASSOCIATION', person_id, ``);
+        await logActivity(req.user.userId, 'ADD', 'ASSOCIATION', personId, ``);
 
         // return association
         const newAssociation = await getAssociationById(associationId);
