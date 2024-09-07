@@ -112,12 +112,6 @@ const delRelatives = async (personId) => {
   await runQuery(query, [personId]);
 };
 
-// Function to delete connections associated with a person
-const delConnections = async (personId) => {
-  const query = 'DELETE FROM Connections WHERE person_id = ?';
-  await runQuery(query, [personId]);
-};
-
 // Function to get all persons
 const getEnrichedPersons = async () => {
   logger.debug(`get all persons`);
@@ -125,19 +119,19 @@ const getEnrichedPersons = async () => {
     SELECT p.id, p.first_name, p.last_name, p.notes, p.gender, p.picture,
       (SELECT e.event_date 
        FROM Events e 
-       JOIN Connections c ON e.id = c.event_id 
+       JOIN Associations c ON e.id = c.event_id 
        WHERE c.person_id = p.id AND e.event_type = 'birth') AS birth_date,
       (SELECT e.event_verified 
        FROM Events e 
-       JOIN Connections c ON e.id = c.event_id 
+       JOIN Associations c ON e.id = c.event_id 
        WHERE c.person_id = p.id AND e.event_type = 'birth') AS birth_date_verified,
       (SELECT e.event_date 
        FROM Events e 
-       JOIN Connections c ON e.id = c.event_id 
+       JOIN Associations c ON e.id = c.event_id 
        WHERE c.person_id = p.id AND e.event_type = 'death') AS death_date,
       (SELECT e.event_verified 
        FROM Events e 
-       JOIN Connections c ON e.id = c.event_id 
+       JOIN Associations c ON e.id = c.event_id 
        WHERE c.person_id = p.id AND e.event_type = 'death') AS death_date_verified
     FROM Persons p 
     ORDER BY p.id ASC;
@@ -162,19 +156,19 @@ const getEnrichedPerson = async (personId) => {
           SELECT p.id, p.first_name, p.last_name, p.notes, p.gender, p.picture,
             (SELECT e.event_date 
               FROM Events e 
-              JOIN Connections c ON e.id = c.event_id 
+              JOIN Associations c ON e.id = c.event_id 
               WHERE c.person_id = p.id AND e.event_type = 'birth') AS birth_date,
             (SELECT e.event_verified 
               FROM Events e 
-              JOIN Connections c ON e.id = c.event_id 
+              JOIN Associations c ON e.id = c.event_id 
               WHERE c.person_id = p.id AND e.event_type = 'birth') AS birth_date_verified,
             (SELECT e.event_date 
               FROM Events e 
-              JOIN Connections c ON e.id = c.event_id 
+              JOIN Associations c ON e.id = c.event_id 
               WHERE c.person_id = p.id AND e.event_type = 'death') AS death_date,
             (SELECT e.event_verified 
               FROM Events e 
-              JOIN Connections c ON e.id = c.event_id 
+              JOIN Associations c ON e.id = c.event_id 
               WHERE c.person_id = p.id AND e.event_type = 'death') AS death_date_verified
           FROM Persons p 
           WHERE p.id = ?`;
@@ -261,7 +255,7 @@ const getEvents = async (personId) => {
   const query = `
     SELECT e.id, e.event_type, e.event_date, e.event_verified, e.event_place, e.event_notes 
     FROM Events e 
-    JOIN Connections c ON e.id = c.event_id 
+    JOIN Associations c ON e.id = c.event_id 
     WHERE c.person_id = ? 
     ORDER BY e.event_date ASC;
   `;
@@ -294,7 +288,7 @@ const getChildren = async (personId) => {
   const query = `
     SELECT p.id as person_id, p.first_name, p.last_name, r.relation_type, e.event_date, e.event_verified, e.id, e.event_place, e.event_notes
     FROM Persons p 
-    JOIN Connections c ON p.id = c.person_id
+    JOIN Associations c ON p.id = c.person_id
     JOIN Events e ON e.event_type = 'birth' AND e.id = c.event_id
     JOIN Relatives r ON p.id = r.related_person_id 
     WHERE r.person_id = ? AND r.relation_type IN ('child');
@@ -333,7 +327,7 @@ const getEventRelations = async (personId, eventId, eventType) => {
         WHERE r.related_person_id IN (
           SELECT p.id
           FROM Persons p
-          JOIN Connections c ON p.id = c.person_id
+          JOIN Associations c ON p.id = c.person_id
           WHERE c.event_id = ? AND c.person_id != ?
         )
         AND r.relation_type = 'spouse';
@@ -357,6 +351,6 @@ export {
   getEvents, getRelatives, getChildren, getEventRelations, getEventAttachments, getPersonById,
   addPerson, addMiddleName,
   editPerson,
-  delPersonById, deleteMiddleNamesByPersonId, delRelatives, delConnections
+  delPersonById, deleteMiddleNamesByPersonId, delRelatives
 };
 

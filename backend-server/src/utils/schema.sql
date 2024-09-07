@@ -51,15 +51,15 @@ CREATE TABLE IF NOT EXISTS  Relatives (
 -- Table Events
 CREATE TABLE IF NOT EXISTS Events (
     id INTEGER PRIMARY KEY,
-    event_type TEXT CHECK(event_type IN ('birth', 'death', 'marriage', 'divorce', 'civil union', 'civil separation', 'other')),
+    event_type TEXT CHECK(event_type IN ('birth', 'death', 'marriage', 'divorce', 'civil union', 'civil separation', 'other') AND event_type <> ''),
     event_date DATE,
     event_verified BOOLEAN DEFAULT FALSE,
     event_place VARCHAR(255),
     event_notes TEXT
 );
 
--- Table Connections
-CREATE TABLE IF NOT EXISTS Connections (
+-- Table Associations
+CREATE TABLE IF NOT EXISTS Associations (
     id INTEGER PRIMARY KEY,
     event_id INTEGER,
     person_id INTEGER,

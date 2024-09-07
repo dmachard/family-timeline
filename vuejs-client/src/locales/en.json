@@ -28,6 +28,7 @@
     "divorcedFrom": "Divorced from",
     "child": "Child",
     "marriage": "Marriage",
+    "divorce": "Divorce",
     "attachmentView": "Attachment overview",
     "startYear": "Start year",
     "endYear": "End year",
@@ -79,5 +80,21 @@
     "select-related-person": "Select a person",
     "select-type-relation": "Select the type of relationship",
     "select-primary-person": "Select the related person",
-    "delete-warning-relative": "Delete relation between"
-} 
+    "delete-warning-relative": "Delete relation between",
+    "selected-person": "Person",
+    "manage-events": "Manage events",
+    "delete-event-confirmation-message": "Are you sure to delete the event",
+    "event-type": "Event",
+    "for": "for",
+    "terminate": "Terminate",
+    "other": "Other",
+    "civil-union": "Civil Union",
+    "civil-separation": "Civil Separation",
+    "event-date": "Date",
+    "event-place": "Place",
+    "event-verified": "This event is verified?",
+    "event-notes": "Description",
+    "drag-drop-files-here": "Drag and drop your files here.",
+    "select-person-to-add": "Person to associate to this event",
+    "notification": "Notification"
+}

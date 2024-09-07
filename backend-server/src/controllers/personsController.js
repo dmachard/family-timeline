@@ -7,7 +7,8 @@ import { profilePictureUpload, deleteProfilePicture } from '../services/uploadSe
 import { getEnrichedPersons, getAllPersons, getAllMiddleNames, getPersonById } from '../services/personsService.js';
 import { addPerson, addMiddleName } from '../services/personsService.js';
 import { editPerson } from '../services/personsService.js';
-import { delPersonById, deleteMiddleNamesByPersonId, delRelatives, delConnections } from '../services/personsService.js';
+import { delPersonById, deleteMiddleNamesByPersonId, delRelatives } from '../services/personsService.js';
+import { delAssociationByPersonId } from '../services/associationsService.js';
 
 export const fetchEnrichedPersons = async (req, res) => {
   // get authenticated user with req.user
@@ -163,7 +164,7 @@ export const deletePerson = async (req, res) => {
     await delPersonById(personId); 
     await deleteMiddleNamesByPersonId(personId); 
     await delRelatives(personId); 
-    await delConnections(personId);
+    await delAssociationByPersonId(personId);
 
     // Log the deletion in the Activities table
     await logActivity(req.user.userId, 'DELETE', 'PERSON', personId, `${person.first_name} ${person.last_name}`);

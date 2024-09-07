@@ -4,11 +4,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
-import config from '../config.js'; 
-import { 
-    fetchEnrichedPersons, fetchPersons, fetchMiddleNames, 
-    createPerson, updatePerson, deletePerson
-} from '../controllers/personsController.js';
+import config from '../config.js';
+
+import { fetchEnrichedPersons, fetchPersons, fetchMiddleNames } from '../controllers/personsController.js';
+import { createPerson, updatePerson, deletePerson } from '../controllers/personsController.js';
+import { createEvent } from '../controllers/eventsController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,5 +29,6 @@ router.delete('/:id', deletePerson);
 router.get('/middle-names', fetchMiddleNames);
 router.get('/enriched', fetchEnrichedPersons);
 
+router.post('/:id/events', createEvent);
 
 export default router;

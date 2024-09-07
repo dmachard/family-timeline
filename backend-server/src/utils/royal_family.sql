@@ -166,45 +166,45 @@ INSERT INTO Events (event_type, event_date, event_place, event_notes, event_veri
 INSERT INTO Events (event_type, event_date, event_place, event_notes, event_verified) VALUES ('death', '1975-06-10', 'London, England', '', FALSE);
 INSERT INTO Events (event_type, event_date, event_place, event_notes, event_verified) VALUES ('birth', '1892-05-23', 'London, England', '', FALSE);
 
--- Insert data into Connections table
-INSERT INTO Connections (event_id, person_id) VALUES (1, 1);
-INSERT INTO Connections (event_id, person_id) VALUES (2, 1);
-INSERT INTO Connections (event_id, person_id) VALUES (3, 2);
-INSERT INTO Connections (event_id, person_id) VALUES (4, 3);
-INSERT INTO Connections (event_id, person_id) VALUES (5, 3);
-INSERT INTO Connections (event_id, person_id) VALUES (6, 2);
-INSERT INTO Connections (event_id, person_id) VALUES (6, 3);
-INSERT INTO Connections (event_id, person_id) VALUES (7, 4);
-INSERT INTO Connections (event_id, person_id) VALUES (8, 5);
-INSERT INTO Connections (event_id, person_id) VALUES (9, 6);
-INSERT INTO Connections (event_id, person_id) VALUES (10, 7);
-INSERT INTO Connections (event_id, person_id) VALUES (11, 8);
-INSERT INTO Connections (event_id, person_id) VALUES (12, 8);
-INSERT INTO Connections (event_id, person_id) VALUES (13, 9);
-INSERT INTO Connections (event_id, person_id) VALUES (14, 9);
-INSERT INTO Connections (event_id, person_id) VALUES (15, 1);
-INSERT INTO Connections (event_id, person_id) VALUES (15, 8);
-INSERT INTO Connections (event_id, person_id) VALUES (16, 10);
-INSERT INTO Connections (event_id, person_id) VALUES (17, 10);
-INSERT INTO Connections (event_id, person_id) VALUES (17, 4);
-INSERT INTO Connections (event_id, person_id) VALUES (18, 10);
-INSERT INTO Connections (event_id, person_id) VALUES (19, 11);
-INSERT INTO Connections (event_id, person_id) VALUES (20, 12);
-INSERT INTO Connections (event_id, person_id) VALUES (21, 10);
-INSERT INTO Connections (event_id, person_id) VALUES (21, 4);
-INSERT INTO Connections (event_id, person_id) VALUES (22, 13);
-INSERT INTO Connections (event_id, person_id) VALUES (23, 13);
-INSERT INTO Connections (event_id, person_id) VALUES (23, 4);
-INSERT INTO Connections (event_id, person_id) VALUES (24, 4);
-INSERT INTO Connections (event_id, person_id) VALUES (25, 2);
-INSERT INTO Connections (event_id, person_id) VALUES (26, 14); -- birth de John Spencer
-INSERT INTO Connections (event_id, person_id) VALUES (27, 14); -- death de John Spencer
-INSERT INTO Connections (event_id, person_id) VALUES (28, 15); -- birth de Frances Shand Kydd
-INSERT INTO Connections (event_id, person_id) VALUES (29, 15); -- death de Frances Shand Kydd
-INSERT INTO Connections (event_id, person_id) VALUES (30, 17); -- birth de Cynthia Hamilton
-INSERT INTO Connections (event_id, person_id) VALUES (31, 17); -- death de Cynthia Hamilton
-INSERT INTO Connections (event_id, person_id) VALUES (32, 16); -- birth de Albert Spencer
-INSERT INTO Connections (event_id, person_id) VALUES (33, 16); -- death de Albert Spencer
+-- Insert data into Associations table
+INSERT INTO Associations (event_id, person_id) VALUES (1, 1);
+INSERT INTO Associations (event_id, person_id) VALUES (2, 1);
+INSERT INTO Associations (event_id, person_id) VALUES (3, 2);
+INSERT INTO Associations (event_id, person_id) VALUES (4, 3);
+INSERT INTO Associations (event_id, person_id) VALUES (5, 3);
+INSERT INTO Associations (event_id, person_id) VALUES (6, 2);
+INSERT INTO Associations (event_id, person_id) VALUES (6, 3);
+INSERT INTO Associations (event_id, person_id) VALUES (7, 4);
+INSERT INTO Associations (event_id, person_id) VALUES (8, 5);
+INSERT INTO Associations (event_id, person_id) VALUES (9, 6);
+INSERT INTO Associations (event_id, person_id) VALUES (10, 7);
+INSERT INTO Associations (event_id, person_id) VALUES (11, 8);
+INSERT INTO Associations (event_id, person_id) VALUES (12, 8);
+INSERT INTO Associations (event_id, person_id) VALUES (13, 9);
+INSERT INTO Associations (event_id, person_id) VALUES (14, 9);
+INSERT INTO Associations (event_id, person_id) VALUES (15, 1);
+INSERT INTO Associations (event_id, person_id) VALUES (15, 8);
+INSERT INTO Associations (event_id, person_id) VALUES (16, 10);
+INSERT INTO Associations (event_id, person_id) VALUES (17, 10);
+INSERT INTO Associations (event_id, person_id) VALUES (17, 4);
+INSERT INTO Associations (event_id, person_id) VALUES (18, 10);
+INSERT INTO Associations (event_id, person_id) VALUES (19, 11);
+INSERT INTO Associations (event_id, person_id) VALUES (20, 12);
+INSERT INTO Associations (event_id, person_id) VALUES (21, 10);
+INSERT INTO Associations (event_id, person_id) VALUES (21, 4);
+INSERT INTO Associations (event_id, person_id) VALUES (22, 13);
+INSERT INTO Associations (event_id, person_id) VALUES (23, 13);
+INSERT INTO Associations (event_id, person_id) VALUES (23, 4);
+INSERT INTO Associations (event_id, person_id) VALUES (24, 4);
+INSERT INTO Associations (event_id, person_id) VALUES (25, 2);
+INSERT INTO Associations (event_id, person_id) VALUES (26, 14); -- birth de John Spencer
+INSERT INTO Associations (event_id, person_id) VALUES (27, 14); -- death de John Spencer
+INSERT INTO Associations (event_id, person_id) VALUES (28, 15); -- birth de Frances Shand Kydd
+INSERT INTO Associations (event_id, person_id) VALUES (29, 15); -- death de Frances Shand Kydd
+INSERT INTO Associations (event_id, person_id) VALUES (30, 17); -- birth de Cynthia Hamilton
+INSERT INTO Associations (event_id, person_id) VALUES (31, 17); -- death de Cynthia Hamilton
+INSERT INTO Associations (event_id, person_id) VALUES (32, 16); -- birth de Albert Spencer
+INSERT INTO Associations (event_id, person_id) VALUES (33, 16); -- death de Albert Spencer
 
 -- Insert data into Attachments table
 INSERT INTO Attachments (event_id, file_path, description) VALUES (24, '/attachments/193592c6-b4b7-4e1a-bf3f-6340aa20591f.jpg', 'Coronation Balcony 2023');
