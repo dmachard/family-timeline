@@ -328,6 +328,7 @@
     </div>
   </div>
 </template>
+
 <script>
 import { mapActions } from 'vuex';
 import fetchDataMixin from '@/mixins/fetchDataMixin';
@@ -414,7 +415,8 @@ export default {
         .map(association => {
           return this.events.find(event => event.id === association.event_id);
         })
-        .filter(event => event !== undefined);
+        .filter(event => event !== undefined)
+        .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
 
       // Optionally, filter attachments related to the filtered events
       this.filteredAttachments = this.attachments.filter(attachment =>
