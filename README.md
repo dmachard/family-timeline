@@ -1,7 +1,7 @@
 # Family Timeline
 
 <p align="center">
-    <strong>Manage your family data with timeline approach.</strong>
+    <strong>Manage your family tree with timeline view.</strong>
     </br>
     <img src="vuejs-client/public/favicon.png" alt="Family-Timeline" style="max-width: 100px;"/>
 </p>
