@@ -2,14 +2,21 @@
 
 <p align="center">
     <strong>Manage your family data with timeline approach.</strong>
+    </br>
     <img src="vuejs-client/public/favicon.png" alt="Family-Timeline" style="max-width: 100px;"/>
 </p>
 
 ![overview](./docs/images/overview.png)
 
-Supported languages:
+Languages:
 - [x] English
 - [x] Français
+
+Features:
+- People Management
+- Family Event Management
+- Relatives and Associations Management:
+- Image upload
 
 ## Quick start
 
