@@ -4,7 +4,10 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 id="personsModalLabel" class="modal-title">
-            {{ $t('manage-persons') }} - {{ totalPersonsCount }} {{ $t('persons') }}
+            {{ $t('manage-persons') }}
+            <span v-if="!isEditing && !personToDelete">
+              - {{ totalPersonsCount }} {{ $t('persons') }}
+            </span>
             <span v-if="isEditing">
               - {{ personBeingEdited.id ? 'Edit' : 'Add' }}
             </span>
@@ -24,27 +27,58 @@
           <!-- Add/Edit Person Form -->
           <div v-if="isEditing" class="container">
             <form @submit.prevent="savePerson">
+              <!-- First and Last Name -->
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label for="firstName" class="form-label">{{ $t('first-name') }}</label>
-                  <input id="firstName" v-model="personBeingEdited.first_name" type="text" class="form-control" required>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person-fill" /></span>
+                    <input id="firstName" v-model="personBeingEdited.first_name" type="text" class="form-control" placeholder="John" required>
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label for="lastName" class="form-label">{{ $t('last-name') }}</label>
-                  <input id="lastName" v-model="personBeingEdited.last_name" type="text" class="form-control" required>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person-fill" /></span>
+                    <input id="lastName" v-model="personBeingEdited.last_name" type="text" class="form-control" placeholder="Doe" required>
+                  </div>
                 </div>
               </div>
 
+              <!-- Middle Names -->
               <div class="mb-3">
                 <label for="middleNames" class="form-label">{{ $t('middle-names') }}</label>
-                <input id="middleNames" v-model="personBeingEdited.middle_names_display" type="text" class="form-control" :placeholder="$t('middle-names-placeholder')">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person-badge-fill" /></span>
+                  <input id="middleNames" v-model="personBeingEdited.middle_names_display" type="text" class="form-control" :placeholder="$t('middle-names-placeholder')">
+                </div>
               </div>
 
+              <!-- Date of Birth and Date of Death -->
+              <div class="row mb-3" :hidden="personBeingEdited.id">
+                <div class="col-md-6">
+                  <label for="birthDate" class="form-label">{{ $t('birth') }}</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar-event" /></span>
+                    <input id="birthDate" v-model="personBeingEdited.birth_date" type="date" class="form-control" placeholder="YYYY-MM-DD">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="deathDate" class="form-label">{{ $t('death') }}</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-calendar-event" /></span>
+                    <input id="deathDate" v-model="personBeingEdited.death_date" type="date" class="form-control" placeholder="YYYY-MM-DD">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes -->
               <div class="mb-3">
                 <label for="notes" class="form-label">{{ $t('notes') }}</label>
                 <textarea id="notes" v-model="personBeingEdited.notes" class="form-control" rows="3" />
               </div>
 
+              <!-- Gender -->
               <div class="mb-3">
                 <label for="gender" class="form-label">{{ $t('gender') }}</label>
                 <select id="gender" v-model="personBeingEdited.gender" class="form-select">
@@ -60,11 +94,12 @@
                 </select>
               </div>
 
+              <!-- Picture Upload -->
               <div class="mb-3">
                 <label for="picture" class="form-label">{{ $t('picture') }}</label>
                 <input id="picture" type="file" class="form-control" @change="handleFileUpload">
-                <div class="mt-2">
-                  <img v-if="personBeingEdited.picture" :src="displayedPicture" alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
+                <div class="mt-2 text-center">
+                  <img v-if="personBeingEdited.picture" :src="displayedPicture" alt="Profile Picture" class="img-thumbnail rounded-circle" style="max-width: 150px;">
                 </div>
               </div>
             </form>
@@ -369,7 +404,9 @@ export default {
         middle_names_display: '',
         notes: '',
         gender: 'Undefined',
-        picture: null
+        picture: null,
+        birth_date: '',
+        death_date: ''
        };
        this.uploadedPicture = null; 
       this.isEditing = true;
@@ -396,11 +433,15 @@ export default {
       formData.append('middle_names', this.personBeingEdited.middle_names_display.split(',').map(name => name.trim()));
       formData.append('notes', this.personBeingEdited.notes);
       formData.append('gender', this.personBeingEdited.gender);
+      formData.append('birth_date', this.personBeingEdited.birth_date);
+      formData.append('death_date', this.personBeingEdited.death_date);
 
       // Append picture if a new one was uploaded
       if (this.uploadedPicture) {
         formData.append('picture', this.uploadedPicture);
       }
+      
+      console.log(formData);
       
       // created person returned by server
       let currentPerson;
