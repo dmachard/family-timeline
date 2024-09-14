@@ -415,7 +415,9 @@ export default {
     startEditPerson(person) {
       this.personBeingEdited = { 
         ...person, 
-        middle_names_display: this.getMiddleNames(person.id).map(mn => mn.middle_name).join(', ')
+        middle_names_display: this.getMiddleNames(person.id).map(mn => mn.middle_name).join(', '),
+        birth_date: '',
+        death_date: ''
       };
       this.uploadedPicture = null; 
       this.isEditing = true;
@@ -440,8 +442,6 @@ export default {
       if (this.uploadedPicture) {
         formData.append('picture', this.uploadedPicture);
       }
-      
-      console.log(formData);
       
       // created person returned by server
       let currentPerson;
