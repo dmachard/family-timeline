@@ -442,7 +442,7 @@ export default {
       if (this.uploadedPicture) {
         formData.append('picture', this.uploadedPicture);
       }
-      
+
       // created person returned by server
       let currentPerson;
 
