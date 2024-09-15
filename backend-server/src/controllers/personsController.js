@@ -10,6 +10,8 @@ import { editPerson } from '../services/personsService.js';
 import { delPersonById, deleteMiddleNamesByPersonId, delRelatives } from '../services/personsService.js';
 import { delAssociationByPersonId } from '../services/associationsService.js';
 import { deleteLogsByPersonId } from '../services/activitiesService.js';
+import { addEvent} from '../services/eventsService.js';
+import { addAssociation } from '../services/associationsService.js';
 
 export const fetchEnrichedPersons = async (req, res) => {
   // get authenticated user with req.user
@@ -58,7 +60,7 @@ export const createPerson = async (req, res) => {
   try {
     await beginTransaction(dbConnection);
 
-    const newPerson = req.body; 
+    const newPerson = req.body;
 
     // If a new picture is uploaded, handle the upload
     if (req.file) {
@@ -69,10 +71,29 @@ export const createPerson = async (req, res) => {
     const createdPerson = await addPerson(newPerson); 
 
     // Then, add the new middle names
-    const middleNames = newPerson.middle_names.split(',').map(name => name.trim());
-    for (const middleName of middleNames) {
-      await addMiddleName(createdPerson.id, middleName);
+    if (newPerson.middle_names && newPerson.middle_names.trim()) {
+      const middleNames = newPerson.middle_names.split(',').map(name => name.trim());
+      for (const middleName of middleNames) {
+        await addMiddleName(createdPerson.id, middleName);
+      }
     }
+
+    // birth ?
+    if (newPerson.birth_date){
+      // create event
+      const birthEventId = await addEvent("birth", newPerson.birth_date, false, '', '');
+      // connect event to person
+      await addAssociation(birthEventId, createdPerson.id);
+    }
+
+    // death ?
+    if (newPerson.death_date){
+      // create event
+      const deathEventId = await addEvent("death", newPerson.death_date, false, '', '');
+      // connect event to person
+      await addAssociation(deathEventId, createdPerson.id);
+    }
+
 
     // Log the addition in the Activities table
     await logActivity(req.user.userId, 'ADD', 'PERSON', createdPerson.id, '');

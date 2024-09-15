@@ -5,6 +5,7 @@ This project is based on the following frameworks
 - [VueJS 3](https://vuejs.org/)
 - [Boostrap 5](https://getbootstrap.com/)
 - [NodeJS](https://nodejs.org/)
+- [D3](https://d3js.org/)
 
 ## Project Setup
 

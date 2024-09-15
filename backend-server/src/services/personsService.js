@@ -53,8 +53,8 @@ const addPerson = async (person) => {
   const values = [
     person.first_name,
     person.last_name,
-    person.notes || null,
-    person.gender || null,
+    person.notes || '',
+    person.gender || 'Undefined',
     person.picture || null
   ];
   

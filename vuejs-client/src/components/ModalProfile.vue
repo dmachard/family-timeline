@@ -105,7 +105,8 @@
                   <p class="card-text mb-0">
                     {{ event.event_date }}
                   </p>
-                  <p class="card-text mb-0">
+                  <p v-if="event.event_place" class="card-text mb-0">
+                    <i class="bi bi-geo-alt-fill" />
                     {{ event.event_place }}
                   </p>
                   <p v-if="event.event_notes" class="card-text mb-0">
