@@ -57,6 +57,8 @@ export const createRelative = async (req, res) => {
             await addRelative(related_person_id, genderOfPerson === 'Female' ? 'sister' : 'brother', person_id);
         } else if (relation_type === 'brother') {
             await addRelative(related_person_id, genderOfPerson === 'Male' ? 'brother' : 'sister', person_id);
+        } else if (relation_type === 'child') {
+            await addRelative(related_person_id, genderOfPerson === 'Male' ? 'father' : 'mother', person_id);
         }
 
         // Log the addition in the Activities table
@@ -90,7 +92,7 @@ export const deleteRelative = async (req, res) => {
         }
 
         const { person_id, related_person_id } = relationship;
-        
+
         // Delete the relationship and its reciprocal
         await delRelativeByPersonId(person_id, related_person_id);
         await delRelativeByPersonId(related_person_id, person_id);
