@@ -80,7 +80,7 @@
     "relative-mother": "mère de",
     "select-related-person": "Sélectionnez une personne",
     "select-type-relation": "Sélectionnez une relation",
-    "select-primary-person": "Sélectionnez la personne associée à cette relation",
+    "select-primary-person": "Sélectionnez la personne à associer",
     "delete-warning-relative": "Supprimer la relation entre",
     "selected-person": "Personne",
     "manage-events": "Gestion des évènements",
@@ -99,6 +99,7 @@
     "select-person-to-add": "Personne à associer à cet évènement",
     "notification": "Notification",
     "who": "Personne",
-    "what": "Action"
+    "what": "Action",
+    "no-result": "Aucun résultat"
 }
   

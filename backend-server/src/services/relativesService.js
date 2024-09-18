@@ -45,9 +45,9 @@ const delRelativeByPersonId = async (personId, relatedPersonId) => {
 
     const query = `DELETE FROM Relatives WHERE person_id = ? AND related_person_id = ?`;
     const changes = await runDeleteQuery(query, [personId, relatedPersonId]);
-    if (changes === 0) {
-      throw new Error('Relative not found');
-    }
+    // if (changes === 0) {
+    //   throw new Error('Relative not found');
+    // }
     return changes;
 };
 

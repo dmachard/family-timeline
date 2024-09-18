@@ -219,6 +219,39 @@ export default {
       return spouseDetails
     },
 
+    filterChildrenNoSpouse (personId) {
+      // Find the person with the given personId
+      const person = this.dataPersons.find(p => p.id === personId)
+
+      // If the person is not found, return an empty array
+      if (!person) {
+        return []
+      }
+
+      // Extract the list of relatives (children)
+      const relatives = person.relatives || []
+
+      // Filter the relatives to get only those with relation_type 'child'
+      const children = relatives.filter(relative => relative.relation_type === 'child')
+
+      // Get the full details of the children from the data list and filter by absence of spouse
+      const childrenWithoutSpouse = children.map(child => {
+        // Find the full details of each child from the data
+        const childDetail = this.dataPersons.find(p => p.id === child.id)
+
+        // Check if the child does not have another parent (spouse) in their relatives
+        const hasNoSpouse = !childDetail.relatives.some(relative =>
+          (relative.relation_type === 'father' && relative.id !== personId) ||
+          (relative.relation_type === 'mother' && relative.id !== personId)
+        )
+
+        // Return the child detail if no other spouse/parent is found
+        return hasNoSpouse ? childDetail : null
+      }).filter(child => child !== null)
+
+      // Return the list of children without spouse details
+      return childrenWithoutSpouse
+    },
     filterChildren (personId, spouseId) {
       // Find the person with the given personId
       const person = this.dataPersons.find(p => p.id === personId)
@@ -306,19 +339,58 @@ export default {
       const periods = []
       let lastEventYear = birthYear
 
-      // Handle case where there are no spouses or children
+      // Handle case where there are no spouses
       if (!spouses.length) {
-        let color = familyColor !== null ? familyColor : this.defaultColor;
+        let color = familyColor !== null ? familyColor : this.defaultColor
 
-        // this period is too small, no background color for this case
-        if (birthYear == endYear){
-          color = "none";
+        // Check if the person has children (without spouse)
+        const children = this.filterChildrenNoSpouse(person.id)
+
+        // If no children, create a single period from birth to death
+        if (children.length === 0) {
+          // this period is too small, no background color for this case
+          if (birthYear === endYear) {
+            color = "none"
+          }
+
+          periods.push({
+            start: birthYear,
+            end: endYear,
+            color: color,
+            birthDateVerified,
+            deathDateVerified,
+            stillAlive: person.death_date === null
+          })
+          return periods
         }
 
+        // If the person has children, create two periods:
+        // 1. Before the first child is born
+        // 2. After the first child is born
+        const firstChildBirthYear = new Date(children[0].birth_date).getFullYear()
+
+        // Period before the first child
+        if (birthYear < firstChildBirthYear) {
+          periods.push({
+            start: birthYear,
+            end: firstChildBirthYear,
+            color: this.defaultColor,
+            birthDateVerified,
+            deathDateVerified,
+            stillAlive: person.death_date === null
+          })
+        }
+
+        // Generate a unique family key by sorting the IDs and joining them
+        const familyNoSpouseKey = this.getFamilyKey(person.id, 0)
+        const familyNoSpouseColor = this.paleColor(this.colorScale(person.id))
+        this.familyColorsMap.set(familyNoSpouseKey, familyNoSpouseColor)
+
+        // Period after the first child
         periods.push({
-          start: birthYear,
+          start: firstChildBirthYear,
           end: endYear,
-          color: color,
+          color: familyColor !== null ? familyColor : familyNoSpouseColor,
           birthDateVerified,
           deathDateVerified,
           stillAlive: person.death_date === null
@@ -743,6 +815,17 @@ export default {
 
       // draw other associated persons
       const spouses = this.filterSpouses(person.id)
+      if (spouses.length === 0 ) {
+        const familyNoSpouseColor = this.familyColorsMap.get(this.getFamilyKey(person.id, 0))
+        const isChild = true
+        const children = this.filterChildrenNoSpouse(person.id)
+        for (const child of children) {
+          if (!this.displayedPersons.has(child.id)) {
+            const childPeriods = this.getPeriods(child, familyNoSpouseColor, isChild)
+            yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
+          }
+        }
+      }
       for (const spouse of spouses) {
         const familyColor = this.familyColorsMap.get(this.getFamilyKey(person.id, spouse.id))
         let isChild = false

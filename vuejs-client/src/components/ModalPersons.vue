@@ -99,7 +99,7 @@
                 <label for="picture" class="form-label">{{ $t('picture') }}</label>
                 <input id="picture" type="file" class="form-control" @change="handleFileUpload">
                 <div class="mt-2 text-center">
-                  <img v-if="personBeingEdited.picture" :src="displayedPicture" alt="Profile Picture" class="img-thumbnail rounded-circle" style="max-width: 150px;">
+                  <img v-if="personBeingEdited.picture" :src="displayedPicture" alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
                 </div>
               </div>
             </form>
