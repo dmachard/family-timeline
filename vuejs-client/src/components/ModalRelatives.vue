@@ -28,48 +28,114 @@
 
           <!-- Add Relative Form -->
           <div v-else-if="isAddingRelative">
-            <form @submit.prevent="confirmAdd">
-              <div class="mb-3">
-                <label for="relatedPersonId" class="form-label">{{ $t('select-related-person') }}</label>
-                <select id="relatedPersonId" v-model="newRelative.related_person_id" class="form-select" required>
-                  <option v-for="person in persons" :key="person.id" :value="person.id">
-                    {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
-                  </option>
-                </select>
+            <form class="needs-validation was-validated" @submit.prevent="confirmAdd">
+              <div class="row">
+                <div class="col-md-6">
+                  <!-- Autocomplete for Related Person -->
+                  <div class="mb-3 position-relative">
+                    <input
+                      id="relatedPersonInput"
+                      v-model="relatedPersonInput"
+                      class="form-control"
+                      autocomplete="off"
+                      required
+                      @input="filterRelativePersons"
+                    >
+                    <div class="invalid-feedback">
+                      {{ $t('select-related-person') }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3 position-relative">
+                    <div class="list-group list-group-flush scrollable-list">
+                      <a v-if="filteredPersons.length === 0" class="list-group-item" hred="#">
+                        {{ $t('no-result') }}
+                      </a>
+                      <a
+                        v-for="person in filteredPersons"
+                        :key="person.id"
+                        href="#"
+                        class="list-group-item list-group-item-action"
+                        @mousedown="selectRelatedPerson(person)"
+                      >
+                        {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="mb-3">
-                <label for="relationType" class="form-label">{{ $t('select-type-relation') }}</label>
-                <select id="relationType" v-model="newRelative.relation_type" class="form-select" required>
-                  <option value="father">
-                    {{ $t("relative-"+'father') }}
-                  </option>
-                  <option value="mother">
-                    {{ $t("relative-"+'mother') }}
-                  </option>
-                  <option value="child">
-                    {{ $t("relative-"+'child') }}
-                  </option>
-                  <option value="sister">
-                    {{ $t("relative-"+'sister') }}
-                  </option>
-                  <option value="brother">
-                    {{ $t("relative-"+'brother') }}
-                  </option>
-                  <option value="spouse">
-                    {{ $t("relative-"+'spouse') }}
-                  </option>
-                  <option value="ex-spouse">
-                    {{ $t("relative-"+'ex-spouse') }}
-                  </option>
-                </select>
+
+              <!-- Relation Type Selection -->
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <select id="relationType" v-model="newRelative.relation_type" class="form-select" required>
+                      <option value="father">
+                        {{ $t("relative-"+'father') }}
+                      </option>
+                      <option value="mother">
+                        {{ $t("relative-"+'mother') }}
+                      </option>
+                      <option value="child">
+                        {{ $t("relative-"+'child') }}
+                      </option>
+                      <option value="sister">
+                        {{ $t("relative-"+'sister') }}
+                      </option>
+                      <option value="brother">
+                        {{ $t("relative-"+'brother') }}
+                      </option>
+                      <option value="spouse">
+                        {{ $t("relative-"+'spouse') }}
+                      </option>
+                      <option value="ex-spouse">
+                        {{ $t("relative-"+'ex-spouse') }}
+                      </option>
+                    </select>
+                    <div class="invalid-feedback">
+                      {{ $t('select-type-relation') }}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="mb-3">
-                <label for="personId" class="form-label">{{ $t('select-primary-person') }}</label>
-                <select id="personId" v-model="newRelative.person_id" class="form-select" required>
-                  <option v-for="person in persons" :key="person.id" :value="person.id">
-                    {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
-                  </option>
-                </select>
+
+              <!-- Autocomplete for Primary Person -->
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3 position-relative">
+                    <input
+                      id="primaryPersonInput"
+                      v-model="primaryPersonInput"
+                      class="form-control"
+                      autocomplete="off"
+                      required
+                      @input="filterPrimaryPersons"
+                    >
+                    <div class="invalid-feedback">
+                      {{ $t('select-primary-person') }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3 position-relative">
+                    <!-- Dropdown list -->
+                    <div class="list-group list-group-flush scrollable-list">
+                      <a v-if="filteredPrimaryPersons.length === 0" class="list-group-item" hred="#">
+                        {{ $t('no-result') }}
+                      </a>
+                      <a
+                        v-for="person in filteredPrimaryPersons"
+                        :key="person.id"
+                        class="list-group-item list-group-item-action"
+                        href="#"
+                        @mousedown="selectPrimaryPerson(person)"
+                      >
+                        {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </form>
           </div>
@@ -146,16 +212,30 @@
           </div>
         </div>
 
+        <!-- Footer -->
         <div v-if="relativeToDelete || isAddingRelative" class="modal-footer">
           <button v-if="relativeToDelete" type="button" class="btn btn-danger" @click="confirmDelete">
             {{ $t('delete') }}
           </button>
-          <button v-if="isAddingRelative" type="submit" class="btn btn-primary" @click="confirmAdd">
+          <button v-if="isAddingRelative" type="submit" class="btn btn-primary" @click="handleSubmit">
             {{ $t('add') }}
           </button>
-          <button type="button" class="btn btn-secondary" @click="cancelAction">
+          <button type="button" class="btn btn-secondary" @click="resetState">
             {{ $t('cancel') }}
           </button>
+        </div>
+
+        <!-- Notification Toast -->
+        <div v-if="notification" class="toast-container position-fixed bottom-0 end-0 p-3">
+          <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+              <strong class="me-auto">{{ $t('notification') }}</strong>
+              <button type="button" class="btn-close" @click="notification = null" />
+            </div>
+            <div class="toast-body">
+              {{ notification }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -189,7 +269,11 @@ export default {
         related_person_id: null,
         relation_type: ''
       },
-      error: null
+      notification: null,
+      relatedPersonInput: '',
+      primaryPersonInput: '',
+      filteredPersons: [],
+      filteredPrimaryPersons: [],
     };
   },
   computed: {
@@ -219,6 +303,9 @@ export default {
     filteredRelatives() {
       return this.relatives.filter(relative => {
         const personName = this.getPersonName(relative.related_person_id);
+        if (personName === null) {
+          return '';
+        }
 
         const searchQueryLower = this.searchQuery.toLowerCase();
         return personName.toLowerCase().includes(searchQueryLower);
@@ -251,7 +338,18 @@ export default {
   methods: {
     ...mapActions(['triggerTimelineReload']),
     handleModalClose() {
+      this.resetState();
       this.triggerTimelineReload();
+    },
+    resetState() {
+      this.isAddingRelative = false;
+      this.relativeToDelete = null;
+      this.notification = null;
+      this.relatedPersonInput = '';
+      this.primaryPersonInput = '';
+      this.filterRelativePersons();
+      this.filterPrimaryPersons();
+      this.newRelative = { person_id: null, related_person_id: null, relation_type: '' };
     },
     async fetchInitialData(emitSignal=true) {
       try {
@@ -286,13 +384,63 @@ export default {
             birth_date: birthEvent ? birthEvent.event_date : null // Add birth_date or set as null if not found
           };
         });
+
+        // load list
+        this.filterRelativePersons()
+        this.filterPrimaryPersons()
+
       } catch (err) {
         console.error('Failed to fetch data:', err.message);
-        this.error = 'Failed to load data';
+        this.notification = 'Failed to load data';
       }
       if (emitSignal) {
         this.$emit('data-loaded', 'relatives'); 
       }
+    },
+    filterRelativePersons() {
+      const search = this.relatedPersonInput.trim().toLowerCase();
+      this.filteredPersons = this.persons.filter(person => {
+        const fullName1 = `${person.last_name} ${person.first_name}`.toLowerCase();
+        const fullName2 = `${person.first_name} ${person.last_name}`.toLowerCase();
+        const birthYear = this.formatDate(person.birth_date).toString();
+
+        // Split the search input to allow searching by multiple words (first + last name)
+        const searchTerms = search.split(' ');
+
+        // Check if each search term is in the full name or birth year
+        return searchTerms.every(term => 
+          fullName1.includes(term) || fullName2.includes(term) || birthYear.includes(term)
+        );
+      });
+    },
+    
+    filterPrimaryPersons() {
+      const search = this.primaryPersonInput.trim().toLowerCase();
+      this.filteredPrimaryPersons = this.persons.filter(person => {
+        const fullName1 = `${person.last_name} ${person.first_name}`.toLowerCase();
+        const fullName2 = `${person.first_name} ${person.last_name}`.toLowerCase();
+        const birthYear = this.formatDate(person.birth_date).toString();
+
+        const searchTerms = search.split(' ');
+
+        return searchTerms.every(term =>
+          fullName1.includes(term) || fullName2.includes(term) || birthYear.includes(term)
+        );
+      });
+    },
+    selectRelatedPerson(person) {
+      this.newRelative.related_person_id = person.id;
+      this.relatedPersonInput = `${this.getPersonName(person.id)} - ${this.formatDate(person.birth_date)}`;
+      this.showRelatedPersonList = false;
+    },
+    selectPrimaryPerson(person) {
+      this.newRelative.person_id = person.id;
+      this.primaryPersonInput = `${this.getPersonName(person.id)} - ${this.formatDate(person.birth_date)}`;
+      this.showPrimaryPersonList = false;
+    },
+    getPersonName(personId) {
+      const person = this.persons.find(p => p.id === personId);
+      return person ? `${person.first_name} ${person.last_name}` : personId; // Combine first_name et last_name
     },
     formatDate(date) {
       if (!date) return 'N/A';
@@ -306,9 +454,9 @@ export default {
       try {
         await deleteRelative(this.relativeToDelete.id);
         await this.fetchInitialData(false);
-        this.cancelAction();
+        this.resetState();
       } catch (error) {
-        this.error = error.message || 'An error occurred';
+        this.notification = error.message || 'An error occurred';
       }
     },
     startAddRelative() {
@@ -319,24 +467,22 @@ export default {
         relation_type: ''
       };
     },
-    async confirmAdd() {
+    handleSubmit() {
+      // Fetch the form and check for validity
+      const form = this.$el.querySelector('form');
+      if (!form.checkValidity()) {
+        return; 
+      }
+      this.submitConfirm();
+    },
+    async submitConfirm() {
       try {
         await addRelative(this.newRelative);
         await this.fetchInitialData(false);
-        this.cancelAction()
+        this.resetState()
       } catch (error) {
-        this.error = error.message || 'An error occurred';
+        this.notification = error.message || 'An error occurred';
       }
-    },
-    cancelAction() {
-      this.isAddingRelative = false;
-      this.relativeToDelete = null;
-      this.error = null;
-      this.newRelative = { person_id: null, related_person_id: null, relation_type: '' };
-    },
-    getPersonName(personId) {
-      const person = this.persons.find(p => p.id === personId);
-      return person ? `${person.first_name} ${person.last_name}` : personId; // Combine first_name et last_name
     },
     changePage(page) {
       this.currentPage = page;
@@ -354,3 +500,11 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.scrollable-list {
+  max-height: 150px;
+  overflow-y: auto;
+  overflow-x: hidden; 
+}
+</style>

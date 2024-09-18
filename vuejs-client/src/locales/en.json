@@ -99,5 +99,6 @@
     "select-person-to-add": "Person to associate to this event",
     "notification": "Notification",
     "who": "Who",
-    "what": "What"
+    "what": "What",
+    "no-result": "No result"
 }
