@@ -162,6 +162,7 @@ export default {
       stopViewYear: config.endViewYear || 2050,
       minYear: config.minYear || 1800,
       maxYear: config.maxYear || 2050,
+      stepYear: config.stepYear || 25,
       clientVersion: import.meta.env.VITE_APP_VERSION
     }
   },
@@ -171,7 +172,7 @@ export default {
     // Generate an array of years from minYear to maxYear, in steps of 50 years
     availableYears() {
       const years = [];
-      for (let year = this.minYear; year <= this.maxYear; year += 50) {
+      for (let year = this.minYear; year <= this.maxYear; year += this.stepYear) {
         years.push(year);
       }
       return years;
