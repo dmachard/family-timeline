@@ -13,6 +13,7 @@ describe('App.vue', () => {
         maxYear: 2050,
         startViewYear: 1800,
         stopViewYear: 2050,
+        stepYear: 25,
       },
       global: {
         plugins: [store],
@@ -29,14 +30,14 @@ describe('App.vue', () => {
     })
   })
 
-  test('availableYears should generate an array of years from minYear to maxYear in steps of 50 years', () => {
-    const expectedYears = [1800, 1850, 1900, 1950, 2000, 2050]
+  test('availableYears should generate an array of years from minYear to maxYear in steps of 25 years', () => {
+    const expectedYears = [1800, 1825, 1850, 1875, 1900, 1925, 1950, 1975, 2000, 2025, 2050]
     expect(wrapper.vm.availableYears).toEqual(expectedYears)
   })
 
   test('filteredEndYears should only include years greater than startViewYear', () => {
     wrapper.setData({ startViewYear: 1850 })
-    const expectedFilteredYears = [1900, 1950, 2000, 2050]
+    const expectedFilteredYears = [1875, 1900, 1925, 1950, 1975, 2000, 2025, 2050]
     expect(wrapper.vm.filteredEndYears).toEqual(expectedFilteredYears)
   })
 
