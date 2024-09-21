@@ -230,6 +230,19 @@
             </button>
           </template>
         </div>
+
+        <!-- Notification Toast -->
+        <div v-if="notification" class="toast-container position-fixed bottom-0 end-0 p-3">
+          <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+              <strong class="me-auto">{{ $t('notification') }}</strong>
+              <button type="button" class="btn-close" @click="notification = null" />
+            </div>
+            <div class="toast-body">
+              {{ notification }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -254,7 +267,8 @@ export default {
       personToDelete: null,
       personBeingEdited: null,
       isEditing: false,
-      uploadedPicture: null
+      uploadedPicture: null,
+      notification: null,
     };
   },
   computed: {
@@ -285,9 +299,19 @@ export default {
       return pages;
     },
     filteredPersons() {
+      const search = this.searchQuery.trim().toLowerCase();
+
       return this.sortedPersons.filter(person => {
-        const fullName = `${person.last_name} ${person.first_name}`.toLowerCase();
-        return fullName.includes(this.searchQuery.toLowerCase());
+        const fullName1 = `${person.last_name} ${person.first_name}`.toLowerCase();
+        const fullName2 = `${person.first_name} ${person.last_name}`.toLowerCase();
+
+        // Split the search input to allow searching by multiple words (first + last name)
+        const searchTerms = search.split(' ');
+
+        // Check if each search term is in the full name or birth year
+        return searchTerms.every(term => 
+          fullName1.includes(term) || fullName2.includes(term)
+        );
       });
     },
     paginatedPersons() {
@@ -356,7 +380,13 @@ export default {
   methods: {
     ...mapActions(['triggerTimelineReload']),
     handleModalClose() {
+      this.resetState();
       this.triggerTimelineReload();
+    },
+    resetState() {
+      this.notification = null;
+      this.personToDelete = null;
+      this.isEditing = false;
     },
     handleFileUpload(event) {
       this.uploadedPicture = event.target.files[0];
