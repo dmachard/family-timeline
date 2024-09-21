@@ -9,7 +9,7 @@
               - {{ totalPersonsCount }} {{ $t('persons') }}
             </span>
             <span v-if="isEditing">
-              - {{ personBeingEdited.id ? 'Edit' : 'Add' }}
+              - {{ personBeingEdited.id ? $t('edit') : $t('add') }}
             </span>
             <span v-if="personToDelete">
               - {{ $t('delete') }}

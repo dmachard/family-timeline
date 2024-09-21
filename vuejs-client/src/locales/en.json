@@ -100,5 +100,6 @@
     "notification": "Notification",
     "who": "Who",
     "what": "What",
-    "no-result": "No result"
+    "no-result": "No result",
+    "edit": "Edit"
 }
