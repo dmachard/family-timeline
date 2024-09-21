@@ -26,7 +26,7 @@
         
           <!-- Add/Edit Person Form -->
           <div v-if="isEditing" class="container">
-            <form @submit.prevent="savePerson">
+            <form class="needs-validation was-validated" @submit.prevent="savePerson">
               <!-- First and Last Name -->
               <div class="row mb-3">
                 <div class="col-md-6">
@@ -214,7 +214,7 @@
         <!-- Footer -->
         <div v-if="isEditing || personToDelete" class="modal-footer">
           <template v-if="isEditing">
-            <button type="submit" class="btn btn-primary" @click="savePerson">
+            <button type="submit" class="btn btn-primary" @click="handleSubmit">
               {{ personBeingEdited.id ? $t('save-changes') : $t('save') }}
             </button>
             <button type="button" class="btn btn-secondary" @click="cancelEdit">
@@ -387,6 +387,7 @@ export default {
       this.notification = null;
       this.personToDelete = null;
       this.isEditing = false;
+      this.uploadedPicture = null; 
     },
     handleFileUpload(event) {
       this.uploadedPicture = event.target.files[0];
@@ -403,7 +404,7 @@ export default {
         this.middleNames = middleNames;
       } catch (err) {
         console.error('Failed to fetch data:', err.message);
-        this.error = 'Failed to load data';
+        this.notification = 'Failed to load data';
       }
       this.$emit('data-loaded', 'persons'); 
     },
@@ -451,11 +452,19 @@ export default {
       };
       this.uploadedPicture = null; 
       this.isEditing = true;
-      this.error = null;
+      this.notification = null;
     },
     cancelEdit() {
       this.personBeingEdited = null;
       this.isEditing = false;
+    },
+    handleSubmit() {
+      // Fetch the form and check for validity
+      const form = this.$el.querySelector('form');
+      if (!form.checkValidity()) {
+        return; 
+      }
+      this.savePerson();
     },
     async savePerson() {
       // Create form data to handle file upload
@@ -516,7 +525,7 @@ export default {
           });
         }
       } catch (err) {
-        this.error = err;
+        this.notification = err;
         console.error('Failed to fetch data:', err.message);
       }
 
@@ -537,13 +546,13 @@ export default {
         // reset
         this.personToDelete = null;
       } catch (err) {
-        this.error = err;
+        this.notification = err;
         console.error('Failed to delete person:', err.message);
       }
     },
     cancelDelete() {
       this.personToDelete = null;
-      this.error = null;
+      this.notification = null;
     }
   }
 };
