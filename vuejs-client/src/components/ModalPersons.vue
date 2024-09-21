@@ -45,6 +45,22 @@
                 </div>
               </div>
 
+              <!-- Gender -->
+              <div class="mb-3">
+                <label for="gender" class="form-label">{{ $t('gender') }}</label>
+                <select id="gender" v-model="personBeingEdited.gender" class="form-select" required>
+                  <option value="Female">
+                    {{ $t('female') }}
+                  </option>
+                  <option value="Male">
+                    {{ $t('male') }}
+                  </option>
+                  <option value="Undefined">
+                    {{ $t('undefined') }}
+                  </option>
+                </select>
+              </div>
+
               <!-- Middle Names -->
               <div class="mb-3">
                 <label for="middleNames" class="form-label">{{ $t('middle-names') }}</label>
@@ -78,21 +94,6 @@
                 <textarea id="notes" v-model="personBeingEdited.notes" class="form-control" rows="3" />
               </div>
 
-              <!-- Gender -->
-              <div class="mb-3">
-                <label for="gender" class="form-label">{{ $t('gender') }}</label>
-                <select id="gender" v-model="personBeingEdited.gender" class="form-select">
-                  <option value="Female">
-                    {{ $t('female') }}
-                  </option>
-                  <option value="Male">
-                    {{ $t('male') }}
-                  </option>
-                  <option value="Undefined">
-                    {{ $t('undefined') }}
-                  </option>
-                </select>
-              </div>
 
               <!-- Picture Upload -->
               <div class="mb-3">
@@ -434,7 +435,7 @@ export default {
         middle_names: '',
         middle_names_display: '',
         notes: '',
-        gender: 'Undefined',
+        gender: '',
         picture: null,
         birth_date: '',
         death_date: ''
