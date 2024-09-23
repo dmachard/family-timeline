@@ -177,16 +177,48 @@ export default {
       ]
     },
     parents () {
-      return this.filteredRelatives('mother').concat(this.filteredRelatives('father'))
+      return this.filteredRelatives('mother').concat(this.filteredRelatives('father')).sort((a, b) => {
+        const childA = this.dataPersons.find(person => person.id === a.id);
+        const childB = this.dataPersons.find(person => person.id === b.id);
+        
+        const birthDateA = new Date(childA?.birth_date || '9999-12-31');
+        const birthDateB = new Date(childB?.birth_date || '9999-12-31');
+
+        return birthDateA - birthDateB;
+      });
     },
     spouses () {
-      return this.filteredRelatives('spouse')
+      return this.filteredRelatives('spouse').sort((a, b) => {
+        const childA = this.dataPersons.find(person => person.id === a.id);
+        const childB = this.dataPersons.find(person => person.id === b.id);
+        
+        const birthDateA = new Date(childA?.birth_date || '9999-12-31');
+        const birthDateB = new Date(childB?.birth_date || '9999-12-31');
+
+        return birthDateA - birthDateB;
+      });
     },
     children () {
-      return this.filteredRelatives('child')
+      return this.filteredRelatives('child').sort((a, b) => {
+        const childA = this.dataPersons.find(person => person.id === a.id);
+        const childB = this.dataPersons.find(person => person.id === b.id);
+        
+        const birthDateA = new Date(childA?.birth_date || '9999-12-31');
+        const birthDateB = new Date(childB?.birth_date || '9999-12-31');
+
+        return birthDateA - birthDateB;
+      });
     },
     siblings () {
-      return this.filteredRelatives('brother').concat(this.filteredRelatives('sister'))
+      return this.filteredRelatives('brother').concat(this.filteredRelatives('sister')).sort((a, b) => {
+        const childA = this.dataPersons.find(person => person.id === a.id);
+        const childB = this.dataPersons.find(person => person.id === b.id);
+        
+        const birthDateA = new Date(childA?.birth_date || '9999-12-31');
+        const birthDateB = new Date(childB?.birth_date || '9999-12-31');
+
+        return birthDateA - birthDateB;
+      });
     },
     age () {
       if (this.person?.birth_date) {
@@ -257,8 +289,12 @@ export default {
       return this.getDataUrl() + filepath
     },
     getPersonName (id) {
-      const person = this.dataPersons.find(p => p.id === id)
-      return person ? `${person.first_name} ${person.last_name}` : 'Unknown'
+      const person = this.dataPersons.find(p => p.id === id);
+      if (person) {
+        const birthYear = person.birth_date ? new Date(person.birth_date).getFullYear() : 'Unknown';
+        return `${person.first_name} ${person.last_name} (${birthYear})`;
+      }
+      return 'Unknown';
     },
     calculateAgeAtEvent (birthDate, eventDate) {
       const birth = new Date(birthDate)
