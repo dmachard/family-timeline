@@ -19,11 +19,6 @@
         </div>
         <!-- Modal Body -->
         <div class="modal-body">
-          <!-- Error Message -->
-          <div v-if="error" class="alert alert-danger" role="alert">
-            {{ error }}
-          </div>
-        
           <!-- Add/Edit Person Form -->
           <div v-if="isEditing" class="container">
             <form class="needs-validation was-validated" @submit.prevent="savePerson">
@@ -442,7 +437,6 @@ export default {
        };
        this.uploadedPicture = null; 
       this.isEditing = true;
-      this.error = null;
     },
     startEditPerson(person) {
       this.personBeingEdited = { 
