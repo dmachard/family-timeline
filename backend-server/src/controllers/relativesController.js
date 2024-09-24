@@ -24,7 +24,7 @@ export const createRelative = async (req, res) => {
     try {
         await beginTransaction(dbConnection);
 
-        // checking input
+        // checking inputs
         if (person_id===null || related_person_id===null || person_id==related_person_id || relation_type === '') {
             await rollbackTransaction(dbConnection);
             return res.status(400).json({ message: 'Invalid relationship.' });

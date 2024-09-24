@@ -21,15 +21,37 @@
           <!-- Events Table -->
           <div v-if="!isEditing && !isDeleting && !isAttachmentsEditing && !isAssociatingPeople">
             <!-- Person Selector -->
-            <div class="mb-3">
-              <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
-              <select id="personSelect" v-model="selectedPersonId" class="form-select" @change="onPersonSelected">
-                <option v-for="person in persons" :key="person.id" :value="person.id">
-                  {{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}
-                </option>
-              </select>
+            <div class="row">
+              <!-- Autocomplete for select Person -->
+              <div class="mb-3 position-relative">
+                <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
+                <input
+                  id="personInput"
+                  v-model="personInput"
+                  class="form-control"
+                  autocomplete="off"
+                  required
+                  :placeholder="$t('select-related-person')"
+                  @input="filterPersons"
+                >
+              </div>
+              <div class="mb-3 position-relative mb-4">
+                <div class="list-group list-group-flush scrollable-list">
+                  <a
+                    v-for="person in filteredPersons"
+                    :key="person.id"
+                    href="#"
+                    class="list-group-item list-group-item-action"
+                    @mousedown="selectPersonFromList(person)"
+                  >
+                    {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
+                  </a>
+                </div>
+              </div>
             </div>
+            
             <div class="table-responsive">
+              <label class="form-label">{{ $t('events') }}</label>
               <table class="table table-hover bg-white mb-4">
                 <tbody>
                   <tr v-for="event in filteredEvents" :key="event.id">
@@ -359,7 +381,9 @@ export default {
       uploadInProgress: false,
       uploadProgress: 0,
       notification: null,
-      associatedPersons: []
+      associatedPersons: [],
+      personInput: '',
+      filteredPersons: [],
     };
   },
   computed: {
@@ -422,11 +446,37 @@ export default {
           this.onPersonSelected();
         }
 
+        // load list
+        this.filterPersons()
+
       } catch (err) {
         this.notification = 'Failed to load initial data';
         console.error(err.message);
       }
       this.$emit('data-loaded', 'events');
+    },
+
+    filterPersons() {
+      const search = this.personInput.trim().toLowerCase();
+      this.filteredPersons = this.persons.filter(person => {
+        const fullName1 = `${person.last_name} ${person.first_name}`.toLowerCase();
+        const fullName2 = `${person.first_name} ${person.last_name}`.toLowerCase();
+        const birthYear = this.formatDate(person.birth_date).toString();
+
+        const searchTerms = search.split(' ');
+
+        return searchTerms.every(term =>
+          fullName1.includes(term) || fullName2.includes(term) || birthYear.includes(term)
+        );
+      });
+    },
+
+    selectPersonFromList(person) {
+      this.selectedPersonId = person.id;
+      this.personInput = `${this.getPersonName(person.id)} - ${this.formatDate(person.birth_date)}`;
+
+      this.filteredPersons = [];
+      this.onPersonSelected();
     },
 
     formatDate(date) {
@@ -552,6 +602,7 @@ export default {
       this.selectedPersonId = null;
       this.selectedPersonToAssociate = null;
       this.notification = null;
+      this.filterPersons();
     },
 
     getPersonName(personId) {
@@ -713,5 +764,11 @@ export default {
 
 .delete-icon {
   cursor: pointer;
+}
+
+.scrollable-list {
+  max-height: 150px;
+  overflow-y: auto;
+  overflow-x: hidden; 
 }
 </style>

@@ -62,6 +62,12 @@ export const createPerson = async (req, res) => {
 
     const newPerson = req.body;
 
+    // checking inputs
+    if (newPerson.first_name === '' || newPerson.first_name === '') {
+      await rollbackTransaction(dbConnection);
+      return res.status(400).json({ message: 'first name or last name are missing' });
+    }
+
     // If a new picture is uploaded, handle the upload
     if (req.file) {
       const newFilename = profilePictureUpload(req.file, newPerson.picture);
@@ -125,6 +131,13 @@ export const updatePerson = async (req, res) => {
       return res.status(404).json({ message: 'Person not found' });
     }
 
+    // checking inputs
+    const paramsPerson = req.body;
+    if (paramsPerson.first_name === '' || paramsPerson.last_name === '') {
+      await rollbackTransaction(dbConnection);
+      return res.status(400).json({ message: 'first name or last name are missing' });
+    }
+    
     // If a new picture is uploaded, handle the upload
     if (req.file) {
       const newFilename = profilePictureUpload(req.file, person.picture);

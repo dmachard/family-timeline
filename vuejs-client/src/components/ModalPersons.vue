@@ -9,7 +9,7 @@
               - {{ totalPersonsCount }} {{ $t('persons') }}
             </span>
             <span v-if="isEditing">
-              - {{ personBeingEdited.id ? 'Edit' : 'Add' }}
+              - {{ personBeingEdited.id ? $t('edit') : $t('add') }}
             </span>
             <span v-if="personToDelete">
               - {{ $t('delete') }}
@@ -19,14 +19,9 @@
         </div>
         <!-- Modal Body -->
         <div class="modal-body">
-          <!-- Error Message -->
-          <div v-if="error" class="alert alert-danger" role="alert">
-            {{ error }}
-          </div>
-        
           <!-- Add/Edit Person Form -->
           <div v-if="isEditing" class="container">
-            <form @submit.prevent="savePerson">
+            <form class="needs-validation was-validated" @submit.prevent="savePerson">
               <!-- First and Last Name -->
               <div class="row mb-3">
                 <div class="col-md-6">
@@ -43,6 +38,22 @@
                     <input id="lastName" v-model="personBeingEdited.last_name" type="text" class="form-control" placeholder="Doe" required>
                   </div>
                 </div>
+              </div>
+
+              <!-- Gender -->
+              <div class="mb-3">
+                <label for="gender" class="form-label">{{ $t('gender') }}</label>
+                <select id="gender" v-model="personBeingEdited.gender" class="form-select" required>
+                  <option value="Female">
+                    {{ $t('female') }}
+                  </option>
+                  <option value="Male">
+                    {{ $t('male') }}
+                  </option>
+                  <option value="Undefined">
+                    {{ $t('undefined') }}
+                  </option>
+                </select>
               </div>
 
               <!-- Middle Names -->
@@ -78,21 +89,6 @@
                 <textarea id="notes" v-model="personBeingEdited.notes" class="form-control" rows="3" />
               </div>
 
-              <!-- Gender -->
-              <div class="mb-3">
-                <label for="gender" class="form-label">{{ $t('gender') }}</label>
-                <select id="gender" v-model="personBeingEdited.gender" class="form-select">
-                  <option value="Female">
-                    {{ $t('female') }}
-                  </option>
-                  <option value="Male">
-                    {{ $t('male') }}
-                  </option>
-                  <option value="Undefined">
-                    {{ $t('undefined') }}
-                  </option>
-                </select>
-              </div>
 
               <!-- Picture Upload -->
               <div class="mb-3">
@@ -214,7 +210,7 @@
         <!-- Footer -->
         <div v-if="isEditing || personToDelete" class="modal-footer">
           <template v-if="isEditing">
-            <button type="submit" class="btn btn-primary" @click="savePerson">
+            <button type="submit" class="btn btn-primary" @click="handleSubmit">
               {{ personBeingEdited.id ? $t('save-changes') : $t('save') }}
             </button>
             <button type="button" class="btn btn-secondary" @click="cancelEdit">
@@ -229,6 +225,19 @@
               {{ $t('delete') }}
             </button>
           </template>
+        </div>
+
+        <!-- Notification Toast -->
+        <div v-if="notification" class="toast-container position-fixed bottom-0 end-0 p-3">
+          <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+              <strong class="me-auto">{{ $t('notification') }}</strong>
+              <button type="button" class="btn-close" @click="notification = null" />
+            </div>
+            <div class="toast-body">
+              {{ notification }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -254,7 +263,8 @@ export default {
       personToDelete: null,
       personBeingEdited: null,
       isEditing: false,
-      uploadedPicture: null
+      uploadedPicture: null,
+      notification: null,
     };
   },
   computed: {
@@ -285,9 +295,19 @@ export default {
       return pages;
     },
     filteredPersons() {
+      const search = this.searchQuery.trim().toLowerCase();
+
       return this.sortedPersons.filter(person => {
-        const fullName = `${person.last_name} ${person.first_name}`.toLowerCase();
-        return fullName.includes(this.searchQuery.toLowerCase());
+        const fullName1 = `${person.last_name} ${person.first_name}`.toLowerCase();
+        const fullName2 = `${person.first_name} ${person.last_name}`.toLowerCase();
+
+        // Split the search input to allow searching by multiple words (first + last name)
+        const searchTerms = search.split(' ');
+
+        // Check if each search term is in the full name or birth year
+        return searchTerms.every(term => 
+          fullName1.includes(term) || fullName2.includes(term)
+        );
       });
     },
     paginatedPersons() {
@@ -356,7 +376,14 @@ export default {
   methods: {
     ...mapActions(['triggerTimelineReload']),
     handleModalClose() {
+      this.resetState();
       this.triggerTimelineReload();
+    },
+    resetState() {
+      this.notification = null;
+      this.personToDelete = null;
+      this.isEditing = false;
+      this.uploadedPicture = null; 
     },
     handleFileUpload(event) {
       this.uploadedPicture = event.target.files[0];
@@ -373,7 +400,7 @@ export default {
         this.middleNames = middleNames;
       } catch (err) {
         console.error('Failed to fetch data:', err.message);
-        this.error = 'Failed to load data';
+        this.notification = 'Failed to load data';
       }
       this.$emit('data-loaded', 'persons'); 
     },
@@ -403,14 +430,13 @@ export default {
         middle_names: '',
         middle_names_display: '',
         notes: '',
-        gender: 'Undefined',
+        gender: '',
         picture: null,
         birth_date: '',
         death_date: ''
        };
        this.uploadedPicture = null; 
       this.isEditing = true;
-      this.error = null;
     },
     startEditPerson(person) {
       this.personBeingEdited = { 
@@ -421,11 +447,19 @@ export default {
       };
       this.uploadedPicture = null; 
       this.isEditing = true;
-      this.error = null;
+      this.notification = null;
     },
     cancelEdit() {
       this.personBeingEdited = null;
       this.isEditing = false;
+    },
+    handleSubmit() {
+      // Fetch the form and check for validity
+      const form = this.$el.querySelector('form');
+      if (!form.checkValidity()) {
+        return; 
+      }
+      this.savePerson();
     },
     async savePerson() {
       // Create form data to handle file upload
@@ -486,7 +520,7 @@ export default {
           });
         }
       } catch (err) {
-        this.error = err;
+        this.notification = err;
         console.error('Failed to fetch data:', err.message);
       }
 
@@ -507,13 +541,13 @@ export default {
         // reset
         this.personToDelete = null;
       } catch (err) {
-        this.error = err;
+        this.notification = err;
         console.error('Failed to delete person:', err.message);
       }
     },
     cancelDelete() {
       this.personToDelete = null;
-      this.error = null;
+      this.notification = null;
     }
   }
 };
