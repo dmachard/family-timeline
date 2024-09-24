@@ -146,6 +146,7 @@ export default {
       }
       this.$emit('data-loaded', 'timeline'); 
     },
+
     filterRootPersons () {
       return this.dataPersons.filter(person => {
         return !person.relatives.some(relative =>
@@ -252,6 +253,7 @@ export default {
       // Return the list of children without spouse details
       return childrenWithoutSpouse
     },
+
     filterChildren (personId, spouseId) {
       // Find the person with the given personId
       const person = this.dataPersons.find(p => p.id === personId)
@@ -847,7 +849,34 @@ export default {
 
         // draw children
         const children = this.filterChildren(person.id, spouse.id)
-        for (const child of children) {
+
+        // First, filter children who have no spouse and no children
+        const childrenWithoutSpouseOrChildren = children.filter(child => {
+          const hasSpouse = child.relatives.some(relative => 
+            ['spouse', 'partner'].includes(relative.relation_type)
+          )
+          const hasChildren = child.relatives.some(relative => 
+            ['child'].includes(relative.relation_type)
+          )
+          return !hasSpouse && !hasChildren
+        })
+        // Then, filter the other children
+        const otherChildren = children.filter(child => 
+          !childrenWithoutSpouseOrChildren.includes(child)
+        )
+
+
+        // Step 1: Draw children without spouse or children
+        for (const child of childrenWithoutSpouseOrChildren) {
+          if (!this.displayedPersons.has(child.id)) {
+            isChild = true
+            const childPeriods = this.getPeriods(child, familyColor, isChild)
+            yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
+          }
+        }
+
+        // Step 2: Draw the other children
+        for (const child of otherChildren) {
           if (!this.displayedPersons.has(child.id)) {
             isChild = true
             const childPeriods = this.getPeriods(child, familyColor, isChild)
