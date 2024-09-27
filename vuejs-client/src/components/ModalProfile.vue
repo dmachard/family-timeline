@@ -173,7 +173,9 @@ export default {
         { label: this.$t('parents'), items: this.parents },
         { label: this.$t('spouses'), items: this.spouses },
         { label: this.$t('children'), items: this.children },
-        { label: this.$t('siblings'), items: this.siblings }
+        { label: this.$t('siblings'), items: this.siblings },
+        { label: this.$t('uncles-aunts'), items: this.getUnclesAndAunts() },
+        { label: this.$t('cousins'), items: this.getCousins() } 
       ]
     },
     parents () {
@@ -246,6 +248,45 @@ export default {
     }
   },
   methods: {
+    getCousins() {
+      const unclesAndAunts = this.getUnclesAndAunts();
+      let cousins = [];
+
+      // Loop through uncles and aunts to find their children
+      unclesAndAunts.forEach(uncleOrAunt => {
+        const relative = this.dataPersons.find(p => p.id === uncleOrAunt.id);
+        if (relative && relative.relatives) {
+          const children = relative.relatives.filter(r => r.relation_type === 'child');
+          cousins = cousins.concat(children);
+        }
+      });
+
+      return cousins;
+    },
+    getUnclesAndAunts() {
+      if (!this.person || !this.person.relatives) return [];
+
+      // Get the IDs of the parents
+      const parentIds = this.person.relatives
+        .filter(r => r.relation_type === 'father' || r.relation_type === 'mother')
+        .map(p => p.id);
+      
+      if (parentIds.length === 0) return [];
+
+      const unclesAndAunts = [];
+
+      // Loop through parents to find their siblings (uncles and aunts)
+      parentIds.forEach(parentId => {
+        const parent = this.dataPersons.find(p => p.id === parentId);
+        if (parent && parent.relatives) {
+          parent.relatives
+            .filter(r => r.relation_type === 'brother' || r.relation_type === 'sister')
+            .forEach(r => unclesAndAunts.push(r));
+        }
+      });
+
+      return unclesAndAunts;
+    },
     getGrandparents(relationType) {
       if (!this.person || !this.person.relatives) return []
 
