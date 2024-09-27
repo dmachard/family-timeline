@@ -440,12 +440,6 @@ export default {
           };
         });
         
-        // Set the default selected person (e.g., the first person in the list)
-        if (this.persons.length > 0) {
-          this.selectedPersonId = this.persons[0].id;
-          this.onPersonSelected();
-        }
-
         // load list
         this.filterPersons()
 
