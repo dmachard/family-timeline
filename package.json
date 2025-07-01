@@ -14,7 +14,7 @@
     "server_test": "cd backend-server && npm run test"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
+    "concurrently": "^9.2.0",
     "eslint": "^9.27.0",
     "eslint-plugin-vue": "^10.1.0"
   },
