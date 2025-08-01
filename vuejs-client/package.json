@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@vue/test-utils": "^2.4.6",
-    "@babel/core": "^7.26.10",
+    "@babel/core": "^7.28.0",
     "@babel/eslint-parser": "^7.27.0",
     "@babel/preset-env": "^7.26.9",
     "@vitejs/plugin-vue": "^6.0.0",
