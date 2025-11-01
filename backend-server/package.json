@@ -20,7 +20,7 @@
         "jsonwebtoken": "^9.0.2",
         "multer": "^2.0.2",
         "sqlite3": "^5.1.7",
-        "uuid": "^11.1.0",
+        "uuid": "^13.0.0",
         "winston": "^3.18.3"
     },
     "devDependencies": {
