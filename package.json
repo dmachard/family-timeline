@@ -16,7 +16,7 @@
   "devDependencies": {
     "concurrently": "^9.2.1",
     "eslint": "^9.36.0",
-    "eslint-plugin-vue": "^10.5.0"
+    "eslint-plugin-vue": "^10.5.1"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47"
