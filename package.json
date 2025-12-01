@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
-    "eslint": "^9.39.0",
+    "eslint": "^9.39.1",
     "eslint-plugin-vue": "^10.5.1"
   },
   "dependencies": {
