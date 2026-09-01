@@ -65,7 +65,13 @@ describe('Timeline Methods', () => {
         stopViewYear: 2020
       },
       global: {
-        plugins: [store]
+        plugins: [store],
+        mocks: {
+          $t: (msg) => msg,
+          $i18n: {
+            locale: 'en'
+          }
+        }
       }
     })
     await wrapper.vm.$nextTick()
@@ -101,5 +107,32 @@ describe('Timeline Methods', () => {
     expect(periods.length).toBeGreaterThan(0)
     expect(periods[0].start).toBe(1980)
     expect(periods[periods.length - 1].end).toBe(2020)
+  })
+
+  test('calculateAutoBounds should adjust bounds to 1735-2026 for 1738 ancestor and living persons', () => {
+    const persons = [
+      { id: 1, birth_date: '1738-06-15', death_date: '1802-04-10' },
+      { id: 2, birth_date: '1995-01-01', death_date: null } // living person
+    ]
+    const bounds = wrapper.vm.calculateAutoBounds(persons)
+    expect(bounds.minYear).toBe(1735)
+    expect(bounds.startViewYear).toBe(1735)
+    expect(bounds.maxYear).toBe(new Date().getFullYear())
+    expect(bounds.stopViewYear).toBe(new Date().getFullYear())
+  })
+
+  test('calculateAutoBounds should adjust bounds correctly for deceased persons range', () => {
+    const persons = [
+      { id: 1, birth_date: '1824-03-12', death_date: '1892-11-05' }
+    ]
+    const bounds = wrapper.vm.calculateAutoBounds(persons)
+    expect(bounds.minYear).toBe(1820)
+    expect(bounds.maxYear).toBe(1892)
+  })
+
+  test('calculateAutoBounds should return fallback bounds when list is empty', () => {
+    const bounds = wrapper.vm.calculateAutoBounds([])
+    expect(bounds.minYear).toBeDefined()
+    expect(bounds.maxYear).toBeGreaterThan(bounds.minYear)
   })
 })

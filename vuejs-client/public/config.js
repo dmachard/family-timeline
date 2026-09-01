@@ -1,5 +1,6 @@
 window.config = {
   language: 'fr',
+  autoScale: true,
   minYear: 1600,
   maxYear: 2050,
   startViewYear: 1600,

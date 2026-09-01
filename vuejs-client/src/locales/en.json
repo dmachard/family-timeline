@@ -103,5 +103,10 @@
     "no-result": "No result",
     "edit": "Edit",
     "uncles-aunts": "Uncles and aunts",
-    "cousins": "Cousins"
+    "cousins": "Cousins",
+    "search-person-placeholder": "Search an ancestor...",
+    "toggle-history": "Show/Hide historical periods in background",
+    "history-context": "History context",
+    "fit-scale": "Fit scale",
+    "fit-scale-title": "Automatically fit scale to family timeline"
 }

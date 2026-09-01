@@ -103,6 +103,10 @@
     "no-result": "Aucun résultat",
     "edit": "Mise à jour",
     "uncles-aunts": "Oncles et tantes",
-    "cousins": "Cousins et cousines"
+    "cousins": "Cousins et cousines",
+    "search-person-placeholder": "Rechercher un ancêtre...",
+    "toggle-history": "Afficher/Masquer les périodes historiques en arrière-plan",
+    "history-context": "Contexte historique",
+    "fit-scale": "Ajuster l'échelle",
+    "fit-scale-title": "Ajuster automatiquement l'échelle à la période familiale"
 }
-  

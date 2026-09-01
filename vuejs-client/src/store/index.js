@@ -1,10 +1,46 @@
 import { createStore } from 'vuex';
 import { jwtDecode } from "jwt-decode";
 
+const getStorageItem = (key) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+    if (typeof localStorage !== 'undefined' && localStorage && typeof localStorage.getItem === 'function') {
+      return localStorage.getItem(key);
+    }
+  } catch (e) {}
+  return null;
+};
+
+const setStorageItem = (key, val) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, val);
+      return;
+    }
+    if (typeof localStorage !== 'undefined' && localStorage && typeof localStorage.setItem === 'function') {
+      localStorage.setItem(key, val);
+    }
+  } catch (e) {}
+};
+
+const removeStorageItem = (key) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    if (typeof localStorage !== 'undefined' && localStorage && typeof localStorage.removeItem === 'function') {
+      localStorage.removeItem(key);
+    }
+  } catch (e) {}
+};
+
 export default createStore({
   state() {
     return {
-      token: localStorage.getItem('token') || null,
+      token: getStorageItem('token') || null,
       userName: null,
       userId: 0,
       shouldReloadTimeline: false
@@ -13,7 +49,7 @@ export default createStore({
   mutations: {
     setToken(state, token) {
       state.token = token;
-      localStorage.setItem('token', token);
+      setStorageItem('token', token);
       try {
         const decodedToken = jwtDecode(token);
         state.userName = decodedToken.username
@@ -26,10 +62,10 @@ export default createStore({
       state.token = null;
       state.userName = null
       state.userId = 0
-      localStorage.removeItem('token');
+      removeStorageItem('token');
     },
     setInitialState(state) {
-        const token = localStorage.getItem('token');
+        const token = getStorageItem('token');
         if (token) {
             state.token = token;
             try {

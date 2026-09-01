@@ -169,11 +169,15 @@ export default {
   computed: {
     ...mapGetters(['isAuthenticated', 'userName']),
 
-    // Generate an array of years from minYear to maxYear, in steps of 50 years
+    // Generate an array of years from minYear to maxYear, in steps of stepYear
     availableYears() {
       const years = [];
-      for (let year = this.minYear; year <= this.maxYear; year += this.stepYear) {
+      const step = this.stepYear || 25;
+      for (let year = this.minYear; year <= this.maxYear; year += step) {
         years.push(year);
+      }
+      if (years.length > 0 && years[years.length - 1] < this.maxYear) {
+        years.push(this.maxYear);
       }
       return years;
     },
@@ -218,10 +222,17 @@ export default {
         this.loading = false;
       } 
     },
-    onDataLoaded(modalId) {
+    onDataLoaded(modalId, bounds) {
       this.loading = false;
 
-      if (modalId !== 'timeline') {
+      if (modalId === 'timeline') {
+        if (bounds) {
+          if (typeof bounds.minYear === 'number') this.minYear = bounds.minYear;
+          if (typeof bounds.maxYear === 'number') this.maxYear = bounds.maxYear;
+          if (typeof bounds.startViewYear === 'number') this.startViewYear = bounds.startViewYear;
+          if (typeof bounds.stopViewYear === 'number') this.stopViewYear = bounds.stopViewYear;
+        }
+      } else {
         const contentModal = new Modal(document.getElementById(`${modalId}Modal`));
         contentModal.show();
       }
