@@ -747,7 +747,12 @@ export default {
             color: spouseColor,
             birthDateVerified,
             deathDateVerified,
-            stillAlive: person.death_date === null
+            stillAlive: person.death_date === null,
+            isRelationship: true,
+            spouseName: `${spouse.first_name} ${spouse.last_name}`,
+            relationshipType: marriageYear ? 'marriage' : (unionYear ? 'civil_union' : 'union'),
+            marriageYear: marriageYear,
+            divorceYear: spouse.divorce_date ? new Date(spouse.divorce_date).getFullYear() : null
           })
 
           // Update the last event year to the end of this relationship
@@ -1081,7 +1086,7 @@ export default {
           filter = 'url(#blur-filter)'
         }
 
-        periodsGroup.append('path')
+        const periodPath = periodsGroup.append('path')
           .attr('d', this.drawRoundedRect(x, y, width, height, 10, roundLeft, roundRight))
           .attr('fill', period.color)
           .attr('stroke', 'rgba(15, 23, 42, 0.1)')
@@ -1089,6 +1094,25 @@ export default {
           .style('cursor', 'pointer')
           .style('filter', filter)
           .on('click', () => this.showPersonProfile(person))
+
+        if (period.isRelationship) {
+          const typeLabel = period.relationshipType === 'marriage' ? 'Mariage' : 'Union'
+          const periodDates = period.divorceYear ? `(${period.start} - ${period.divorceYear})` : `(depuis ${period.start})`
+          periodPath.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
+
+          // Anneaux d'alliance dorés discrets au début de la tranche de mariage
+          if (width >= 24) {
+            const ringG = periodsGroup.append('g')
+              .attr('class', 'marriage-bar-badge')
+              .attr('transform', `translate(${x + 12}, ${y + height / 2})`)
+              .style('cursor', 'pointer')
+              .on('click', () => this.showPersonProfile(person))
+
+            ringG.append('circle').attr('cx', -3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#fbbf24').attr('stroke-width', 1.8)
+            ringG.append('circle').attr('cx', 3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#f59e0b').attr('stroke-width', 1.8)
+            ringG.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
+          }
+        }
       })
 
       // Determine the image URL based on gender
@@ -1566,6 +1590,16 @@ export default {
   fill: #2563eb;
 }
 
+/* Marriage Badges on bars */
+.marriage-bar-badge circle {
+  transition: stroke-width 0.2s ease, r 0.2s ease;
+}
+
+.marriage-bar-badge:hover circle {
+  stroke-width: 2.5;
+  stroke: #d97706;
+}
+
 /* Highlight pulse on search focus */
 @keyframes personPulse {
   0% {
@@ -1582,5 +1616,4 @@ export default {
 .person-highlighted {
   animation: personPulse 1.2s ease-in-out 3;
 }
-
 </style>
