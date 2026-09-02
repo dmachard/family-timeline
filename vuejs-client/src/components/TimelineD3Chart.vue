@@ -203,15 +203,6 @@
               <span>{{ expandedDescendantIds.has(hoveredPerson.id) ? '▼ ' + $t('hide-children') : '▼ ' + $t('show-children') + ` (${getPersonChildren(hoveredPerson.id).length})` }}</span>
             </button>
 
-            <!-- Bouton Profil -->
-            <button
-              class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-circle"
-              type="button"
-              title="Voir la fiche profil"
-              @click="showPersonProfile(hoveredPerson)"
-            >
-              <i class="bi bi-info-circle" />
-            </button>
           </div>
         </div>
       </div>
@@ -733,18 +724,20 @@ export default {
       }
       this.hoveredPerson = person
 
+      // Positionner la toolbar à droite de l'avatar (sur la ligne de vie)
       const wrapper = document.getElementById('timeline-wrapper')
       if (!wrapper) return
       const wrapperRect = wrapper.getBoundingClientRect()
-      const targetRect = event.currentTarget.getBoundingClientRect()
+      const avatarRect = event.currentTarget.getBoundingClientRect()
 
-      // Calculate position relative to timeline-wrapper container
-      const top = targetRect.top - wrapperRect.top + wrapper.scrollTop - 44
-      const left = Math.max(16, Math.min(targetRect.left - wrapperRect.left + wrapper.scrollLeft + 60, wrapperRect.width - 450))
+      // Top : centré verticalement sur l'avatar
+      const top = avatarRect.top - wrapperRect.top + wrapper.scrollTop + avatarRect.height / 2 - 18
+      // Left : juste à droite du cercle de profil (bord droit de l'avatar + 8px de marge)
+      const left = avatarRect.right - wrapperRect.left + wrapper.scrollLeft + 8
 
       this.floatingToolbarStyle = {
         top: `${Math.max(8, top)}px`,
-        left: `${left}px`
+        left: `${Math.min(left, wrapperRect.width - 450)}px`
       }
     },
 
@@ -1459,21 +1452,14 @@ export default {
         .attr('id', `person-bar-${person.id}`)
         .attr('transform', `translate(0, ${y})`)
         .datum(person)
-        .on('mouseenter', (event) => {
-          if (this.viewMode === 'dynamic') {
-            this.onPersonMouseEnter(person, event)
-          }
-        })
-        .on('mouseleave', () => {
-          if (this.viewMode === 'dynamic') {
-            this.onPersonMouseLeave()
-          }
-        })
 
-      // Determine the image URL based on gender
-      const imageUrl = person.gender === 'Male'
-        ? 'profile_men.png'
-        : 'profile_women.png'
+      // URL de l'image : photo réelle si disponible, sinon générique selon le genre
+      const dataUrl = import.meta.env.MODE === 'development'
+        ? import.meta.env.VITE_DATA_URL
+        : '/data'
+      const imageUrl = person.picture
+        ? dataUrl + person.picture
+        : (person.gender === 'Male' ? 'profile_men.png' : 'profile_women.png')
 
       const avatarCx = xScale(birthYear) + 20
 
@@ -1499,8 +1485,8 @@ export default {
           .style('filter', 'drop-shadow(0 2px 6px rgba(15,23,42,0.1))')
           .on('click', () => this.togglePersonBar(person.id))
 
-        // Cercle blanc derrière l'avatar
-        personGroup.append('circle')
+        // Cercle blanc derrière l'avatar (zone de survol pour la toolbar)
+        const avatarCircle = personGroup.append('circle')
           .attr('cx', avatarCx)
           .attr('cy', y + height / 2)
           .attr('r', 16)
@@ -1511,8 +1497,8 @@ export default {
           .style('cursor', 'pointer')
           .on('click', () => this.togglePersonBar(person.id))
 
-        // Avatar
-        personGroup.append('image')
+        // Avatar (image de profil)
+        const avatarImage = personGroup.append('image')
           .attr('xlink:href', imageUrl)
           .attr('x', avatarCx - 15)
           .attr('y', y + height / 2 - 15)
@@ -1521,6 +1507,16 @@ export default {
           .attr('clip-path', 'circle(15px at 15px 15px)')
           .style('cursor', 'pointer')
           .on('click', () => this.togglePersonBar(person.id))
+
+        // Toolbar sur survol de l'avatar uniquement
+        if (this.viewMode === 'dynamic') {
+          const attachAvatarHover = (el) => {
+            el.on('mouseenter', (event) => this.onPersonMouseEnter(person, event))
+              .on('mouseleave', () => this.onPersonMouseLeave())
+          }
+          attachAvatarHover(avatarCircle)
+          attachAvatarHover(avatarImage)
+        }
 
         // Prénom (texte tronqué)
         personGroup.append('text')
@@ -1597,8 +1593,8 @@ export default {
           }
         })
 
-        // Cercle de fond blanc pour détacher l'avatar
-        personGroup.append('circle')
+        // Cercle de fond blanc pour détacher l'avatar (zone de survol pour la toolbar)
+        const avatarCircleExp = personGroup.append('circle')
           .attr('cx', avatarCx)
           .attr('cy', y + height / 2)
           .attr('r', 16)
@@ -1608,7 +1604,7 @@ export default {
           .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))')
 
         // Append the image inside the circle
-        personGroup.append('image')
+        const avatarImageExp = personGroup.append('image')
           .attr('xlink:href', imageUrl)
           .attr('x', avatarCx - 15)
           .attr('y', y + height / 2 - 15)
@@ -1618,6 +1614,16 @@ export default {
           .attr('clip-path', 'circle(15px at 15px 15px)')
           .style('cursor', 'pointer')
           .on('click', () => this.showPersonProfile(person))
+
+        // Toolbar sur survol de l'avatar uniquement (mode déplié)
+        if (this.viewMode === 'dynamic') {
+          const attachAvatarHoverExp = (el) => {
+            el.on('mouseenter', (event) => this.onPersonMouseEnter(person, event))
+              .on('mouseleave', () => this.onPersonMouseLeave())
+          }
+          attachAvatarHoverExp(avatarCircleExp)
+          attachAvatarHoverExp(avatarImageExp)
+        }
 
         // Add the person's name on the bar (texte blanc net)
         personGroup.append('text')
@@ -1878,7 +1884,7 @@ export default {
             .attr('width', clampedWidth)
             .attr('height', height)
             .attr('fill', period.color)
-            .style('cursor', 'help')
+            .style('cursor', 'default')
 
           // Infobulle native SVG au survol
           band.append('title').text(fullLabelWithDates)
@@ -1919,7 +1925,7 @@ export default {
               .attr('font-weight', '700')
               .attr('fill', '#0f172a')
               .style('user-select', 'none')
-              .style('cursor', 'help')
+              .style('cursor', 'default')
               .text(displayText)
 
             textEl.append('title').text(fullLabelWithDates)
