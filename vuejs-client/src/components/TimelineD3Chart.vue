@@ -66,7 +66,48 @@
             </ul>
           </div>
 
-          <div class="d-flex align-items-center gap-2 my-1">
+          <div class="d-flex flex-wrap align-items-center gap-2 my-1">
+            <!-- Mode switch: Dynamic Tree vs Full Tree -->
+            <div class="btn-group btn-group-sm" role="group">
+              <button
+                type="button"
+                class="btn d-flex align-items-center gap-1"
+                :class="viewMode === 'dynamic' ? 'btn-primary' : 'btn-outline-secondary'"
+                :title="$t('dynamic-tree-title')"
+                @click="toggleViewMode('dynamic')"
+              >
+                <i class="bi bi-diagram-3-fill" />
+                <span>{{ $t('dynamic-tree') }}</span>
+              </button>
+              <button
+                type="button"
+                class="btn d-flex align-items-center gap-1"
+                :class="viewMode === 'all' ? 'btn-primary' : 'btn-outline-secondary'"
+                :title="$t('full-tree-title')"
+                @click="toggleViewMode('all')"
+              >
+                <i class="bi bi-people-fill" />
+                <span>{{ $t('full-tree') }}</span>
+              </button>
+            </div>
+
+            <!-- In dynamic mode: root person badge & reset button -->
+            <div v-if="viewMode === 'dynamic' && dynamicRootPerson" class="d-flex align-items-center gap-1">
+              <span class="badge bg-light text-dark border d-flex align-items-center gap-1 py-1 px-2">
+                <i class="bi bi-person-fill text-primary" />
+                <span>{{ dynamicRootPerson.first_name }} {{ dynamicRootPerson.last_name }}</span>
+              </span>
+              <button
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 py-1 px-2"
+                type="button"
+                :title="$t('reset-tree')"
+                @click="resetDynamicTree"
+              >
+                <i class="bi bi-arrow-counterclockwise" />
+                <span class="d-none d-md-inline">{{ $t('reset-tree') }}</span>
+              </button>
+            </div>
+
             <!-- History Context Layer Toggle Button -->
             <button
               class="btn btn-sm d-flex align-items-center gap-1"
@@ -92,6 +133,18 @@
               <i class="bi bi-arrows-angle-expand" />
               <span>{{ $t('fit-scale') }}</span>
             </button>
+
+            <!-- Expand / Collapse All Bars Button -->
+            <button
+              class="btn btn-sm d-flex align-items-center gap-1"
+              :class="unfoldedPersonIds.size === 0 ? 'btn-outline-secondary' : 'btn-info'"
+              type="button"
+              :title="unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars')"
+              @click="toggleAllBars"
+            >
+              <i :class="unfoldedPersonIds.size === 0 ? 'bi bi-layout-three-columns' : 'bi bi-dash-square'" />
+              <span>{{ unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars') }}</span>
+            </button>
           </div>
         </div>
 
@@ -102,6 +155,63 @@
           </div>
           <div id="timeline-graph-container">
             <svg id="timeline-graph" />
+          </div>
+
+          <!-- Floating Action Toolbar on Person Hover -->
+          <div
+            v-if="hoveredPerson && viewMode === 'dynamic'"
+            class="person-floating-toolbar shadow border d-flex align-items-center gap-2 p-1 bg-white rounded-pill"
+            :style="floatingToolbarStyle"
+            @mouseenter="onToolbarMouseEnter"
+            @mouseleave="onToolbarMouseLeave"
+          >
+            <!-- Nom de la personne -->
+            <span class="badge bg-light text-dark border-0 fw-semibold px-2 py-1">
+              {{ hoveredPerson.first_name }}
+            </span>
+
+            <!-- Bouton Parents ▲ -->
+            <button
+              v-if="getPersonParents(hoveredPerson.id).length > 0"
+              class="btn btn-sm btn-outline-primary py-0 px-2 d-flex align-items-center gap-1 rounded-pill"
+              :class="{ 'btn-primary text-white': expandedAscendantIds.has(hoveredPerson.id) }"
+              type="button"
+              @click="toggleAscendants(hoveredPerson.id)"
+            >
+              <span>{{ expandedAscendantIds.has(hoveredPerson.id) ? '▲ ' + $t('hide-parents') : '▲ ' + $t('show-parents') + ` (${getPersonParents(hoveredPerson.id).length})` }}</span>
+            </button>
+
+            <!-- Bouton Conjoints 💍 -->
+            <button
+              v-if="filterSpouses(hoveredPerson.id).length > 0"
+              class="btn btn-sm btn-outline-warning text-dark py-0 px-2 d-flex align-items-center gap-1 rounded-pill"
+              :class="{ 'btn-warning': expandedSpouseIds.has(hoveredPerson.id) }"
+              type="button"
+              @click="toggleSpouses(hoveredPerson.id)"
+            >
+              <span>{{ expandedSpouseIds.has(hoveredPerson.id) ? '💍 ' + $t('hide-spouses') : '💍 ' + $t('show-spouses') + ` (${filterSpouses(hoveredPerson.id).length})` }}</span>
+            </button>
+
+            <!-- Bouton Enfants ▼ -->
+            <button
+              v-if="getPersonChildren(hoveredPerson.id).length > 0"
+              class="btn btn-sm btn-outline-success py-0 px-2 d-flex align-items-center gap-1 rounded-pill"
+              :class="{ 'btn-success text-white': expandedDescendantIds.has(hoveredPerson.id) }"
+              type="button"
+              @click="toggleDescendants(hoveredPerson.id)"
+            >
+              <span>{{ expandedDescendantIds.has(hoveredPerson.id) ? '▼ ' + $t('hide-children') : '▼ ' + $t('show-children') + ` (${getPersonChildren(hoveredPerson.id).length})` }}</span>
+            </button>
+
+            <!-- Bouton Profil -->
+            <button
+              class="btn btn-sm btn-outline-secondary py-0 px-2 rounded-circle"
+              type="button"
+              title="Voir la fiche profil"
+              @click="showPersonProfile(hoveredPerson)"
+            >
+              <i class="bi bi-info-circle" />
+            </button>
           </div>
         </div>
       </div>
@@ -195,10 +305,24 @@ export default {
       renderedPersons: new Map(),
       searchQuery: '',
       isSearchOpen: false,
+      viewMode: 'dynamic', // 'dynamic' (arbre vivant par défaut) ou 'all' (vue complète)
+      dynamicRootPersonId: null,
+      expandedAscendantIds: new Set(),
+      expandedDescendantIds: new Set(),
+      expandedSpouseIds: new Set(),
+      unfoldedPersonIds: new Set(),
+      hoveredPerson: null,
+      floatingToolbarStyle: {},
+      isHoveringToolbar: false,
+      hoverToolbarTimer: null,
     }
   },
   computed: {
     ...mapGetters(['shouldReloadTimeline']),
+    dynamicRootPerson () {
+      if (!this.dynamicRootPersonId) return null
+      return this.dataPersons.find(p => p.id === this.dynamicRootPersonId) || null
+    },
     filteredPersons () {
       if (!this.searchQuery || this.searchQuery.trim().length < 2) return []
       const q = this.searchQuery.toLowerCase().trim()
@@ -240,6 +364,7 @@ export default {
   },
   async created () {
     this.dataPersons = await this.fetchData(fetchEnrichedPersons)
+    this.dynamicRootPersonId = this.getDefaultDynamicRootPersonId()
     const bounds = this.applyScaleBounds()
     this.isDataLoaded = true
     this.$emit('data-loaded', 'timeline', bounds); 
@@ -378,9 +503,20 @@ export default {
       };
     },
 
+    getPersonsForScale () {
+      if (this.viewMode === 'dynamic') {
+        const visibleIds = this.getDynamicVisiblePersonIds()
+        const visiblePersons = this.dataPersons.filter(p => visibleIds.has(p.id))
+        if (visiblePersons.length > 0) {
+          return visiblePersons
+        }
+      }
+      return this.dataPersons
+    },
+
     applyScaleBounds () {
       if (config.autoScale !== false) {
-        const bounds = this.calculateAutoBounds(this.dataPersons);
+        const bounds = this.calculateAutoBounds(this.getPersonsForScale());
         this.computedMinYear = bounds.minYear;
         this.computedMaxYear = bounds.maxYear;
         this.localStartViewYear = bounds.startViewYear;
@@ -401,13 +537,238 @@ export default {
     },
 
     resetToAutoScale () {
-      const bounds = this.calculateAutoBounds(this.dataPersons);
+      const bounds = this.calculateAutoBounds(this.getPersonsForScale());
       this.computedMinYear = bounds.minYear;
       this.computedMaxYear = bounds.maxYear;
       this.localStartViewYear = bounds.startViewYear;
       this.localStopViewYear = bounds.stopViewYear;
       this.$emit('data-loaded', 'timeline', bounds);
       this.drawTimeline();
+    },
+
+    getDefaultDynamicRootPersonId () {
+      if (!this.dataPersons || this.dataPersons.length === 0) return null
+
+      // Rechercher en priorité une personne ayant à la fois des parents et des enfants (ex: Charles Windsor)
+      const personWithBoth = this.dataPersons.find(p => {
+        const parents = this.getPersonParents(p.id)
+        const children = this.getPersonChildren(p.id)
+        return parents.length > 0 && children.length > 0
+      })
+      if (personWithBoth) return personWithBoth.id
+
+      // Sinon, une personne ayant des conjoints
+      const personWithSpouse = this.dataPersons.find(p => {
+        const spouses = this.filterSpouses(p.id)
+        return spouses.length > 0
+      })
+      if (personWithSpouse) return personWithSpouse.id
+
+      return this.dataPersons[0].id
+    },
+
+    getPersonParents (personId) {
+      const person = this.dataPersons.find(p => p.id === personId)
+      if (!person || !Array.isArray(person.relatives)) return []
+      const parentIds = person.relatives
+        .filter(r => r.relation_type === 'father' || r.relation_type === 'mother')
+        .map(r => r.id)
+      return this.dataPersons.filter(p => parentIds.includes(p.id))
+    },
+
+    getPersonChildren (personId) {
+      const person = this.dataPersons.find(p => p.id === personId)
+      if (!person || !Array.isArray(person.relatives)) return []
+      const childIds = person.relatives
+        .filter(r => r.relation_type === 'child')
+        .map(r => r.id)
+      return this.dataPersons.filter(p => childIds.includes(p.id))
+    },
+
+    getDynamicVisiblePersonIds () {
+      if (!this.dynamicRootPersonId) {
+        this.dynamicRootPersonId = this.getDefaultDynamicRootPersonId()
+      }
+      const visible = new Set()
+      if (!this.dynamicRootPersonId) return visible
+
+      // The root person is always visible
+      visible.add(this.dynamicRootPersonId)
+
+      // Spouses are ONLY added if explicitly expanded for that person!
+      const checkAndAddSpouses = (pId) => {
+        if (!this.expandedSpouseIds.has(pId)) return
+        const spouses = this.filterSpouses(pId)
+        spouses.forEach(s => {
+          visible.add(s.id)
+        })
+      }
+
+      // Parcourir les ascendants de manière récursive
+      const visitAscendants = (pId) => {
+        if (!this.expandedAscendantIds.has(pId)) return
+        const parents = this.getPersonParents(pId)
+        parents.forEach(parent => {
+          visible.add(parent.id)
+          checkAndAddSpouses(parent.id)
+          visitAscendants(parent.id)
+        })
+      }
+
+      // Parcourir les descendants de manière récursive
+      const visitDescendants = (pId) => {
+        if (!this.expandedDescendantIds.has(pId)) return
+        const children = this.getPersonChildren(pId)
+        children.forEach(child => {
+          visible.add(child.id)
+          checkAndAddSpouses(child.id)
+          visitDescendants(child.id)
+        })
+      }
+
+      checkAndAddSpouses(this.dynamicRootPersonId)
+      this.expandedAscendantIds.forEach(id => visitAscendants(id))
+      this.expandedDescendantIds.forEach(id => visitDescendants(id))
+      this.expandedSpouseIds.forEach(id => checkAndAddSpouses(id))
+
+      return visible
+    },
+
+    toggleSpouses (personId) {
+      if (this.expandedSpouseIds.has(personId)) {
+        this.expandedSpouseIds.delete(personId)
+      } else {
+        this.expandedSpouseIds.add(personId)
+      }
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    toggleAscendants (personId) {
+      if (this.expandedAscendantIds.has(personId)) {
+        this.expandedAscendantIds.delete(personId)
+      } else {
+        this.expandedAscendantIds.add(personId)
+      }
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    toggleDescendants (personId) {
+      if (this.expandedDescendantIds.has(personId)) {
+        this.expandedDescendantIds.delete(personId)
+      } else {
+        this.expandedDescendantIds.add(personId)
+      }
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    toggleViewMode (mode) {
+      this.viewMode = mode
+      this.hoveredPerson = null
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    resetDynamicTree () {
+      this.expandedAscendantIds.clear()
+      this.expandedDescendantIds.clear()
+      this.expandedSpouseIds.clear()
+      this.hoveredPerson = null
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    setDynamicRootPerson (personId) {
+      this.dynamicRootPersonId = personId
+      this.expandedAscendantIds.clear()
+      this.expandedDescendantIds.clear()
+      this.expandedSpouseIds.clear()
+      this.hoveredPerson = null
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    onPersonMouseEnter (person, event) {
+      if (this.hoverToolbarTimer) {
+        clearTimeout(this.hoverToolbarTimer)
+        this.hoverToolbarTimer = null
+      }
+      this.hoveredPerson = person
+
+      const wrapper = document.getElementById('timeline-wrapper')
+      if (!wrapper) return
+      const wrapperRect = wrapper.getBoundingClientRect()
+      const targetRect = event.currentTarget.getBoundingClientRect()
+
+      // Calculate position relative to timeline-wrapper container
+      const top = targetRect.top - wrapperRect.top + wrapper.scrollTop - 44
+      const left = Math.max(16, Math.min(targetRect.left - wrapperRect.left + wrapper.scrollLeft + 60, wrapperRect.width - 450))
+
+      this.floatingToolbarStyle = {
+        top: `${Math.max(8, top)}px`,
+        left: `${left}px`
+      }
+    },
+
+    onPersonMouseLeave () {
+      this.hoverToolbarTimer = setTimeout(() => {
+        if (!this.isHoveringToolbar) {
+          this.hoveredPerson = null
+        }
+      }, 300)
+    },
+
+    onToolbarMouseEnter () {
+      if (this.hoverToolbarTimer) {
+        clearTimeout(this.hoverToolbarTimer)
+        this.hoverToolbarTimer = null
+      }
+      this.isHoveringToolbar = true
+    },
+
+    onToolbarMouseLeave () {
+      this.isHoveringToolbar = false
+      this.hoverToolbarTimer = setTimeout(() => {
+        this.hoveredPerson = null
+      }, 200)
     },
 
     filterRootPersons () {
@@ -811,7 +1172,10 @@ export default {
       this.timelineWidth = timelineContentWidth - this.graphMargin.right - this.graphMargin.left
 
       // Calculate the total height of the chart
-      this.totalHeight = Math.max((this.dataPersons.length + 3) * this.barHeight, window.innerHeight)
+      const personCount = this.viewMode === 'dynamic'
+        ? Math.max(this.getDynamicVisiblePersonIds().size, 4)
+        : this.dataPersons.length
+      this.totalHeight = Math.max((personCount + 3) * this.barHeight, window.innerHeight)
 
       this.xViewScale = d3.scaleLinear()
         .domain([this.localStartViewYear, this.localStopViewYear])
@@ -1044,12 +1408,36 @@ export default {
       const familyColor = null
       const isChild = false
 
-      this.rootPersons = this.filterRootPersons()
-      for (const person of this.rootPersons) {
-        if (!this.displayedPersons.has(person.id)) {
-          const personPeriods = this.getPeriods(person, familyColor, isChild)
-          yPosition = this.drawPerson(person, personPeriods, grahSvg, yPosition, xScale)
-          yPosition++
+      if (this.viewMode === 'all') {
+        this.rootPersons = this.filterRootPersons()
+        for (const person of this.rootPersons) {
+          if (!this.displayedPersons.has(person.id)) {
+            const personPeriods = this.getPeriods(person, familyColor, isChild)
+            yPosition = this.drawPerson(person, personPeriods, grahSvg, yPosition, xScale)
+            yPosition++
+          }
+        }
+      } else {
+        // Mode dynamique : identifier les racines parmi les personnes visibles
+        const visibleIds = this.getDynamicVisiblePersonIds()
+        const visiblePersons = this.dataPersons.filter(p => visibleIds.has(p.id))
+
+        // Une racine visible est une personne dont aucun parent n'est dans l'ensemble visible
+        const visibleRoots = visiblePersons.filter(p => {
+          const parents = this.getPersonParents(p.id)
+          return !parents.some(parent => visibleIds.has(parent.id))
+        }).sort((a, b) => {
+          const birthA = this.getYearFromDate(a.birth_date) || 9999
+          const birthB = this.getYearFromDate(b.birth_date) || 9999
+          return birthA - birthB
+        })
+
+        for (const person of visibleRoots) {
+          if (!this.displayedPersons.has(person.id)) {
+            const personPeriods = this.getPeriods(person, familyColor, isChild)
+            yPosition = this.drawPerson(person, personPeriods, grahSvg, yPosition, xScale)
+            yPosition++
+          }
         }
       }
     },
@@ -1064,118 +1452,247 @@ export default {
       const topOffset = this.showHistoryContext ? 52 : 15
       const y = yPosition * this.barHeight / 2 + topOffset
       const height = 40
+      const isUnfolded = this.isBarUnfolded(person.id)
+
       const personGroup = grahSvg.append('g')
         .attr('class', 'person')
         .attr('id', `person-bar-${person.id}`)
         .attr('transform', `translate(0, ${y})`)
         .datum(person)
-
-      // Create a timeline group for all periods
-      const periodsGroup = personGroup.append('g')
-
-      // draw each period for this person
-      periods.forEach((period, index) => {
-        const x = xScale(period.start)
-        const width = xScale(period.end) - xScale(period.start)
-        const roundLeft = index === 0
-        const roundRight = (index === periods.length - 1) && !period.stillAlive
-
-        // Determine the filter to apply
-        let filter = 'none'
-        if (!period.birthDateVerified || !period.deathDateVerified) {
-          filter = 'url(#blur-filter)'
-        }
-
-        const periodPath = periodsGroup.append('path')
-          .attr('d', this.drawRoundedRect(x, y, width, height, 10, roundLeft, roundRight))
-          .attr('fill', period.color)
-          .attr('stroke', 'rgba(15, 23, 42, 0.1)')
-          .attr('stroke-width', 1)
-          .style('cursor', 'pointer')
-          .style('filter', filter)
-          .on('click', () => this.showPersonProfile(person))
-
-        if (period.isRelationship) {
-          const typeLabel = period.relationshipType === 'marriage' ? 'Mariage' : 'Union'
-          const periodDates = period.divorceYear ? `(${period.start} - ${period.divorceYear})` : `(depuis ${period.start})`
-          periodPath.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
-
-          // Anneaux d'alliance dorés discrets au début de la tranche de mariage
-          if (width >= 24) {
-            const ringG = periodsGroup.append('g')
-              .attr('class', 'marriage-bar-badge')
-              .attr('transform', `translate(${x + 12}, ${y + height / 2})`)
-              .style('cursor', 'pointer')
-              .on('click', () => this.showPersonProfile(person))
-
-            ringG.append('circle').attr('cx', -3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#fbbf24').attr('stroke-width', 1.8)
-            ringG.append('circle').attr('cx', 3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#f59e0b').attr('stroke-width', 1.8)
-            ringG.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
+        .on('mouseenter', (event) => {
+          if (this.viewMode === 'dynamic') {
+            this.onPersonMouseEnter(person, event)
           }
-        }
-      })
+        })
+        .on('mouseleave', () => {
+          if (this.viewMode === 'dynamic') {
+            this.onPersonMouseLeave()
+          }
+        })
 
       // Determine the image URL based on gender
       const imageUrl = person.gender === 'Male'
         ? 'profile_men.png'
         : 'profile_women.png'
 
-      // Cercle de fond blanc pour détacher l'avatar
-      personGroup.append('circle')
-        .attr('cx', xScale(birthYear) + 20)
-        .attr('cy', y + height / 2)
-        .attr('r', 16)
-        .attr('fill', '#ffffff')
-        .attr('stroke', '#ffffff')
-        .attr('stroke-width', 2)
-        .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))')
+      const avatarCx = xScale(birthYear) + 20
 
-      // Append the image inside the circle
-      personGroup.append('image')
-        .attr('xlink:href', imageUrl)
-        .attr('x', xScale(birthYear) + 5)
-        .attr('y', y + height / 2 - 15)
-        .attr('fill', 'none')
-        .attr('width', 30)
-        .attr('height', 30)
-        .attr('clip-path', 'circle(15px at 15px 15px)')
-        .style('cursor', 'pointer')
-        .on('click', () => this.showPersonProfile(person))
+      if (!isUnfolded) {
+        // ── MODE COMPACT (par défaut) ─────────────────────────────────────────
+        // Pastille arrondie de ~180px centrée sur la date de naissance
+        const pillWidth = 170
+        const pillX = xScale(birthYear)
+        const pillRadius = height / 2
 
-      // Add the person's name on the bar (texte blanc net)
-      personGroup.append('text')
-        .attr('x', xScale(birthYear) + 44)
-        .attr('y', y + height / 2)
-        .attr('dy', '.35em')
-        .attr('text-anchor', 'start')
-        .attr('font-size', '13px')
-        .attr('font-weight', '700')
-        .attr('fill', '#ffffff')
-        .style('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.4)')
-        .text(`${person.first_name} ${person.last_name}`)
-        .style('cursor', 'pointer')
-        .style('user-select', 'none')
-        .on('click', () => this.showPersonProfile(person))
+        // Ombre portée / fond de la pastille
+        personGroup.append('rect')
+          .attr('x', pillX)
+          .attr('y', y)
+          .attr('width', pillWidth)
+          .attr('height', height)
+          .attr('rx', pillRadius)
+          .attr('ry', pillRadius)
+          .attr('fill', periods.length > 0 ? periods[0].color : '#e2e8f0')
+          .attr('stroke', 'rgba(15, 23, 42, 0.12)')
+          .attr('stroke-width', 1.5)
+          .style('cursor', 'pointer')
+          .style('filter', 'drop-shadow(0 2px 6px rgba(15,23,42,0.1))')
+          .on('click', () => this.togglePersonBar(person.id))
+
+        // Cercle blanc derrière l'avatar
+        personGroup.append('circle')
+          .attr('cx', avatarCx)
+          .attr('cy', y + height / 2)
+          .attr('r', 16)
+          .attr('fill', '#ffffff')
+          .attr('stroke', '#ffffff')
+          .attr('stroke-width', 2)
+          .style('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.15))')
+          .style('cursor', 'pointer')
+          .on('click', () => this.togglePersonBar(person.id))
+
+        // Avatar
+        personGroup.append('image')
+          .attr('xlink:href', imageUrl)
+          .attr('x', avatarCx - 15)
+          .attr('y', y + height / 2 - 15)
+          .attr('width', 30)
+          .attr('height', 30)
+          .attr('clip-path', 'circle(15px at 15px 15px)')
+          .style('cursor', 'pointer')
+          .on('click', () => this.togglePersonBar(person.id))
+
+        // Prénom (texte tronqué)
+        personGroup.append('text')
+          .attr('x', avatarCx + 22)
+          .attr('y', y + height / 2)
+          .attr('dy', '.35em')
+          .attr('text-anchor', 'start')
+          .attr('font-size', '12px')
+          .attr('font-weight', '700')
+          .attr('fill', '#1e293b')
+          .style('user-select', 'none')
+          .style('cursor', 'pointer')
+          .text(`${person.first_name} ${person.last_name}`.substring(0, 13) + ((`${person.first_name} ${person.last_name}`).length > 13 ? '…' : ''))
+          .on('click', () => this.togglePersonBar(person.id))
+
+        // Icône chevron droit ▶ pour indiquer qu'on peut déplier
+        personGroup.append('text')
+          .attr('class', 'expand-toggle-icon')
+          .attr('x', pillX + pillWidth - 14)
+          .attr('y', y + height / 2)
+          .attr('dy', '.35em')
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '11px')
+          .attr('fill', '#64748b')
+          .style('user-select', 'none')
+          .style('cursor', 'pointer')
+          .text('▶')
+          .on('click', () => this.togglePersonBar(person.id))
+
+      } else {
+        // ── MODE DÉPLIÉ (barre de vie complète) ───────────────────────────────
+        // Create a timeline group for all periods
+        const periodsGroup = personGroup.append('g')
+
+        // draw each period for this person
+        periods.forEach((period, index) => {
+          const x = xScale(period.start)
+          const width = xScale(period.end) - xScale(period.start)
+          const roundLeft = index === 0
+          const roundRight = (index === periods.length - 1) && !period.stillAlive
+
+          // Determine the filter to apply
+          let filter = 'none'
+          if (!period.birthDateVerified || !period.deathDateVerified) {
+            filter = 'url(#blur-filter)'
+          }
+
+          const periodPath = periodsGroup.append('path')
+            .attr('d', this.drawRoundedRect(x, y, width, height, 10, roundLeft, roundRight))
+            .attr('fill', period.color)
+            .attr('stroke', 'rgba(15, 23, 42, 0.1)')
+            .attr('stroke-width', 1)
+            .style('cursor', 'pointer')
+            .style('filter', filter)
+            .on('click', () => this.showPersonProfile(person))
+
+          if (period.isRelationship) {
+            const typeLabel = period.relationshipType === 'marriage' ? 'Mariage' : 'Union'
+            const periodDates = period.divorceYear ? `(${period.start} - ${period.divorceYear})` : `(depuis ${period.start})`
+            periodPath.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
+
+            // Anneaux d'alliance dorés discrets au début de la tranche de mariage
+            if (width >= 24) {
+              const ringG = periodsGroup.append('g')
+                .attr('class', 'marriage-bar-badge')
+                .attr('transform', `translate(${x + 12}, ${y + height / 2})`)
+                .style('cursor', 'pointer')
+                .on('click', () => this.showPersonProfile(person))
+
+              ringG.append('circle').attr('cx', -3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#fbbf24').attr('stroke-width', 1.8)
+              ringG.append('circle').attr('cx', 3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#f59e0b').attr('stroke-width', 1.8)
+              ringG.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
+            }
+          }
+        })
+
+        // Cercle de fond blanc pour détacher l'avatar
+        personGroup.append('circle')
+          .attr('cx', avatarCx)
+          .attr('cy', y + height / 2)
+          .attr('r', 16)
+          .attr('fill', '#ffffff')
+          .attr('stroke', '#ffffff')
+          .attr('stroke-width', 2)
+          .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))')
+
+        // Append the image inside the circle
+        personGroup.append('image')
+          .attr('xlink:href', imageUrl)
+          .attr('x', avatarCx - 15)
+          .attr('y', y + height / 2 - 15)
+          .attr('fill', 'none')
+          .attr('width', 30)
+          .attr('height', 30)
+          .attr('clip-path', 'circle(15px at 15px 15px)')
+          .style('cursor', 'pointer')
+          .on('click', () => this.showPersonProfile(person))
+
+        // Add the person's name on the bar (texte blanc net)
+        personGroup.append('text')
+          .attr('x', xScale(birthYear) + 44)
+          .attr('y', y + height / 2)
+          .attr('dy', '.35em')
+          .attr('text-anchor', 'start')
+          .attr('font-size', '13px')
+          .attr('font-weight', '700')
+          .attr('fill', '#ffffff')
+          .style('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.4)')
+          .text(`${person.first_name} ${person.last_name}`)
+          .style('cursor', 'pointer')
+          .style('user-select', 'none')
+          .on('click', () => this.showPersonProfile(person))
+
+        // Bouton de repli ◀ à l'extrémité droite de la barre
+        const lastPeriod = periods[periods.length - 1]
+        const collapseX = lastPeriod ? xScale(lastPeriod.end) + 6 : xScale(birthYear) + 180
+        personGroup.append('circle')
+          .attr('class', 'collapse-btn-bg')
+          .attr('cx', collapseX + 10)
+          .attr('cy', y + height / 2)
+          .attr('r', 10)
+          .attr('fill', '#f1f5f9')
+          .attr('stroke', '#cbd5e1')
+          .attr('stroke-width', 1)
+          .style('cursor', 'pointer')
+          .on('click', () => this.togglePersonBar(person.id))
+
+        personGroup.append('text')
+          .attr('class', 'collapse-toggle-icon')
+          .attr('x', collapseX + 10)
+          .attr('y', y + height / 2)
+          .attr('dy', '.35em')
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '11px')
+          .attr('fill', '#64748b')
+          .style('user-select', 'none')
+          .style('cursor', 'pointer')
+          .text('◀')
+          .on('click', () => this.togglePersonBar(person.id))
+      }
 
       // set this person as displayed to avoid duplication
       this.displayedPersons.add(person.id)
 
       // Store rendered coordinates for family links and search focus
-      // y est cumulé par le groupe transform translate(0, y) ET les coordonnées internes y
       const actualYTop = y * 2
       const actualYBottom = actualYTop + height
+      // Note: chaque groupe SVG a transform(0, y) ET les éléments internes utilisent y dans leurs attributs,
+      // donc la position absolue réelle = 2*y. actualYTop + height/2 est le vrai centre absolu SVG.
+      const actualYCenter = actualYTop + height / 2
+      // Points d'ancrage pour les liens de filiation :
+      //   anchorXOut = point de départ (centre de l'avatar du parent)
+      //   anchorXIn  = point d'arrivée (à gauche de l'avatar de l'enfant)
+      const avatarCenterX = xScale(birthYear) + 20
+      const avatarLeftX   = xScale(birthYear) + 4  // cx(20) - r(16)
       this.renderedPersons.set(person.id, {
         id: person.id,
         person: person,
         yPosition: yPosition,
         yTop: actualYTop,
+        yCenter: actualYCenter,
         yBottom: actualYBottom,
         birthYear: birthYear,
+        anchorXOut: avatarCenterX,
+        anchorXIn:  avatarLeftX,
         deathYear: this.getYearFromDate(person.death_date)
       })
 
       // draw other associated persons
       const spouses = this.filterSpouses(person.id)
+      const visibleIds = this.viewMode === 'dynamic' ? this.getDynamicVisiblePersonIds() : null
+
       if (spouses.length === 0 ) {
         const familyNoSpouseColor = this.familyColorsMap.get(this.getFamilyKey(person.id, 0))
         const isChild = true
@@ -1186,7 +1703,8 @@ export default {
           return birthA - birthB
         })
         for (const child of sortedNoSpouse) {
-          if (!this.displayedPersons.has(child.id)) {
+          const shouldDrawChild = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || (visibleIds && visibleIds.has(child.id))
+          if (shouldDrawChild && !this.displayedPersons.has(child.id)) {
             const childPeriods = this.getPeriods(child, familyNoSpouseColor, isChild)
             yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
           }
@@ -1196,34 +1714,41 @@ export default {
         const familyColor = this.familyColorsMap.get(this.getFamilyKey(person.id, spouse.id))
         let isChild = false
 
-        // draw oldest anceter
-        const oldestAncestor = this.filterOldestAncestor(spouse.id)
-        if (oldestAncestor.id !== spouse.id) {
-          if (!this.displayedPersons.has(oldestAncestor.id)) {
-            const oldestAncestorPeriods = this.getPeriods(oldestAncestor, familyColor, isChild)
-            yPosition = this.drawPerson(oldestAncestor, oldestAncestorPeriods, grahSvg, yPosition + 1, xScale)
+        // draw oldest ancestor of spouse (only in 'all' mode, or if spouse's ancestors were expanded)
+        if (this.viewMode === 'all' || (visibleIds && this.expandedAscendantIds.has(spouse.id))) {
+          const oldestAncestor = this.filterOldestAncestor(spouse.id)
+          if (oldestAncestor.id !== spouse.id) {
+            const shouldDrawOldest = this.viewMode === 'all' || (visibleIds && visibleIds.has(oldestAncestor.id))
+            if (shouldDrawOldest && !this.displayedPersons.has(oldestAncestor.id)) {
+              const oldestAncestorPeriods = this.getPeriods(oldestAncestor, familyColor, isChild)
+              yPosition = this.drawPerson(oldestAncestor, oldestAncestorPeriods, grahSvg, yPosition + 1, xScale)
+            }
           }
         }
 
         // draw the spouse
-        if (!this.displayedPersons.has(spouse.id)) {
+        const shouldDrawSpouse = this.viewMode === 'all' || (visibleIds && visibleIds.has(spouse.id))
+        if (shouldDrawSpouse && !this.displayedPersons.has(spouse.id)) {
           const spousePeriods = this.getPeriods(spouse, familyColor, isChild)
           yPosition = this.drawPerson(spouse, spousePeriods, grahSvg, yPosition + 1, xScale)
         }
 
         // draw children sorted chronologically by birth date
-        const children = this.filterChildren(person.id, spouse.id)
-        const sortedChildren = [...children].sort((a, b) => {
-          const birthA = this.getYearFromDate(a.birth_date) || 9999
-          const birthB = this.getYearFromDate(b.birth_date) || 9999
-          return birthA - birthB
-        })
+        const shouldDrawChildren = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || this.expandedDescendantIds.has(spouse.id)
+        if (shouldDrawChildren) {
+          const children = this.filterChildren(person.id, spouse.id)
+          const sortedChildren = [...children].sort((a, b) => {
+            const birthA = this.getYearFromDate(a.birth_date) || 9999
+            const birthB = this.getYearFromDate(b.birth_date) || 9999
+            return birthA - birthB
+          })
 
-        for (const child of sortedChildren) {
-          if (!this.displayedPersons.has(child.id)) {
-            isChild = true
-            const childPeriods = this.getPeriods(child, familyColor, isChild)
-            yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
+          for (const child of sortedChildren) {
+            if (!this.displayedPersons.has(child.id)) {
+              isChild = true
+              const childPeriods = this.getPeriods(child, familyColor, isChild)
+              yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
+            }
           }
         }
       }
@@ -1233,6 +1758,32 @@ export default {
     showPersonProfile (person) {
       this.selectedPerson = person
       this.$refs.profileModal.show()
+    },
+
+    isBarUnfolded (personId) {
+      return this.unfoldedPersonIds.has(personId)
+    },
+
+    togglePersonBar (personId) {
+      const newSet = new Set(this.unfoldedPersonIds)
+      if (newSet.has(personId)) {
+        newSet.delete(personId)
+      } else {
+        newSet.add(personId)
+      }
+      this.unfoldedPersonIds = newSet
+      this.drawTimeline()
+    },
+
+    toggleAllBars () {
+      if (this.unfoldedPersonIds.size === 0) {
+        // Tout déplier : ajouter toutes les personnes affichées
+        this.unfoldedPersonIds = new Set(this.renderedPersons.keys())
+      } else {
+        // Tout replier
+        this.unfoldedPersonIds = new Set()
+      }
+      this.drawTimeline()
     },
 
     refreshPersonProfile (person) {
@@ -1252,6 +1803,11 @@ export default {
     focusPerson (person) {
       this.searchQuery = `${person.first_name} ${person.last_name}`
       this.isSearchOpen = false
+
+      if (this.viewMode === 'dynamic') {
+        this.setDynamicRootPerson(person.id)
+        return
+      }
 
       const birthYear = this.getYearFromDate(person.birth_date)
       const deathYear = this.getYearFromDate(person.death_date) || (birthYear ? birthYear + 70 : 2000)
@@ -1390,11 +1946,6 @@ export default {
         ? graphSvg.insert('g', '.person').attr('class', 'family-links-layer')
         : graphSvg.append('g').attr('class', 'family-links-layer')
 
-      // Générateur de courbes cubiques de Bézier verticales douces
-      const bezierCurve = d3.linkVertical()
-        .x(d => d[0])
-        .y(d => d[1])
-
       this.renderedPersons.forEach((childData) => {
         const child = childData.person
         if (!child.relatives || child.relatives.length === 0) return
@@ -1409,8 +1960,6 @@ export default {
 
         const birthYear = childData.birthYear
         if (!birthYear) return
-
-        const xBirth = xScale(birthYear)
 
         // Chercher le parent au-dessus de l'enfant
         let targetParent = null
@@ -1428,52 +1977,55 @@ export default {
 
         if (!targetParent) return
 
-        const yStart = targetParent.yBottom
-        const yEnd = childData.yTop
+        const avatarRadius = 16
+        // Départ : bas de l'avatar du parent
+        const startX = targetParent.anchorXOut ?? (xScale(childData.birthYear) + 20)
+        const startY = (targetParent.yCenter ?? (targetParent.yTop + 20)) + avatarRadius
+        // Arrivée : bord gauche de l'avatar de l'enfant (centre vertical)
+        const endX   = childData.anchorXIn  ?? (xScale(childData.birthYear) + 4)
+        const endY   = childData.yCenter    ?? (childData.yTop + 20)
 
-        if (yEnd > yStart) {
-          // Ancrage naturel : part sous la barre du parent et ondule doucement vers l'avatar de l'enfant
-          const startX = xBirth + 6
-          const endX = xBirth + 20
-          const targetY = yEnd + 15
+        // Bézier cubique : descend d'abord verticalement, puis s'incurve vers la droite
+        // CP1 : directement en dessous du départ (descente verticale visible)
+        // CP2 : à gauche de l'arrivée (arrivée horizontale)
+        const dropAmount = Math.max(30, (endY - startY) * 0.4)
+        const cp1x = startX
+        const cp1y = startY + dropAmount
+        const cp2x = endX - Math.max(40, (endX - startX) * 0.3)
+        const cp2y = endY
+        const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
 
-          const linkG = linksGroup.append('g')
-            .attr('class', 'family-link')
-            .attr('data-child-id', child.id)
-            .attr('data-parent-id', targetParent.id)
+        const linkG = linksGroup.append('g')
+          .attr('class', 'family-link')
+          .attr('data-child-id', child.id)
+          .attr('data-parent-id', targetParent.id)
 
-          // Point d'ancrage sous le parent
-          linkG.append('circle')
-            .attr('class', 'anchor-parent')
-            .attr('cx', startX)
-            .attr('cy', yStart)
-            .attr('r', 3)
-            .attr('fill', '#64748b')
+        // Point d'ancrage visible au bas de l'avatar du parent
+        linkG.append('circle')
+          .attr('class', 'anchor-parent')
+          .attr('cx', startX)
+          .attr('cy', startY)
+          .attr('r', 4)
+          .attr('fill', '#475569')
 
-          // Tracé de la courbe fluide de Bézier reliant directement le parent à l'enfant
-          const pathD = bezierCurve({
-            source: [startX, yStart],
-            target: [endX, targetY]
-          })
+        linkG.append('path')
+          .attr('class', 'link-line')
+          .attr('d', pathD)
+          .attr('fill', 'none')
+          .attr('stroke', 'rgba(100, 116, 139, 0.55)')
+          .attr('stroke-width', 1.8)
+          .attr('stroke-linecap', 'round')
 
-          linkG.append('path')
-            .attr('class', 'link-line')
-            .attr('d', pathD)
-            .attr('fill', 'none')
-            .attr('stroke', 'rgba(100, 116, 139, 0.45)')
-            .attr('stroke-width', 1.8)
-            .attr('stroke-linecap', 'round')
-
-          // Point d'ancrage discret derrière l'avatar de l'enfant
-          linkG.append('circle')
-            .attr('class', 'anchor-child')
-            .attr('cx', endX)
-            .attr('cy', targetY)
-            .attr('r', 2.5)
-            .attr('fill', '#3b82f6')
-        }
+        // Point d'ancrage discret à l'arrivée sur l'enfant
+        linkG.append('circle')
+          .attr('class', 'anchor-child')
+          .attr('cx', endX)
+          .attr('cy', endY)
+          .attr('r', 2.5)
+          .attr('fill', '#3b82f6')
       })
     }
+
 
   }
 }
@@ -1600,6 +2152,29 @@ export default {
   stroke: #d97706;
 }
 
+/* Floating Action Toolbar on Person Hover */
+.person-floating-toolbar {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: auto;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.16);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  animation: fadeInToolbar 0.15s ease-out;
+}
+
+@keyframes fadeInToolbar {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Highlight pulse on search focus */
 @keyframes personPulse {
   0% {
@@ -1615,5 +2190,25 @@ export default {
 
 .person-highlighted {
   animation: personPulse 1.2s ease-in-out 3;
+}
+
+/* Compact pill mode */
+.person .expand-toggle-icon,
+.person .collapse-toggle-icon {
+  transition: fill 0.15s ease, transform 0.15s ease;
+}
+
+.person:hover .expand-toggle-icon,
+.person:hover .collapse-toggle-icon {
+  fill: #2563eb;
+}
+
+.collapse-btn-bg {
+  transition: fill 0.15s ease;
+}
+
+.person:hover .collapse-btn-bg {
+  fill: #dbeafe;
+  stroke: #2563eb;
 }
 </style>

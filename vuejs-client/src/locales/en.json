@@ -108,5 +108,20 @@
     "toggle-history": "Show/Hide historical periods in background",
     "history-context": "History context",
     "fit-scale": "Fit scale",
-    "fit-scale-title": "Automatically fit scale to family timeline"
+    "fit-scale-title": "Automatically fit scale to family timeline",
+    "dynamic-tree": "Dynamic tree",
+    "full-tree": "Full tree",
+    "dynamic-tree-title": "Explore tree interactively (ancestors / descendants)",
+    "full-tree-title": "Display the whole family",
+    "reset-tree": "Reset tree",
+    "show-parents": "Show parents",
+    "hide-parents": "Hide parents",
+    "show-children": "Show children",
+    "hide-children": "Hide children",
+    "show-spouses": "Show spouse(s)",
+    "hide-spouses": "Hide spouse(s)",
+    "expand-all-bars": "Expand all",
+    "collapse-all-bars": "Collapse all",
+    "expand-bar": "Expand life bar",
+    "collapse-bar": "Collapse life bar"
 }

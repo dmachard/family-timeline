@@ -135,4 +135,81 @@ describe('Timeline Methods', () => {
     expect(bounds.minYear).toBeDefined()
     expect(bounds.maxYear).toBeGreaterThan(bounds.minYear)
   })
+
+  test('dynamic mode should initialize with default viewMode and root person', () => {
+    expect(wrapper.vm.viewMode).toBe('dynamic')
+    expect(wrapper.vm.dynamicRootPersonId).toBeDefined()
+  })
+
+  test('toggleViewMode should switch between dynamic and all', () => {
+    wrapper.vm.toggleViewMode('all')
+    expect(wrapper.vm.viewMode).toBe('all')
+    wrapper.vm.toggleViewMode('dynamic')
+    expect(wrapper.vm.viewMode).toBe('dynamic')
+  })
+
+  test('toggleAscendants and toggleDescendants should add and remove IDs in dynamic sets', () => {
+    const testId = 4
+    expect(wrapper.vm.expandedAscendantIds.has(testId)).toBe(false)
+    wrapper.vm.toggleAscendants(testId)
+    expect(wrapper.vm.expandedAscendantIds.has(testId)).toBe(true)
+    wrapper.vm.toggleAscendants(testId)
+    expect(wrapper.vm.expandedAscendantIds.has(testId)).toBe(false)
+
+    expect(wrapper.vm.expandedDescendantIds.has(testId)).toBe(false)
+    wrapper.vm.toggleDescendants(testId)
+    expect(wrapper.vm.expandedDescendantIds.has(testId)).toBe(true)
+    wrapper.vm.toggleDescendants(testId)
+    expect(wrapper.vm.expandedDescendantIds.has(testId)).toBe(false)
+
+    expect(wrapper.vm.expandedSpouseIds.has(testId)).toBe(false)
+    wrapper.vm.toggleSpouses(testId)
+    expect(wrapper.vm.expandedSpouseIds.has(testId)).toBe(true)
+    wrapper.vm.toggleSpouses(testId)
+    expect(wrapper.vm.expandedSpouseIds.has(testId)).toBe(false)
+  })
+
+  test('unfoldedPersonIds should be empty by default (compact mode)', () => {
+    expect(wrapper.vm.unfoldedPersonIds.size).toBe(0)
+  })
+
+  test('isBarUnfolded should return false for unknown person id by default', () => {
+    expect(wrapper.vm.isBarUnfolded(999)).toBe(false)
+  })
+
+  test('togglePersonBar should add then remove a person id', () => {
+    const personId = 1
+
+    // Initially not unfolded
+    expect(wrapper.vm.isBarUnfolded(personId)).toBe(false)
+
+    // Mock drawTimeline to avoid D3 side effects in test
+    wrapper.vm.drawTimeline = vi.fn()
+
+    // Toggle once → should be unfolded
+    wrapper.vm.togglePersonBar(personId)
+    expect(wrapper.vm.isBarUnfolded(personId)).toBe(true)
+
+    // Toggle again → should be folded back
+    wrapper.vm.togglePersonBar(personId)
+    expect(wrapper.vm.isBarUnfolded(personId)).toBe(false)
+  })
+
+  test('toggleAllBars should expand all rendered persons, then collapse all', () => {
+    // Pre-populate renderedPersons to simulate drawn persons
+    wrapper.vm.renderedPersons.set(1, { id: 1 })
+    wrapper.vm.renderedPersons.set(2, { id: 2 })
+
+    // Mock drawTimeline to avoid D3 side effects in test
+    wrapper.vm.drawTimeline = vi.fn()
+
+    // All collapsed → expand all
+    wrapper.vm.toggleAllBars()
+    expect(wrapper.vm.unfoldedPersonIds.has(1)).toBe(true)
+    expect(wrapper.vm.unfoldedPersonIds.has(2)).toBe(true)
+
+    // Some expanded → collapse all
+    wrapper.vm.toggleAllBars()
+    expect(wrapper.vm.unfoldedPersonIds.size).toBe(0)
+  })
 })

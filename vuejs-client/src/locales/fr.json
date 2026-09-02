@@ -108,5 +108,20 @@
     "toggle-history": "Afficher/Masquer les périodes historiques en arrière-plan",
     "history-context": "Contexte historique",
     "fit-scale": "Ajuster l'échelle",
-    "fit-scale-title": "Ajuster automatiquement l'échelle à la période familiale"
+    "fit-scale-title": "Ajuster automatiquement l'échelle à la période familiale",
+    "dynamic-tree": "Arbre dynamique",
+    "full-tree": "Vue complète",
+    "dynamic-tree-title": "Explorer l'arbre de manière vivante et interactive",
+    "full-tree-title": "Afficher l'ensemble de la famille",
+    "reset-tree": "Réinitialiser l'arbre",
+    "show-parents": "Voir les parents",
+    "hide-parents": "Masquer les parents",
+    "show-children": "Voir les enfants",
+    "hide-children": "Masquer les enfants",
+    "show-spouses": "Voir conjoint(s)",
+    "hide-spouses": "Masquer conjoint(s)",
+    "expand-all-bars": "Tout déplier",
+    "collapse-all-bars": "Tout replier",
+    "expand-bar": "Déplier la barre de vie",
+    "collapse-bar": "Replier la barre de vie"
 }
