@@ -1,5 +1,5 @@
 # Build stage
-FROM node:26.2.0 AS build
+FROM node:26.8.1 AS build
 
 # Set the working directory
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM nginx:1.31.2-alpine
+FROM nginx:1.31.4-alpine
 
 # Copy built files from the build stage to Nginx's directory
 COPY --from=build /app/dist /usr/share/nginx/html
