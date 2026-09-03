@@ -302,6 +302,7 @@ export default {
       moveGraphStarted: false,
       showHistoryContext: true,
       renderedPersons: new Map(),
+      coupleBridges: new Map(),
       searchQuery: '',
       isSearchOpen: false,
       viewMode: 'dynamic', // 'dynamic' (arbre vivant par défaut) ou 'all' (vue complète)
@@ -670,6 +671,10 @@ export default {
         this.expandedDescendantIds.delete(personId)
       } else {
         this.expandedDescendantIds.add(personId)
+        // Déplier automatiquement les parents pour que leurs barres de vie et pont d'union atteignent les années de naissance
+        this.unfoldedPersonIds.add(personId)
+        const spouses = this.filterSpouses(personId)
+        spouses.forEach(s => this.unfoldedPersonIds.add(s.id))
       }
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
@@ -1313,6 +1318,7 @@ export default {
       this.displayedPersons.clear()
       this.familyColorsMap.clear()
       this.renderedPersons.clear()
+      this.coupleBridges.clear()
     },
 
     drawTimeline () {
@@ -1340,11 +1346,11 @@ export default {
       // 4. Draw persons and their periods
       this.drawPersons(this.xViewScale)
 
-      // 5. Draw family links (filiation parent-child)
-      this.drawFamilyLinks(d3.select('#timeline-graph'), this.xViewScale)
-
-      // 6. Draw marriage bridges (barres qui se rapprochent au mariage)
+      // 5. Draw marriage & couple bridges (registers coupleBridges)
       this.drawMarriageBridges(d3.select('#timeline-graph'), this.xViewScale)
+
+      // 6. Draw family links (filiation parent-child attached to couple/parent at birth date)
+      this.drawFamilyLinks(d3.select('#timeline-graph'), this.xViewScale)
     },
 
     drawTimelineHeader (width, margin, yearStart, yearStop) {
@@ -1994,6 +2000,7 @@ export default {
         : graphSvg.append('g').attr('class', 'marriage-bridge-layer')
 
       const processed = new Set()
+      this.coupleBridges.clear()
 
       this.renderedPersons.forEach((personData) => {
         const spouses = this.filterSpouses(personData.id)
@@ -2008,25 +2015,49 @@ export default {
           if (processed.has(pairKey)) return
           processed.add(pairKey)
 
-          // Date de début du pont (la plus ancienne entre union civile et mariage)
+          // Date de début du pont :
+          // 1. Mariage ou union civile (le plus ancien)
           const mDate = this.getYearFromDate(spouse.marriage_date)
           const uDate = this.getYearFromDate(spouse.civil_union_date)
-          const marriageYear = mDate && uDate ? Math.min(mDate, uDate) : (mDate || uDate)
+          let marriageYear = mDate && uDate ? Math.min(mDate, uDate) : (mDate || uDate)
+
+          // 2. Si pas de mariage ni union civile, débuter dès le 1er enfant commun (coparentalité / union libre)
+          if (!marriageYear) {
+            const commonChildren = this.filterChildren(personData.id, spouse.id)
+            if (commonChildren && commonChildren.length > 0) {
+              const sortedKids = [...commonChildren].sort((a, b) => {
+                const bA = this.getYearFromDate(a.birth_date) || 9999
+                const bB = this.getYearFromDate(b.birth_date) || 9999
+                return bA - bB
+              })
+              marriageYear = this.getYearFromDate(sortedKids[0].birth_date)
+            }
+          }
+
           if (!marriageYear) return
 
           // Date de fin (divorce, séparation, ou décès du premier conjoint)
           const divorceYear = this.getYearFromDate(spouse.divorce_date || spouse.civil_separation_date)
 
           // Fin de la bande : position X en pixels de la fin de chaque barre
-          // → toujours connu au rendu (pill fixe ou barre déployée)
           const fallbackX = xScale(this.localStopViewYear)
           const xEndPerson = personData.barEndX ?? fallbackX
           const xEndSpouse = spouseData.barEndX ?? fallbackX
 
-          // Si divorce : on clip à la date de divorce
           let xEnd = Math.min(xEndPerson, xEndSpouse)
           if (divorceYear) {
             xEnd = Math.min(xEnd, xScale(divorceYear))
+          }
+
+          // Si un des conjoints est décédé, s'arrêter au premier décès
+          const spouseDeathYear = spouseData.deathYear
+          const personDeathYear = personData.deathYear
+          if (spouseDeathYear && personDeathYear) {
+            xEnd = Math.min(xEnd, xScale(Math.min(spouseDeathYear, personDeathYear)))
+          } else if (spouseDeathYear) {
+            xEnd = Math.min(xEnd, xScale(spouseDeathYear))
+          } else if (personDeathYear) {
+            xEnd = Math.min(xEnd, xScale(personDeathYear))
           }
 
           const xStart = xScale(marriageYear)
@@ -2052,7 +2083,22 @@ export default {
             ? bandColor + '99'  // hex + alpha 60%
             : bandColor.replace(/rgba?\(([^)]+)\)/, (_, g) => `rgba(${g.split(',').slice(0,3).join(',')}, 0.55)`)
 
-          // Option A : bande translucide dans le gap pendant le mariage
+          // Enregistrer les métadonnées du pont pour le tracé des liens d'enfants
+          this.coupleBridges.set(pairKey, {
+            parentA: personData,
+            parentB: spouseData,
+            topData,
+            bottomData,
+            gapTop,
+            gapBottom,
+            gapCenterY: (gapTop + gapBottom) / 2,
+            yearStart: marriageYear,
+            xStart,
+            xEnd,
+            bandColor
+          })
+
+          // Bande translucide dans le gap pendant l'union / parentalité
           bridgeLayer.append('rect')
             .attr('class', 'marriage-band')
             .attr('x', xStart)
@@ -2066,7 +2112,7 @@ export default {
     },
 
     drawFamilyLinks (graphSvg, xScale) {
-      // Insérer la couche des liens juste avant les personnes pour qu'elle se trouve en-dessous (derrière)
+      // Insérer la couche des liens juste avant les personnes pour qu'elle se trouve EN-DESSOUS (derrière) les barres de vie
       const firstPerson = graphSvg.select('.person')
       const linksGroup = firstPerson.node()
         ? graphSvg.insert('g', '.person').attr('class', 'family-links-layer')
@@ -2076,7 +2122,7 @@ export default {
         const child = childData.person
         if (!child.relatives || child.relatives.length === 0) return
 
-        // Trouver père ou mère parmi les personnes affichées
+        // Trouver père et mère parmi les personnes affichées
         const parentRelatives = child.relatives.filter(r =>
           (r.relation_type === 'father' || r.relation_type === 'mother') &&
           this.renderedPersons.has(r.id)
@@ -2087,68 +2133,88 @@ export default {
         const birthYear = childData.birthYear
         if (!birthYear) return
 
-        // Chercher le parent au-dessus de l'enfant
-        let targetParent = null
-        let maxParentYBottom = -1
-
-        parentRelatives.forEach(pr => {
-          const pData = this.renderedPersons.get(pr.id)
-          if (pData && pData.yBottom <= childData.yTop) {
-            if (pData.yBottom > maxParentYBottom) {
-              maxParentYBottom = pData.yBottom
-              targetParent = pData
-            }
-          }
-        })
-
-        if (!targetParent) return
-
-        const avatarRadius = 16
-        // Départ : bas de l'avatar du parent
-        const startX = targetParent.anchorXOut ?? (xScale(childData.birthYear) + 20)
-        const startY = (targetParent.yCenter ?? (targetParent.yTop + 20)) + avatarRadius
-        // Arrivée : bord gauche de l'avatar de l'enfant (centre vertical)
-        const endX   = childData.anchorXIn  ?? (xScale(childData.birthYear) + 4)
+        const xBirth = xScale(birthYear)
+        const endX   = childData.anchorXIn ?? (xBirth + 4)
         const endY   = childData.yCenter    ?? (childData.yTop + 20)
-
-        // Bézier cubique : descend d'abord verticalement, puis s'incurve vers la droite
-        // CP1 : directement en dessous du départ (descente verticale visible)
-        // CP2 : à gauche de l'arrivée (arrivée horizontale)
-        const dropAmount = Math.max(30, (endY - startY) * 0.4)
-        const cp1x = startX
-        const cp1y = startY + dropAmount
-        const cp2x = endX - Math.max(40, (endX - startX) * 0.3)
-        const cp2y = endY
-        const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
 
         const linkG = linksGroup.append('g')
           .attr('class', 'family-link')
           .attr('data-child-id', child.id)
-          .attr('data-parent-id', targetParent.id)
 
-        // Point d'ancrage visible au bas de l'avatar du parent
-        linkG.append('circle')
-          .attr('class', 'anchor-parent')
-          .attr('cx', startX)
-          .attr('cy', startY)
-          .attr('r', 4)
-          .attr('fill', '#475569')
+        // Cas 1 : Deux parents affichés
+        if (parentRelatives.length >= 2) {
+          const p1 = this.renderedPersons.get(parentRelatives[0].id)
+          const p2 = this.renderedPersons.get(parentRelatives[1].id)
+          const topParent = p1.yCenter <= p2.yCenter ? p1 : p2
+          const botParent = p1.yCenter <= p2.yCenter ? p2 : p1
+          const pairKey   = [p1.id, p2.id].sort().join('-')
+          const bridge    = this.coupleBridges.get(pairKey)
 
-        linkG.append('path')
-          .attr('class', 'link-line')
-          .attr('d', pathD)
-          .attr('fill', 'none')
-          .attr('stroke', 'rgba(100, 116, 139, 0.55)')
-          .attr('stroke-width', 1.8)
-          .attr('stroke-linecap', 'round')
+          const coupleColor = (bridge && bridge.bandColor) ? bridge.bandColor : '#475569'
 
-        // Point d'ancrage discret à l'arrivée sur l'enfant
-        linkG.append('circle')
-          .attr('class', 'anchor-child')
-          .attr('cx', endX)
-          .attr('cy', endY)
-          .attr('r', 2.5)
-          .attr('fill', '#3b82f6')
+          // Si les parents sont en mode compact (repliés), le départ part du bout de la pastille du parent
+          const isParentsCollapsed = !topParent.isUnfolded && !botParent.isUnfolded
+          const startX = isParentsCollapsed ? Math.min(xBirth, botParent.barEndX || xBirth) : xBirth
+
+          // Départ : centre de la bande d'union des deux parents à l'année de naissance
+          const startY = bridge ? bridge.gapCenterY : (topParent.yBottom + botParent.yTop) / 2
+
+          // UNIQUE point au milieu dans la bande d'union
+          linkG.append('circle')
+            .attr('class', 'anchor-couple')
+            .attr('cx', startX)
+            .attr('cy', startY)
+            .attr('r', 3.5)
+            .attr('fill', coupleColor)
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 1.5)
+
+          // Trait descendant du pont, passant derrière la barre du bas et rejoignant l'enfant
+          const deltaY = endY - startY
+          const cp1x = startX
+          const cp1y = startY + deltaY * 0.4
+          const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
+          const cp2y = endY
+          const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+
+          linkG.append('path')
+            .attr('class', 'link-line')
+            .attr('d', pathD)
+            .attr('fill', 'none')
+            .attr('stroke', 'rgba(71, 85, 105, 0.65)')
+            .attr('stroke-width', 1.8)
+            .attr('stroke-linecap', 'round')
+
+        } else {
+          // Cas 2 : Un seul parent affiché
+          const pData = this.renderedPersons.get(parentRelatives[0].id)
+          if (!pData) return
+
+          const startX = !pData.isUnfolded ? Math.min(xBirth, pData.barEndX || xBirth) : xBirth
+          const startY = childData.yTop >= pData.yBottom ? pData.yBottom : pData.yTop
+          const deltaY = endY - startY
+          const cp1x = startX
+          const cp1y = startY + deltaY * 0.4
+          const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
+          const cp2y = endY
+          const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+
+          linkG.append('circle')
+            .attr('cx', startX)
+            .attr('cy', startY)
+            .attr('r', 3)
+            .attr('fill', '#475569')
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', 1)
+
+          linkG.append('path')
+            .attr('class', 'link-line')
+            .attr('d', pathD)
+            .attr('fill', 'none')
+            .attr('stroke', 'rgba(71, 85, 105, 0.65)')
+            .attr('stroke-width', 1.8)
+            .attr('stroke-linecap', 'round')
+        }
       })
     }
 
