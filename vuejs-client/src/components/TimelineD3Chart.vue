@@ -160,49 +160,57 @@
           <!-- Floating Action Toolbar on Person Hover -->
           <div
             v-if="hoveredPerson && viewMode === 'dynamic'"
-            class="person-floating-toolbar shadow border d-flex align-items-center gap-2 p-1 bg-white rounded-pill"
+            class="person-floating-toolbar shadow border d-flex flex-column gap-1 p-2 bg-white rounded-3"
             :style="floatingToolbarStyle"
             @mouseenter="onToolbarMouseEnter"
             @mouseleave="onToolbarMouseLeave"
           >
             <!-- Nom de la personne -->
-            <span class="badge bg-light text-dark border-0 fw-semibold px-2 py-1">
-              {{ hoveredPerson.first_name }}
-            </span>
+            <div class="fw-semibold px-2 py-1 text-secondary border-bottom small text-truncate text-center">
+              {{ hoveredPerson.first_name }} {{ hoveredPerson.last_name }}
+            </div>
 
             <!-- Bouton Parents ▲ -->
             <button
               v-if="getPersonParents(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-primary py-0 px-2 d-flex align-items-center gap-1 rounded-pill"
+              class="btn btn-sm btn-outline-primary py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
               :class="{ 'btn-primary text-white': expandedAscendantIds.has(hoveredPerson.id) }"
               type="button"
               @click="toggleAscendants(hoveredPerson.id)"
             >
-              <span>{{ expandedAscendantIds.has(hoveredPerson.id) ? '▲ ' + $t('hide-parents') : '▲ ' + $t('show-parents') + ` (${getPersonParents(hoveredPerson.id).length})` }}</span>
+              <span>▲ {{ expandedAscendantIds.has(hoveredPerson.id) ? $t('hide-parents') : $t('show-parents') }}</span>
+              <span class="badge rounded-pill" :class="expandedAscendantIds.has(hoveredPerson.id) ? 'bg-white text-primary' : 'bg-primary text-white'">
+                {{ getPersonParents(hoveredPerson.id).length }}
+              </span>
             </button>
 
             <!-- Bouton Conjoints 💍 -->
             <button
               v-if="filterSpouses(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-warning text-dark py-0 px-2 d-flex align-items-center gap-1 rounded-pill"
+              class="btn btn-sm btn-outline-warning text-dark py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
               :class="{ 'btn-warning': expandedSpouseIds.has(hoveredPerson.id) }"
               type="button"
               @click="toggleSpouses(hoveredPerson.id)"
             >
-              <span>{{ expandedSpouseIds.has(hoveredPerson.id) ? '💍 ' + $t('hide-spouses') : '💍 ' + $t('show-spouses') + ` (${filterSpouses(hoveredPerson.id).length})` }}</span>
+              <span>💍 {{ expandedSpouseIds.has(hoveredPerson.id) ? $t('hide-spouses') : $t('show-spouses') }}</span>
+              <span class="badge rounded-pill" :class="expandedSpouseIds.has(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-warning text-dark'">
+                {{ filterSpouses(hoveredPerson.id).length }}
+              </span>
             </button>
 
             <!-- Bouton Enfants ▼ -->
             <button
               v-if="getPersonChildren(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-success py-0 px-2 d-flex align-items-center gap-1 rounded-pill"
+              class="btn btn-sm btn-outline-success py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
               :class="{ 'btn-success text-white': expandedDescendantIds.has(hoveredPerson.id) }"
               type="button"
               @click="toggleDescendants(hoveredPerson.id)"
             >
-              <span>{{ expandedDescendantIds.has(hoveredPerson.id) ? '▼ ' + $t('hide-children') : '▼ ' + $t('show-children') + ` (${getPersonChildren(hoveredPerson.id).length})` }}</span>
+              <span>▼ {{ expandedDescendantIds.has(hoveredPerson.id) ? $t('hide-children') : $t('show-children') }}</span>
+              <span class="badge rounded-pill" :class="expandedDescendantIds.has(hoveredPerson.id) ? 'bg-white text-success' : 'bg-success text-white'">
+                {{ getPersonChildren(hoveredPerson.id).length }}
+              </span>
             </button>
-
           </div>
         </div>
       </div>
@@ -730,14 +738,14 @@ export default {
       const wrapperRect = wrapper.getBoundingClientRect()
       const avatarRect = event.currentTarget.getBoundingClientRect()
 
-      // Top : centré verticalement sur l'avatar
-      const top = avatarRect.top - wrapperRect.top + wrapper.scrollTop + avatarRect.height / 2 - 18
-      // Left : juste à droite du cercle de profil (bord droit de l'avatar + 8px de marge)
-      const left = avatarRect.right - wrapperRect.left + wrapper.scrollLeft + 8
+      // Top : aligné légèrement au-dessus de l'avatar pour un menu vertical
+      const top = avatarRect.top - wrapperRect.top + wrapper.scrollTop - 6
+      // Left : juste à droite de l'avatar (bord droit + 6px de marge)
+      const left = avatarRect.right - wrapperRect.left + wrapper.scrollLeft + 6
 
       this.floatingToolbarStyle = {
         top: `${Math.max(8, top)}px`,
-        left: `${Math.min(left, wrapperRect.width - 450)}px`
+        left: `${Math.min(left, wrapperRect.width - 230)}px`
       }
     },
 
@@ -746,7 +754,7 @@ export default {
         if (!this.isHoveringToolbar) {
           this.hoveredPerson = null
         }
-      }, 300)
+      }, 350)
     },
 
     onToolbarMouseEnter () {
@@ -761,7 +769,7 @@ export default {
       this.isHoveringToolbar = false
       this.hoverToolbarTimer = setTimeout(() => {
         this.hoveredPerson = null
-      }, 200)
+      }, 300)
     },
 
     filterRootPersons () {
@@ -1051,7 +1059,14 @@ export default {
 
         // Extract years for marriage, civil union, divorce, and separation
         const marriageYear = spouse.marriage_date ? new Date(spouse.marriage_date).getFullYear() : null
-        const divorceYear = spouse.divorce_date ? new Date(spouse.divorce_date).getFullYear() : endYear
+        const spouseDeathYear = spouse.death_date ? new Date(spouse.death_date).getFullYear() : null
+        // Marriage period ends at: divorce, spouse's death, or person's own end year (whichever comes first)
+        let divorceYear = endYear
+        if (spouse.divorce_date) {
+          divorceYear = new Date(spouse.divorce_date).getFullYear()
+        } else if (spouseDeathYear && spouseDeathYear < endYear) {
+          divorceYear = spouseDeathYear
+        }
         const unionYear = spouse.civil_union_date ? new Date(spouse.civil_union_date).getFullYear() : null
 
         // Determine relationshipStartYear based on marriage, union, and children
@@ -1078,7 +1093,17 @@ export default {
           // Retrieve or generate a color for this spouse
           let spouseColor = this.familyColorsMap.get(familyKey)
           if (!spouseColor) {
-            spouseColor = this.getFamilyColor(spouse.id)
+            // Derive a unique couple color that doesn't collide with either person's default color
+            const ids = familyKey.split('-').map(v => parseInt(v, 10))
+            const personDefaultColor = this.getFamilyColor(person.id)
+            const spouseDefaultColor = this.getFamilyColor(spouse.id)
+            // Try multiple hash seeds until we find a non-colliding color
+            for (let attempt = 0; attempt < 12; attempt++) {
+              const numKey = (ids[0] * 13 + ids[1] * 7 + attempt * 3) 
+              spouseColor = this.getFamilyColor(numKey)
+              // Check it doesn't match either person's lifeline color
+              if (spouseColor !== personDefaultColor && spouseColor !== spouseDefaultColor) break
+            }
             this.familyColorsMap.set(familyKey, spouseColor)
           }
 
@@ -1124,14 +1149,15 @@ export default {
         }
       }
 
-      // Handle the period after the last divorce until death or the current year
+      // Handle the period after the last divorce or spouse death until death or current year
       if (lastEventYear < endYear) {
         periods.push({
           start: lastEventYear,
           end: endYear,
-          color: this.defaultColor,
+          color: isChild ? familyColor : this.getDefaultColor(person.id),
           birthDateVerified,
-          deathDateVerified
+          deathDateVerified,
+          stillAlive: person.death_date === null
         })
       }
       return periods
@@ -1316,6 +1342,9 @@ export default {
 
       // 5. Draw family links (filiation parent-child)
       this.drawFamilyLinks(d3.select('#timeline-graph'), this.xViewScale)
+
+      // 6. Draw marriage bridges (barres qui se rapprochent au mariage)
+      this.drawMarriageBridges(d3.select('#timeline-graph'), this.xViewScale)
     },
 
     drawTimelineHeader (width, margin, yearStart, yearStop) {
@@ -1565,7 +1594,7 @@ export default {
           }
 
           const periodPath = periodsGroup.append('path')
-            .attr('d', this.drawRoundedRect(x, y, width, height, 10, roundLeft, roundRight))
+            .attr('d', this.drawRoundedRect(x, y, width, height, 0, false, false))
             .attr('fill', period.color)
             .attr('stroke', 'rgba(15, 23, 42, 0.1)')
             .attr('stroke-width', 1)
@@ -1682,6 +1711,15 @@ export default {
       //   anchorXIn  = point d'arrivée (à gauche de l'avatar de l'enfant)
       const avatarCenterX = xScale(birthYear) + 20
       const avatarLeftX   = xScale(birthYear) + 4  // cx(20) - r(16)
+
+      // Position X de fin de barre (en pixels) — pour le pont de mariage
+      // Compact : fin du pill fixe ; Déplié : fin de la dernière période
+      const barEndX = isUnfolded
+        ? (() => { const lp = periods[periods.length - 1]; return lp?.end ? xScale(lp.end) : null })()
+        : xScale(birthYear) + 170
+
+
+
       this.renderedPersons.set(person.id, {
         id: person.id,
         person: person,
@@ -1692,7 +1730,10 @@ export default {
         birthYear: birthYear,
         anchorXOut: avatarCenterX,
         anchorXIn:  avatarLeftX,
-        deathYear: this.getYearFromDate(person.death_date)
+        deathYear: this.getYearFromDate(person.death_date),
+        barEndYear: periods.length > 0 ? (periods[periods.length - 1].end ?? null) : null,
+        barEndX: barEndX,
+        isUnfolded: isUnfolded
       })
 
       // draw other associated persons
@@ -1945,6 +1986,85 @@ export default {
         .attr('stroke-dasharray', '3,3')
     },
 
+    drawMarriageBridges (graphSvg, xScale) {
+      // Couche dessinée derrière les barres de vie
+      const firstPerson = graphSvg.select('.person')
+      const bridgeLayer = firstPerson.node()
+        ? graphSvg.insert('g', '.person').attr('class', 'marriage-bridge-layer')
+        : graphSvg.append('g').attr('class', 'marriage-bridge-layer')
+
+      const processed = new Set()
+
+      this.renderedPersons.forEach((personData) => {
+        const spouses = this.filterSpouses(personData.id)
+        if (!spouses || spouses.length === 0) return
+
+        spouses.forEach(spouse => {
+          const spouseData = this.renderedPersons.get(spouse.id)
+          if (!spouseData) return
+
+          // Ne traiter chaque couple qu'une seule fois
+          const pairKey = [personData.id, spouse.id].sort().join('-')
+          if (processed.has(pairKey)) return
+          processed.add(pairKey)
+
+          // Date de début du pont (la plus ancienne entre union civile et mariage)
+          const mDate = this.getYearFromDate(spouse.marriage_date)
+          const uDate = this.getYearFromDate(spouse.civil_union_date)
+          const marriageYear = mDate && uDate ? Math.min(mDate, uDate) : (mDate || uDate)
+          if (!marriageYear) return
+
+          // Date de fin (divorce, séparation, ou décès du premier conjoint)
+          const divorceYear = this.getYearFromDate(spouse.divorce_date || spouse.civil_separation_date)
+
+          // Fin de la bande : position X en pixels de la fin de chaque barre
+          // → toujours connu au rendu (pill fixe ou barre déployée)
+          const fallbackX = xScale(this.localStopViewYear)
+          const xEndPerson = personData.barEndX ?? fallbackX
+          const xEndSpouse = spouseData.barEndX ?? fallbackX
+
+          // Si divorce : on clip à la date de divorce
+          let xEnd = Math.min(xEndPerson, xEndSpouse)
+          if (divorceYear) {
+            xEnd = Math.min(xEnd, xScale(divorceYear))
+          }
+
+          const xStart = xScale(marriageYear)
+          if (xEnd <= xStart) return
+
+          // Déterminer qui est en haut et qui est en bas
+          const topData    = personData.yCenter <= spouseData.yCenter ? personData : spouseData
+          const bottomData = personData.yCenter <= spouseData.yCenter ? spouseData : personData
+
+          // Gap entre les deux barres
+          const gapTop    = topData.yBottom     // bas de la barre du haut
+          const gapBottom = bottomData.yTop      // haut de la barre du bas
+          const gapHeight = gapBottom - gapTop
+
+          // Pas de gap visible → rien à dessiner
+          if (gapHeight <= 0) return
+
+          // Couleur de la bande : couleur du couple depuis familyColorsMap
+          const familyKey = this.getFamilyKey(personData.id, spouse.id)
+          const bandColor = this.familyColorsMap.get(familyKey) || '#e2e8f0'
+          // Ajout d'une légère transparence pour rester discret
+          const bandFill = bandColor.startsWith('#')
+            ? bandColor + '99'  // hex + alpha 60%
+            : bandColor.replace(/rgba?\(([^)]+)\)/, (_, g) => `rgba(${g.split(',').slice(0,3).join(',')}, 0.55)`)
+
+          // Option A : bande translucide dans le gap pendant le mariage
+          bridgeLayer.append('rect')
+            .attr('class', 'marriage-band')
+            .attr('x', xStart)
+            .attr('y', gapTop)
+            .attr('width', xEnd - xStart)
+            .attr('height', gapHeight)
+            .attr('fill', bandFill)
+            .attr('rx', 2)
+        })
+      })
+    },
+
     drawFamilyLinks (graphSvg, xScale) {
       // Insérer la couche des liens juste avant les personnes pour qu'elle se trouve en-dessous (derrière)
       const firstPerson = graphSvg.select('.person')
@@ -2163,11 +2283,22 @@ export default {
   position: absolute;
   z-index: 1000;
   pointer-events: auto;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.16);
-  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(8px);
-  white-space: nowrap;
+  min-width: 200px;
   animation: fadeInToolbar 0.15s ease-out;
+}
+
+/* Zone invisible de transition vers l'avatar pour ne jamais perdre le survol */
+.person-floating-toolbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -12px;
+  width: 12px;
+  pointer-events: auto;
 }
 
 @keyframes fadeInToolbar {
