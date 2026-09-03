@@ -681,6 +681,9 @@ export default {
         this.expandedAscendantIds.delete(personId)
       } else {
         this.expandedAscendantIds.add(personId)
+        // Déplier automatiquement les parents pour que leurs barres de vie et pont d'union atteignent les années de naissance
+        const parents = this.getPersonParents(personId)
+        parents.forEach(p => this.unfoldedPersonIds.add(p.id))
       }
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
@@ -1549,6 +1552,15 @@ export default {
             yPosition++
           }
         }
+
+        // Sécurité mode dynamique : dessiner toute personne visible restante
+        for (const person of visiblePersons) {
+          if (!this.displayedPersons.has(person.id)) {
+            const personPeriods = this.getPeriods(person, familyColor, isChild)
+            yPosition = this.drawPerson(person, personPeriods, grahSvg, yPosition, xScale)
+            yPosition++
+          }
+        }
       }
     },
 
@@ -1669,11 +1681,9 @@ export default {
         const periodsGroup = personGroup.append('g')
 
         // draw each period for this person
-        periods.forEach((period, index) => {
+        periods.forEach(period => {
           const x = xScale(period.start)
           const width = xScale(period.end) - xScale(period.start)
-          const roundLeft = index === 0
-          const roundRight = (index === periods.length - 1) && !period.stillAlive
 
           // Determine the filter to apply
           let filter = 'none'
@@ -1937,9 +1947,10 @@ export default {
         }
 
         // draw children sorted chronologically by birth date
-        const shouldDrawChildren = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || this.expandedDescendantIds.has(spouse.id)
+        const children = this.filterChildren(person.id, spouse.id)
+        const hasVisibleChild = visibleIds ? children.some(c => visibleIds.has(c.id)) : false
+        const shouldDrawChildren = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || this.expandedDescendantIds.has(spouse.id) || hasVisibleChild
         if (shouldDrawChildren) {
-          const children = this.filterChildren(person.id, spouse.id)
           const sortedChildren = [...children].sort((a, b) => {
             const birthA = this.getYearFromDate(a.birth_date) || 9999
             const birthB = this.getYearFromDate(b.birth_date) || 9999
@@ -1947,7 +1958,8 @@ export default {
           })
 
           for (const child of sortedChildren) {
-            if (!this.displayedPersons.has(child.id)) {
+            const shouldDrawThisChild = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || this.expandedDescendantIds.has(spouse.id) || (visibleIds && visibleIds.has(child.id))
+            if (shouldDrawThisChild && !this.displayedPersons.has(child.id)) {
               isChild = true
               const childPeriods = this.getPeriods(child, familyColor, isChild)
               yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
@@ -2292,7 +2304,7 @@ export default {
 
                 const unionPinG = overlayLayer.append('g')
                   .attr('class', 'place-marker union-place-marker')
-                  .attr('transform', `translate(${xStart + 12}, ${gapCenterY + 8})`)
+                  .attr('transform', `translate(${xStart + 12}, ${gapCenterY})`)
                   .style('cursor', 'pointer')
                   .on('click', () => this.showPersonProfile(personData.person))
 
@@ -2338,7 +2350,7 @@ export default {
 
                 const divorcePinG = overlayLayer.append('g')
                   .attr('class', 'place-marker divorce-place-marker')
-                  .attr('transform', `translate(${xEnd - 6}, ${gapCenterY + 8})`)
+                  .attr('transform', `translate(${xEnd - 6}, ${gapCenterY})`)
                   .style('cursor', 'pointer')
                   .on('click', () => this.showPersonProfile(personData.person))
 
@@ -2428,12 +2440,10 @@ export default {
               (e.event_type || '').toLowerCase() === 'birth' && e.event_place && e.event_place.trim()
             )
 
-            const pinY = bridge ? (bridge.gapCenterY + 8) : (startY + 8)
-
             if (this.showPlaces && birthEv) {
               const birthPin = overlayLayer.append('g')
                 .attr('class', 'place-marker child-birth-marker')
-                .attr('transform', `translate(${startX}, ${pinY})`)
+                .attr('transform', `translate(${startX}, ${startY})`)
                 .style('cursor', 'pointer')
                 .on('click', () => this.showPersonProfile(child))
 
@@ -2466,13 +2476,12 @@ export default {
             }
 
             // Trait descendant du pont (part de la pointe du pin si affiché, ou du centre de la bande)
-            const lineOriginY = (this.showPlaces && birthEv) ? pinY : startY
-            const deltaY = endY - lineOriginY
+            const deltaY = endY - startY
             const cp1x = startX
-            const cp1y = lineOriginY + deltaY * 0.4
+            const cp1y = startY + deltaY * 0.4
             const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
             const cp2y = endY
-            const pathD = `M ${startX},${lineOriginY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+            const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
 
             linkG.append('path')
               .attr('class', 'link-line')
@@ -2489,14 +2498,12 @@ export default {
 
             const startX = !pData.isUnfolded ? Math.min(xBirth, pData.barEndX || xBirth) : xBirth
             const startY = childData.yTop >= pData.yBottom ? pData.yBottom : pData.yTop
-            const pinY = startY + 5
-            const lineOriginY = (this.showPlaces) ? pinY : startY
-            const deltaY = endY - lineOriginY
+            const deltaY = endY - startY
             const cp1x = startX
-            const cp1y = lineOriginY + deltaY * 0.4
+            const cp1y = startY + deltaY * 0.4
             const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
             const cp2y = endY
-            const pathD = `M ${startX},${lineOriginY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+            const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
 
             let overlayLayer = graphSvg.select('.places-overlay-layer')
             if (!overlayLayer.node()) {
@@ -2510,7 +2517,7 @@ export default {
             if (this.showPlaces && birthEv) {
               const birthPin = overlayLayer.append('g')
                 .attr('class', 'place-marker child-birth-marker')
-                .attr('transform', `translate(${startX}, ${pinY})`)
+                .attr('transform', `translate(${startX}, ${startY})`)
                 .style('cursor', 'pointer')
                 .on('click', () => this.showPersonProfile(child))
 

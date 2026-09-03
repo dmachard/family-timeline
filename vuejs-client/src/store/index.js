@@ -9,7 +9,9 @@ const getStorageItem = (key) => {
     if (typeof localStorage !== 'undefined' && localStorage && typeof localStorage.getItem === 'function') {
       return localStorage.getItem(key);
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore storage access errors
+  }
   return null;
 };
 
@@ -22,7 +24,9 @@ const setStorageItem = (key, val) => {
     if (typeof localStorage !== 'undefined' && localStorage && typeof localStorage.setItem === 'function') {
       localStorage.setItem(key, val);
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore storage access errors
+  }
 };
 
 const removeStorageItem = (key) => {
@@ -34,7 +38,9 @@ const removeStorageItem = (key) => {
     if (typeof localStorage !== 'undefined' && localStorage && typeof localStorage.removeItem === 'function') {
       localStorage.removeItem(key);
     }
-  } catch (e) {}
+  } catch (e) {
+    // Ignore storage access errors
+  }
 };
 
 export default createStore({
