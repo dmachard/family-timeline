@@ -123,6 +123,21 @@
               </span>
             </button>
 
+            <!-- Toggle Places / Locations Markers Button -->
+            <button
+              class="btn btn-sm d-flex align-items-center gap-1"
+              :class="showPlaces ? 'btn-danger text-white' : 'btn-outline-secondary'"
+              type="button"
+              :title="showPlaces ? $t('hide-places') : $t('show-places')"
+              @click="togglePlaces"
+            >
+              <i class="bi bi-geo-alt-fill" />
+              <span>{{ $t('places') }}</span>
+              <span class="badge ms-1" :class="showPlaces ? 'bg-white text-danger' : 'bg-secondary text-white'">
+                {{ showPlaces ? 'ON' : 'OFF' }}
+              </span>
+            </button>
+
             <!-- Auto Fit Scale Button -->
             <button
               class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
@@ -165,9 +180,19 @@
             @mouseenter="onToolbarMouseEnter"
             @mouseleave="onToolbarMouseLeave"
           >
-            <!-- Nom de la personne -->
-            <div class="fw-semibold px-2 py-1 text-secondary border-bottom small text-truncate text-center">
-              {{ hoveredPerson.first_name }} {{ hoveredPerson.last_name }}
+            <!-- Nom de la personne, lieu de naissance et lieu de décès -->
+            <div class="px-2 py-1 border-bottom text-center">
+              <div class="fw-bold text-dark small text-truncate">
+                {{ hoveredPerson.first_name }} {{ hoveredPerson.last_name }}
+              </div>
+              <div v-if="getPersonBirthInfo(hoveredPerson)" class="text-muted d-flex align-items-center justify-content-center gap-1 mt-1" style="font-size: 11px;">
+                <i class="bi bi-geo-alt-fill text-danger" />
+                <span class="text-truncate">{{ getPersonBirthInfo(hoveredPerson) }}</span>
+              </div>
+              <div v-if="getPersonDeathInfo(hoveredPerson)" class="text-muted d-flex align-items-center justify-content-center gap-1 mt-1" style="font-size: 11px;">
+                <span class="text-secondary fw-bold" style="font-size: 10px;">✝</span>
+                <span class="text-truncate">{{ getPersonDeathInfo(hoveredPerson) }}</span>
+              </div>
             </div>
 
             <!-- Bouton Parents ▲ -->
@@ -301,6 +326,7 @@ export default {
       totalHeight: 0,
       moveGraphStarted: false,
       showHistoryContext: true,
+      showPlaces: true,
       renderedPersons: new Map(),
       coupleBridges: new Map(),
       searchQuery: '',
@@ -777,6 +803,32 @@ export default {
       }, 300)
     },
 
+    getPersonBirthInfo (person) {
+      if (!person || !person.birth_date) return null
+      const bEv = (person.events || []).find(e => (e.event_type || '').toLowerCase() === 'birth')
+      const bDate = new Date(person.birth_date)
+      const bYear = !isNaN(bDate.getTime()) ? bDate.getFullYear() : null
+      if (bEv && bEv.event_place) {
+        return bYear ? `${bEv.event_place} (${bYear})` : bEv.event_place
+      } else if (bYear) {
+        return `${bYear}`
+      }
+      return null
+    },
+
+    getPersonDeathInfo (person) {
+      if (!person || !person.death_date) return null
+      const dEv = (person.events || []).find(e => (e.event_type || '').toLowerCase() === 'death')
+      const dDate = new Date(person.death_date)
+      const dYear = !isNaN(dDate.getTime()) ? dDate.getFullYear() : null
+      if (dEv && dEv.event_place) {
+        return dYear ? `${dEv.event_place} (${dYear})` : dEv.event_place
+      } else if (dYear) {
+        return `${dYear}`
+      }
+      return null
+    },
+
     filterRootPersons () {
       return this.dataPersons.filter(person => {
         return !person.relatives.some(relative =>
@@ -806,29 +858,35 @@ export default {
         // Find the full details of each spouse from the data
         const spouseDetail = this.dataPersons.find(p => p.id === spouse.id)
 
-        // Initialize the common dates to null
+        // Initialize the common dates and places to null
         let marriageDate = null
+        let marriagePlace = null
         let divorceDate = null
+        let divorcePlace = null
         let civilUnionDate = null
+        let civilUnionPlace = null
         let civilSeparationDate = null
 
         // Find the events that match marriage, civil union, or divorce
-        const commonEvents = person.events.filter(event => {
+        const commonEvents = (person.events || []).filter(event => {
           return ['marriage', 'divorce', 'civil_union', 'civil_separation'].includes(event.event_type) &&
-                event.related_persons.some(rp => rp.id === spouse.id)
+                (event.related_persons || []).some(rp => rp.id === spouse.id)
         })
 
-        // Extract the relevant dates from the common events
+        // Extract the relevant dates and places from the common events
         commonEvents.forEach(event => {
           switch (event.event_type) {
             case 'marriage':
               marriageDate = event.event_date
+              marriagePlace = event.event_place
               break
             case 'divorce':
               divorceDate = event.event_date
+              divorcePlace = event.event_place
               break
             case 'civil_union':
               civilUnionDate = event.event_date
+              civilUnionPlace = event.event_place
               break
             case 'civil_separation':
               civilSeparationDate = event.event_date
@@ -836,12 +894,36 @@ export default {
           }
         })
 
-        // Return the spouse detail with the added common dates
+        // Also check if spouseDetail has the event place if not found on person
+        if (!marriagePlace && spouseDetail && spouseDetail.events) {
+          const spouseM = spouseDetail.events.find(e =>
+            ['marriage', 'civil union', 'civil_union'].includes((e.event_type || '').toLowerCase()) &&
+            (e.related_persons || []).some(rp => rp.id === person.id)
+          )
+          if (spouseM && spouseM.event_place) {
+            marriagePlace = spouseM.event_place
+          }
+        }
+
+        if (!divorcePlace && spouseDetail && spouseDetail.events) {
+          const spouseD = spouseDetail.events.find(e =>
+            ['divorce', 'civil_separation'].includes((e.event_type || '').toLowerCase()) &&
+            (e.related_persons || []).some(rp => rp.id === person.id)
+          )
+          if (spouseD && spouseD.event_place) {
+            divorcePlace = spouseD.event_place
+          }
+        }
+
+        // Return the spouse detail with the added common dates and places
         return {
           ...spouseDetail,
           marriage_date: marriageDate,
+          marriage_place: marriagePlace,
           divorce_date: divorceDate,
+          divorce_place: divorcePlace,
           civil_union_date: civilUnionDate,
+          civil_union_place: civilUnionPlace,
           civil_separation_date: civilSeparationDate
         }
       })
@@ -1611,7 +1693,11 @@ export default {
           if (period.isRelationship) {
             const typeLabel = period.relationshipType === 'marriage' ? 'Mariage' : 'Union'
             const periodDates = period.divorceYear ? `(${period.start} - ${period.divorceYear})` : `(depuis ${period.start})`
-            periodPath.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
+            // Lieu de l'union s'il est renseigné dans les événements
+            const unionEv = person.events ? person.events.find(e => ['marriage', 'civil union', 'civil_union'].includes((e.event_type || '').toLowerCase()) && e.event_place) : null
+            const placeSuffix = (unionEv && unionEv.event_place) ? `\n📍 ${unionEv.event_place}` : ''
+            const relTooltip = `💍 ${typeLabel} avec ${period.spouseName} ${periodDates}${placeSuffix}`
+            periodPath.append('title').text(relTooltip)
 
             // Anneaux d'alliance dorés discrets au début de la tranche de mariage
             if (width >= 24) {
@@ -1623,7 +1709,7 @@ export default {
 
               ringG.append('circle').attr('cx', -3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#fbbf24').attr('stroke-width', 1.8)
               ringG.append('circle').attr('cx', 3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#f59e0b').attr('stroke-width', 1.8)
-              ringG.append('title').text(`💍 ${typeLabel} avec ${period.spouseName} ${periodDates}`)
+              ringG.append('title').text(relTooltip)
             }
           }
         })
@@ -1674,6 +1760,70 @@ export default {
           .style('cursor', 'pointer')
           .style('user-select', 'none')
           .on('click', () => this.showPersonProfile(person))
+
+        // ── Marqueurs de lieux géolocalisés sur la barre de vie ────────────────
+        if (this.showPlaces && person.events && person.events.length > 0) {
+          const placeEvents = person.events.filter(e => {
+            if (!e.event_place || !e.event_place.trim() || !e.event_date) return false
+            const type = (e.event_type || '').toLowerCase()
+            // Naissance, décès (menu avatar), mariages et divorces (au milieu dans le pont), enfants (liens) : exclus de la barre
+            if (['birth', 'death', 'marriage', 'civil union', 'civil_union', 'divorce', 'civil_separation', 'child'].includes(type)) {
+              return false
+            }
+            return true
+          })
+
+          if (placeEvents.length > 0) {
+            const eventsByYear = new Map()
+            placeEvents.forEach(e => {
+              const yr = this.getYearFromDate(e.event_date)
+              if (!yr) return
+              if (!eventsByYear.has(yr)) eventsByYear.set(yr, [])
+              eventsByYear.get(yr).push(e)
+            })
+
+            const placesG = personGroup.append('g').attr('class', 'person-places-layer')
+
+            eventsByYear.forEach((evList, yr) => {
+              const px = xScale(yr)
+              if (px < 0 || px > this.timelineWidth) return
+
+              // Marqueur élégant sous forme de pin de carte géographique
+              const markerG = placesG.append('g')
+                .attr('class', 'place-marker')
+                .attr('transform', `translate(${px}, ${y + height / 2 + 5})`)
+                .style('cursor', 'pointer')
+                .on('click', () => this.showPersonProfile(person))
+
+              // Forme de pin de carte (goutte inversée pointant sur l'année)
+              markerG.append('path')
+                .attr('class', 'map-pin-body')
+                .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
+                .attr('fill', '#e11d48')
+                .attr('stroke', '#ffffff')
+                .attr('stroke-width', 1.3)
+                .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
+
+              // Point blanc au centre du pin
+              markerG.append('circle')
+                .attr('class', 'map-pin-dot')
+                .attr('cx', 0)
+                .attr('cy', -10)
+                .attr('r', 2.2)
+                .attr('fill', '#ffffff')
+
+              // Tooltip soigné au survol
+              const tooltipLines = evList.map(e => {
+                const typeLabel = this.$t(e.event_type) || e.event_type
+                const datePart = e.event_date ? ` (${e.event_date})` : ''
+                const notePart = e.event_notes ? `\n   Note : ${e.event_notes}` : ''
+                return `📍 ${e.event_place}\n   ${typeLabel}${datePart}${notePart}`
+              }).join('\n\n')
+
+              markerG.append('title').text(tooltipLines)
+            })
+          }
+        }
 
         // Bouton de repli ◀ à l'extrémité droite de la barre
         const lastPeriod = periods[periods.length - 1]
@@ -1845,6 +1995,11 @@ export default {
 
     toggleHistoryContext () {
       this.showHistoryContext = !this.showHistoryContext
+      this.drawTimeline()
+    },
+
+    togglePlaces () {
+      this.showPlaces = !this.showPlaces
       this.drawTimeline()
     },
 
@@ -2071,6 +2226,7 @@ export default {
           const gapTop    = topData.yBottom     // bas de la barre du haut
           const gapBottom = bottomData.yTop      // haut de la barre du bas
           const gapHeight = gapBottom - gapTop
+          const gapCenterY = (gapTop + gapBottom) / 2
 
           // Pas de gap visible → rien à dessiner
           if (gapHeight <= 0) return
@@ -2107,6 +2263,106 @@ export default {
             .attr('height', gapHeight)
             .attr('fill', bandFill)
             .attr('rx', 2)
+
+          // Marqueur de lieu de l'union au centre de la bande d'union (au premier plan)
+          if (this.showPlaces) {
+            try {
+              let uPlace = spouse.marriage_place || spouse.civil_union_place
+              if (!uPlace) {
+                const pEvents = (personData.person && personData.person.events) || []
+                const sEvents = (spouseData.person && spouseData.person.events) || []
+                const mEv = [...pEvents, ...sEvents].find(e =>
+                  ['marriage', 'civil union', 'civil_union'].includes((e.event_type || '').toLowerCase()) &&
+                  e.event_place && e.event_place.trim()
+                )
+                if (mEv) uPlace = mEv.event_place
+              }
+
+              if (uPlace && uPlace.trim()) {
+                const pName = (personData && personData.person && personData.person.first_name) || ''
+                const sName = (spouse && spouse.first_name) || (spouseData && spouseData.person && spouseData.person.first_name) || ''
+                const typeName = spouse.marriage_date ? 'Mariage' : 'Union'
+                const dateStr = (spouse.marriage_date || spouse.civil_union_date) ? ` (${spouse.marriage_date || spouse.civil_union_date})` : ''
+
+                // Insérer dans un calque d'overlay au premier plan pour ne pas être masqué par les barres de vie
+                let overlayLayer = graphSvg.select('.places-overlay-layer')
+                if (!overlayLayer.node()) {
+                  overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
+                }
+
+                const unionPinG = overlayLayer.append('g')
+                  .attr('class', 'place-marker union-place-marker')
+                  .attr('transform', `translate(${xStart + 12}, ${gapCenterY + 8})`)
+                  .style('cursor', 'pointer')
+                  .on('click', () => this.showPersonProfile(personData.person))
+
+                unionPinG.append('path')
+                  .attr('class', 'map-pin-body')
+                  .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
+                  .attr('fill', '#e11d48')
+                  .attr('stroke', '#ffffff')
+                  .attr('stroke-width', 1.3)
+                  .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
+
+                unionPinG.append('circle')
+                  .attr('class', 'map-pin-dot')
+                  .attr('cx', 0)
+                  .attr('cy', -10)
+                  .attr('r', 2.2)
+                  .attr('fill', '#ffffff')
+
+                unionPinG.append('title').text(`📍 ${uPlace}\n💍 ${typeName} de ${pName} & ${sName}${dateStr}`)
+              }
+
+              // Marqueur de lieu de divorce à la fin de la bande d'union (si couple divorcé et lieu renseigné)
+              let dPlace = spouse.divorce_place
+              if (!dPlace && spouse.divorce_date) {
+                const pEvents = (personData.person && personData.person.events) || []
+                const sEvents = (spouseData.person && spouseData.person.events) || []
+                const dEv = [...pEvents, ...sEvents].find(e =>
+                  ['divorce', 'civil_separation'].includes((e.event_type || '').toLowerCase()) &&
+                  e.event_place && e.event_place.trim()
+                )
+                if (dEv) dPlace = dEv.event_place
+              }
+
+              if (dPlace && dPlace.trim() && spouse.divorce_date) {
+                const pName = (personData && personData.person && personData.person.first_name) || ''
+                const sName = (spouse && spouse.first_name) || (spouseData && spouseData.person && spouseData.person.first_name) || ''
+                const dDateStr = ` (${spouse.divorce_date})`
+
+                let overlayLayer = graphSvg.select('.places-overlay-layer')
+                if (!overlayLayer.node()) {
+                  overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
+                }
+
+                const divorcePinG = overlayLayer.append('g')
+                  .attr('class', 'place-marker divorce-place-marker')
+                  .attr('transform', `translate(${xEnd - 6}, ${gapCenterY + 8})`)
+                  .style('cursor', 'pointer')
+                  .on('click', () => this.showPersonProfile(personData.person))
+
+                divorcePinG.append('path')
+                  .attr('class', 'map-pin-body')
+                  .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
+                  .attr('fill', '#e11d48')
+                  .attr('stroke', '#ffffff')
+                  .attr('stroke-width', 1.3)
+                  .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
+
+                divorcePinG.append('circle')
+                  .attr('class', 'map-pin-dot')
+                  .attr('cx', 0)
+                  .attr('cy', -10)
+                  .attr('r', 2.2)
+                  .attr('fill', '#ffffff')
+
+                divorcePinG.append('title').text(`📍 ${dPlace}\n💔 Divorce de ${pName} & ${sName}${dDateStr}`)
+              }
+            } catch (err) {
+              console.error('Error drawing union place marker:', err)
+            }
+          }
         })
       })
     },
@@ -2119,101 +2375,181 @@ export default {
         : graphSvg.append('g').attr('class', 'family-links-layer')
 
       this.renderedPersons.forEach((childData) => {
-        const child = childData.person
-        if (!child.relatives || child.relatives.length === 0) return
+        try {
+          const child = childData.person
+          if (!child || !child.relatives || child.relatives.length === 0) return
 
-        // Trouver père et mère parmi les personnes affichées
-        const parentRelatives = child.relatives.filter(r =>
-          (r.relation_type === 'father' || r.relation_type === 'mother') &&
-          this.renderedPersons.has(r.id)
-        )
+          // Trouver père et mère parmi les personnes affichées
+          const parentRelatives = child.relatives.filter(r =>
+            (r.relation_type === 'father' || r.relation_type === 'mother') &&
+            this.renderedPersons.has(r.id)
+          )
 
-        if (parentRelatives.length === 0) return
+          if (parentRelatives.length === 0) return
 
-        const birthYear = childData.birthYear
-        if (!birthYear) return
+          const birthYear = childData.birthYear
+          if (!birthYear) return
 
-        const xBirth = xScale(birthYear)
-        const endX   = childData.anchorXIn ?? (xBirth + 4)
-        const endY   = childData.yCenter    ?? (childData.yTop + 20)
+          const xBirth = xScale(birthYear)
+          const endX   = childData.anchorXIn != null ? childData.anchorXIn : (xBirth + 4)
+          const endY   = childData.yCenter != null ? childData.yCenter : (childData.yTop + 20)
 
-        const linkG = linksGroup.append('g')
-          .attr('class', 'family-link')
-          .attr('data-child-id', child.id)
+          const linkG = linksGroup.append('g')
+            .attr('class', 'family-link')
+            .attr('data-child-id', child.id)
 
-        // Cas 1 : Deux parents affichés
-        if (parentRelatives.length >= 2) {
-          const p1 = this.renderedPersons.get(parentRelatives[0].id)
-          const p2 = this.renderedPersons.get(parentRelatives[1].id)
-          const topParent = p1.yCenter <= p2.yCenter ? p1 : p2
-          const botParent = p1.yCenter <= p2.yCenter ? p2 : p1
-          const pairKey   = [p1.id, p2.id].sort().join('-')
-          const bridge    = this.coupleBridges.get(pairKey)
+          // Cas 1 : Deux parents affichés
+          if (parentRelatives.length >= 2) {
+            const p1 = this.renderedPersons.get(parentRelatives[0].id)
+            const p2 = this.renderedPersons.get(parentRelatives[1].id)
+            if (!p1 || !p2) return
 
-          const coupleColor = (bridge && bridge.bandColor) ? bridge.bandColor : '#475569'
+            const topParent = p1.yCenter <= p2.yCenter ? p1 : p2
+            const botParent = p1.yCenter <= p2.yCenter ? p2 : p1
+            const pairKey   = [Number(p1.id), Number(p2.id)].sort((a, b) => a - b).join('-')
+            const bridge    = this.coupleBridges.get(pairKey)
 
-          // Si les parents sont en mode compact (repliés), le départ part du bout de la pastille du parent
-          const isParentsCollapsed = !topParent.isUnfolded && !botParent.isUnfolded
-          const startX = isParentsCollapsed ? Math.min(xBirth, botParent.barEndX || xBirth) : xBirth
+            const coupleColor = (bridge && bridge.bandColor) ? bridge.bandColor : '#475569'
 
-          // Départ : centre de la bande d'union des deux parents à l'année de naissance
-          const startY = bridge ? bridge.gapCenterY : (topParent.yBottom + botParent.yTop) / 2
+            // Si les parents sont en mode compact (repliés), le départ part du bout de la pastille du parent
+            const isParentsCollapsed = !topParent.isUnfolded && !botParent.isUnfolded
+            const startX = isParentsCollapsed ? Math.min(xBirth, botParent.barEndX || xBirth) : xBirth
 
-          // UNIQUE point au milieu dans la bande d'union
-          linkG.append('circle')
-            .attr('class', 'anchor-couple')
-            .attr('cx', startX)
-            .attr('cy', startY)
-            .attr('r', 3.5)
-            .attr('fill', coupleColor)
-            .attr('stroke', '#ffffff')
-            .attr('stroke-width', 1.5)
+            // Départ : centre de la bande d'union des deux parents à l'année de naissance
+            const startY = bridge ? bridge.gapCenterY : (topParent.yBottom + botParent.yTop) / 2
 
-          // Trait descendant du pont, passant derrière la barre du bas et rejoignant l'enfant
-          const deltaY = endY - startY
-          const cp1x = startX
-          const cp1y = startY + deltaY * 0.4
-          const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
-          const cp2y = endY
-          const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+            // Calque d'overlay au premier plan pour les pastilles de lieux
+            let overlayLayer = graphSvg.select('.places-overlay-layer')
+            if (!overlayLayer.node()) {
+              overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
+            }
 
-          linkG.append('path')
-            .attr('class', 'link-line')
-            .attr('d', pathD)
-            .attr('fill', 'none')
-            .attr('stroke', 'rgba(71, 85, 105, 0.65)')
-            .attr('stroke-width', 1.8)
-            .attr('stroke-linecap', 'round')
+            const birthEv = (child.events || []).find(e =>
+              (e.event_type || '').toLowerCase() === 'birth' && e.event_place && e.event_place.trim()
+            )
 
-        } else {
-          // Cas 2 : Un seul parent affiché
-          const pData = this.renderedPersons.get(parentRelatives[0].id)
-          if (!pData) return
+            const pinY = bridge ? (bridge.gapCenterY + 8) : (startY + 8)
 
-          const startX = !pData.isUnfolded ? Math.min(xBirth, pData.barEndX || xBirth) : xBirth
-          const startY = childData.yTop >= pData.yBottom ? pData.yBottom : pData.yTop
-          const deltaY = endY - startY
-          const cp1x = startX
-          const cp1y = startY + deltaY * 0.4
-          const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
-          const cp2y = endY
-          const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+            if (this.showPlaces && birthEv) {
+              const birthPin = overlayLayer.append('g')
+                .attr('class', 'place-marker child-birth-marker')
+                .attr('transform', `translate(${startX}, ${pinY})`)
+                .style('cursor', 'pointer')
+                .on('click', () => this.showPersonProfile(child))
 
-          linkG.append('circle')
-            .attr('cx', startX)
-            .attr('cy', startY)
-            .attr('r', 3)
-            .attr('fill', '#475569')
-            .attr('stroke', '#ffffff')
-            .attr('stroke-width', 1)
+              birthPin.append('path')
+                .attr('class', 'map-pin-body')
+                .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
+                .attr('fill', '#e11d48')
+                .attr('stroke', '#ffffff')
+                .attr('stroke-width', 1.3)
+                .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
 
-          linkG.append('path')
-            .attr('class', 'link-line')
-            .attr('d', pathD)
-            .attr('fill', 'none')
-            .attr('stroke', 'rgba(71, 85, 105, 0.65)')
-            .attr('stroke-width', 1.8)
-            .attr('stroke-linecap', 'round')
+              birthPin.append('circle')
+                .attr('class', 'map-pin-dot')
+                .attr('cx', 0)
+                .attr('cy', -10)
+                .attr('r', 2.2)
+                .attr('fill', '#ffffff')
+
+              birthPin.append('title').text(`📍 ${birthEv.event_place}\n👶 Naissance de ${child.first_name} ${child.last_name} (${childData.birthYear})`)
+            } else {
+              // Point neutre quand les lieux sont masqués ou sans lieu
+              linkG.append('circle')
+                .attr('class', 'anchor-couple')
+                .attr('cx', startX)
+                .attr('cy', startY)
+                .attr('r', 3.5)
+                .attr('fill', coupleColor)
+                .attr('stroke', '#ffffff')
+                .attr('stroke-width', 1.5)
+            }
+
+            // Trait descendant du pont (part de la pointe du pin si affiché, ou du centre de la bande)
+            const lineOriginY = (this.showPlaces && birthEv) ? pinY : startY
+            const deltaY = endY - lineOriginY
+            const cp1x = startX
+            const cp1y = lineOriginY + deltaY * 0.4
+            const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
+            const cp2y = endY
+            const pathD = `M ${startX},${lineOriginY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+
+            linkG.append('path')
+              .attr('class', 'link-line')
+              .attr('d', pathD)
+              .attr('fill', 'none')
+              .attr('stroke', 'rgba(71, 85, 105, 0.65)')
+              .attr('stroke-width', 1.8)
+              .attr('stroke-linecap', 'round')
+
+          } else {
+            // Cas 2 : Un seul parent affiché
+            const pData = this.renderedPersons.get(parentRelatives[0].id)
+            if (!pData) return
+
+            const startX = !pData.isUnfolded ? Math.min(xBirth, pData.barEndX || xBirth) : xBirth
+            const startY = childData.yTop >= pData.yBottom ? pData.yBottom : pData.yTop
+            const pinY = startY + 5
+            const lineOriginY = (this.showPlaces) ? pinY : startY
+            const deltaY = endY - lineOriginY
+            const cp1x = startX
+            const cp1y = lineOriginY + deltaY * 0.4
+            const cp2x = endX - Math.max(8, (endX - startX) * 0.3)
+            const cp2y = endY
+            const pathD = `M ${startX},${lineOriginY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
+
+            let overlayLayer = graphSvg.select('.places-overlay-layer')
+            if (!overlayLayer.node()) {
+              overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
+            }
+
+            const birthEv = (child.events || []).find(e =>
+              (e.event_type || '').toLowerCase() === 'birth' && e.event_place && e.event_place.trim()
+            )
+
+            if (this.showPlaces && birthEv) {
+              const birthPin = overlayLayer.append('g')
+                .attr('class', 'place-marker child-birth-marker')
+                .attr('transform', `translate(${startX}, ${pinY})`)
+                .style('cursor', 'pointer')
+                .on('click', () => this.showPersonProfile(child))
+
+              birthPin.append('path')
+                .attr('class', 'map-pin-body')
+                .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
+                .attr('fill', '#e11d48')
+                .attr('stroke', '#ffffff')
+                .attr('stroke-width', 1.3)
+                .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
+
+              birthPin.append('circle')
+                .attr('class', 'map-pin-dot')
+                .attr('cx', 0)
+                .attr('cy', -10)
+                .attr('r', 2.2)
+                .attr('fill', '#ffffff')
+
+              birthPin.append('title').text(`📍 ${birthEv.event_place}\n👶 Naissance de ${child.first_name} ${child.last_name} (${childData.birthYear})`)
+            } else {
+              linkG.append('circle')
+                .attr('cx', startX)
+                .attr('cy', startY)
+                .attr('r', 3)
+                .attr('fill', '#475569')
+                .attr('stroke', '#ffffff')
+                .attr('stroke-width', 1)
+            }
+
+            linkG.append('path')
+              .attr('class', 'link-line')
+              .attr('d', pathD)
+              .attr('fill', 'none')
+              .attr('stroke', 'rgba(71, 85, 105, 0.65)')
+              .attr('stroke-width', 1.8)
+              .attr('stroke-linecap', 'round')
+          }
+        } catch (err) {
+          console.error('Error drawing family link for child:', err)
         }
       })
     }
@@ -2342,6 +2678,26 @@ export default {
 .marriage-bar-badge:hover circle {
   stroke-width: 2.5;
   stroke: #d97706;
+}
+
+/* Map Pin Place markers on life bars */
+.place-marker {
+  cursor: pointer;
+}
+
+.place-marker .map-pin-body {
+  transition: fill 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+}
+
+.place-marker:hover .map-pin-body {
+  fill: #9f1239;
+  stroke: #ffffff;
+  stroke-width: 1.8;
+  filter: drop-shadow(0 3px 8px rgba(159, 18, 57, 0.65));
+}
+
+.place-marker:hover .map-pin-dot {
+  fill: #fef08a;
 }
 
 /* Floating Action Toolbar on Person Hover */

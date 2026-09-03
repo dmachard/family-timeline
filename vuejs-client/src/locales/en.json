@@ -123,5 +123,8 @@
     "expand-all-bars": "Expand all",
     "collapse-all-bars": "Collapse all",
     "expand-bar": "Expand life bar",
-    "collapse-bar": "Collapse life bar"
+    "collapse-bar": "Collapse life bar",
+    "places": "Places",
+    "show-places": "Show places",
+    "hide-places": "Hide places"
 }

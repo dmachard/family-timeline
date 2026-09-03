@@ -123,5 +123,8 @@
     "expand-all-bars": "Tout déplier",
     "collapse-all-bars": "Tout replier",
     "expand-bar": "Déplier la barre de vie",
-    "collapse-bar": "Replier la barre de vie"
+    "collapse-bar": "Replier la barre de vie",
+    "places": "Lieux",
+    "show-places": "Afficher les lieux",
+    "hide-places": "Masquer les lieux"
 }
