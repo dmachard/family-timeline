@@ -126,5 +126,7 @@
     "collapse-bar": "Collapse life bar",
     "places": "Places",
     "show-places": "Show places",
-    "hide-places": "Hide places"
+    "hide-places": "Hide places",
+    "zoom-in": "Zoom in (+)",
+    "zoom-out": "Zoom out (-)"
 }

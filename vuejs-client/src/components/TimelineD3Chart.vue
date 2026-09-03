@@ -138,16 +138,34 @@
               </span>
             </button>
 
-            <!-- Auto Fit Scale Button -->
-            <button
-              class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
-              type="button"
-              :title="$t('fit-scale-title')"
-              @click="resetToAutoScale"
-            >
-              <i class="bi bi-arrows-angle-expand" />
-              <span>{{ $t('fit-scale') }}</span>
-            </button>
+            <!-- Zoom & Fit Scale Controls Group -->
+            <div class="btn-group btn-group-sm" role="group">
+              <button
+                class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-2"
+                type="button"
+                :title="$t('zoom-in')"
+                @click="zoomIn"
+              >
+                <i class="bi bi-zoom-in" />
+              </button>
+              <button
+                class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-2"
+                type="button"
+                :title="$t('zoom-out')"
+                @click="zoomOut"
+              >
+                <i class="bi bi-zoom-out" />
+              </button>
+              <button
+                class="btn btn-outline-secondary d-flex align-items-center gap-1"
+                type="button"
+                :title="$t('fit-scale-title')"
+                @click="resetToAutoScale"
+              >
+                <i class="bi bi-arrows-angle-expand" />
+                <span class="d-none d-lg-inline">{{ $t('fit-scale') }}</span>
+              </button>
+            </div>
 
             <!-- Expand / Collapse All Bars Button -->
             <button
@@ -163,8 +181,8 @@
           </div>
         </div>
 
-        <!-- Container for the timeline header and graph with scroll -->
-        <div id="timeline-wrapper">
+        <!-- Container for the timeline header and graph with scroll and zoom -->
+        <div id="timeline-wrapper" @wheel="onWheelZoom">
           <div id="timeline-header-container" @mousedown="onPointerStart($event, 'mouse')" @mousemove="onPointerMove($event, 'mouse')" @mouseup="onPointerEnd()" @mouseleave="onPointerEnd()" @touchstart="onPointerStart($event, 'touch')" @touchmove="onPointerMove($event, 'touch')" @touchend="onPointerEnd()" @touchcancel="onPointerEnd()">
             <svg id="timeline-header" />
           </div>
@@ -572,6 +590,69 @@ export default {
       this.drawTimeline();
     },
 
+    zoomTimeline (factor, focusX = null) {
+      const start = this.localStartViewYear;
+      const end = this.localStopViewYear;
+      const currentSpan = end - start;
+
+      // Factor < 1 = Zoom In (span shrinks), Factor > 1 = Zoom Out (span grows)
+      if (factor < 1 && currentSpan <= 5) return; // Limite minimum: 5 ans
+      if (factor > 1 && currentSpan >= (this.computedMaxYear - this.computedMinYear + 30)) return;
+
+      const newSpan = Math.max(5, currentSpan * factor);
+
+      let ratio = 0.5; // Zoom centré par défaut
+      if (focusX !== null && this.timelineWidth > 0) {
+        ratio = Math.max(0, Math.min(1, focusX / this.timelineWidth));
+      }
+
+      const focusYear = start + ratio * currentSpan;
+      let newStart = Math.round(focusYear - ratio * newSpan);
+      let newEnd = Math.round(newStart + newSpan);
+
+      const minBound = this.computedMinYear - 5;
+      const maxBound = this.computedMaxYear + 5;
+      if (newStart < minBound) {
+        newStart = minBound;
+        newEnd = Math.round(newStart + newSpan);
+      }
+      if (newEnd > maxBound) {
+        newEnd = maxBound;
+        newStart = Math.round(newEnd - newSpan);
+      }
+
+      this.localStartViewYear = newStart;
+      this.localStopViewYear = newEnd;
+
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      });
+      this.drawTimeline();
+    },
+
+    zoomIn () {
+      this.zoomTimeline(0.75);
+    },
+
+    zoomOut () {
+      this.zoomTimeline(1.33);
+    },
+
+    onWheelZoom (event) {
+      // Zoomer si la touche Ctrl / Meta est enfoncée, ou si la molette tourne sur le header
+      const isHeader = event.target.closest('#timeline-header-container');
+      if (event.ctrlKey || event.metaKey || isHeader) {
+        event.preventDefault();
+        const rect = event.currentTarget.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const factor = event.deltaY < 0 ? 0.82 : 1.22;
+        this.zoomTimeline(factor, mouseX);
+      }
+    },
+
     getDefaultDynamicRootPersonId () {
       if (!this.dataPersons || this.dataPersons.length === 0) return null
 
@@ -618,10 +699,9 @@ export default {
       const visible = new Set()
       if (!this.dynamicRootPersonId) return visible
 
-      // The root person is always visible
+      // La personne racine est toujours visible
       visible.add(this.dynamicRootPersonId)
 
-      // Spouses are ONLY added if explicitly expanded for that person!
       const checkAndAddSpouses = (pId) => {
         if (!this.expandedSpouseIds.has(pId)) return
         const spouses = this.filterSpouses(pId)
@@ -630,32 +710,33 @@ export default {
         })
       }
 
-      // Parcourir les ascendants de manière récursive
       const visitAscendants = (pId) => {
         if (!this.expandedAscendantIds.has(pId)) return
         const parents = this.getPersonParents(pId)
         parents.forEach(parent => {
           visible.add(parent.id)
-          checkAndAddSpouses(parent.id)
-          visitAscendants(parent.id)
         })
       }
 
-      // Parcourir les descendants de manière récursive
       const visitDescendants = (pId) => {
         if (!this.expandedDescendantIds.has(pId)) return
         const children = this.getPersonChildren(pId)
         children.forEach(child => {
           visible.add(child.id)
-          checkAndAddSpouses(child.id)
-          visitDescendants(child.id)
         })
       }
 
-      checkAndAddSpouses(this.dynamicRootPersonId)
-      this.expandedAscendantIds.forEach(id => visitAscendants(id))
-      this.expandedDescendantIds.forEach(id => visitDescendants(id))
-      this.expandedSpouseIds.forEach(id => checkAndAddSpouses(id))
+      // Parcourir de manière itérative uniquement les branches connectées depuis les personnes actuellement visibles
+      let prevSize = 0
+      while (visible.size > prevSize) {
+        prevSize = visible.size
+        const currentIds = Array.from(visible)
+        currentIds.forEach(id => {
+          checkAndAddSpouses(id)
+          visitAscendants(id)
+          visitDescendants(id)
+        })
+      }
 
       return visible
     },
@@ -678,7 +759,18 @@ export default {
 
     toggleAscendants (personId) {
       if (this.expandedAscendantIds.has(personId)) {
-        this.expandedAscendantIds.delete(personId)
+        // Retirer récursivement les ascendants de cette branche
+        const removeAscendants = (id) => {
+          this.expandedAscendantIds.delete(id)
+          this.expandedSpouseIds.delete(id)
+          const parents = this.getPersonParents(id)
+          parents.forEach(parent => {
+            this.expandedAscendantIds.delete(parent.id)
+            this.expandedSpouseIds.delete(parent.id)
+            removeAscendants(parent.id)
+          })
+        }
+        removeAscendants(personId)
       } else {
         this.expandedAscendantIds.add(personId)
         // Déplier automatiquement les parents pour que leurs barres de vie et pont d'union atteignent les années de naissance
@@ -697,7 +789,24 @@ export default {
 
     toggleDescendants (personId) {
       if (this.expandedDescendantIds.has(personId)) {
-        this.expandedDescendantIds.delete(personId)
+        // Retirer récursivement personId et TOUS ses descendants de expandedDescendantIds et expandedSpouseIds
+        const removeDescendants = (id) => {
+          this.expandedDescendantIds.delete(id)
+          this.expandedSpouseIds.delete(id)
+          const children = this.getPersonChildren(id)
+          children.forEach(child => {
+            this.expandedDescendantIds.delete(child.id)
+            this.expandedSpouseIds.delete(child.id)
+            this.expandedAscendantIds.delete(child.id)
+            removeDescendants(child.id)
+          })
+          const spouses = this.filterSpouses(id)
+          spouses.forEach(s => {
+            this.expandedDescendantIds.delete(s.id)
+            this.expandedSpouseIds.delete(s.id)
+          })
+        }
+        removeDescendants(personId)
       } else {
         this.expandedDescendantIds.add(personId)
         // Déplier automatiquement les parents pour que leurs barres de vie et pont d'union atteignent les années de naissance
@@ -870,53 +979,35 @@ export default {
         let civilUnionPlace = null
         let civilSeparationDate = null
 
-        // Find the events that match marriage, civil union, or divorce
-        const commonEvents = (person.events || []).filter(event => {
-          return ['marriage', 'divorce', 'civil_union', 'civil_separation'].includes(event.event_type) &&
-                (event.related_persons || []).some(rp => rp.id === spouse.id)
-        })
+        const normalizeType = (t) => (t || '').toLowerCase().replace(/[\s_-]+/g, '_')
 
-        // Extract the relevant dates and places from the common events
-        commonEvents.forEach(event => {
-          switch (event.event_type) {
+        // Rassembler tous les événements mutuels du couple (depuis person ET depuis spouseDetail)
+        const pEvents = (person.events || [])
+          .filter(e => (e.related_persons || []).some(rp => rp.id === spouse.id))
+        const sEvents = (spouseDetail && spouseDetail.events ? spouseDetail.events : [])
+          .filter(e => (e.related_persons || []).some(rp => rp.id === person.id))
+
+        // Parcourir les événements des deux conjoints pour extraire dates et lieux
+        ;[...pEvents, ...sEvents].forEach(event => {
+          const nType = normalizeType(event.event_type)
+          switch (nType) {
             case 'marriage':
-              marriageDate = event.event_date
-              marriagePlace = event.event_place
-              break
-            case 'divorce':
-              divorceDate = event.event_date
-              divorcePlace = event.event_place
+              if (!marriageDate && event.event_date) marriageDate = event.event_date
+              if (!marriagePlace && event.event_place) marriagePlace = event.event_place
               break
             case 'civil_union':
-              civilUnionDate = event.event_date
-              civilUnionPlace = event.event_place
+              if (!civilUnionDate && event.event_date) civilUnionDate = event.event_date
+              if (!civilUnionPlace && event.event_place) civilUnionPlace = event.event_place
+              break
+            case 'divorce':
+              if (!divorceDate && event.event_date) divorceDate = event.event_date
+              if (!divorcePlace && event.event_place) divorcePlace = event.event_place
               break
             case 'civil_separation':
-              civilSeparationDate = event.event_date
+              if (!civilSeparationDate && event.event_date) civilSeparationDate = event.event_date
               break
           }
         })
-
-        // Also check if spouseDetail has the event place if not found on person
-        if (!marriagePlace && spouseDetail && spouseDetail.events) {
-          const spouseM = spouseDetail.events.find(e =>
-            ['marriage', 'civil union', 'civil_union'].includes((e.event_type || '').toLowerCase()) &&
-            (e.related_persons || []).some(rp => rp.id === person.id)
-          )
-          if (spouseM && spouseM.event_place) {
-            marriagePlace = spouseM.event_place
-          }
-        }
-
-        if (!divorcePlace && spouseDetail && spouseDetail.events) {
-          const spouseD = spouseDetail.events.find(e =>
-            ['divorce', 'civil_separation'].includes((e.event_type || '').toLowerCase()) &&
-            (e.related_persons || []).some(rp => rp.id === person.id)
-          )
-          if (spouseD && spouseD.event_place) {
-            divorcePlace = spouseD.event_place
-          }
-        }
 
         // Return the spouse detail with the added common dates and places
         return {
@@ -2276,54 +2367,62 @@ export default {
             .attr('fill', bandFill)
             .attr('rx', 2)
 
-          // Marqueur de lieu de l'union au centre de la bande d'union (au premier plan)
+          // Marqueurs de lieu de l'union (Union civile et/ou Mariage) au centre de la bande d'union (au premier plan)
           if (this.showPlaces) {
             try {
-              let uPlace = spouse.marriage_place || spouse.civil_union_place
-              if (!uPlace) {
-                const pEvents = (personData.person && personData.person.events) || []
-                const sEvents = (spouseData.person && spouseData.person.events) || []
-                const mEv = [...pEvents, ...sEvents].find(e =>
-                  ['marriage', 'civil union', 'civil_union'].includes((e.event_type || '').toLowerCase()) &&
-                  e.event_place && e.event_place.trim()
-                )
-                if (mEv) uPlace = mEv.event_place
+              let overlayLayer = graphSvg.select('.places-overlay-layer')
+              if (!overlayLayer.node()) {
+                overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
               }
 
-              if (uPlace && uPlace.trim()) {
-                const pName = (personData && personData.person && personData.person.first_name) || ''
-                const sName = (spouse && spouse.first_name) || (spouseData && spouseData.person && spouseData.person.first_name) || ''
-                const typeName = spouse.marriage_date ? 'Mariage' : 'Union'
-                const dateStr = (spouse.marriage_date || spouse.civil_union_date) ? ` (${spouse.marriage_date || spouse.civil_union_date})` : ''
+              const pName = (personData && personData.person && personData.person.first_name) || ''
+              const sName = (spouse && spouse.first_name) || (spouseData && spouseData.person && spouseData.person.first_name) || ''
 
-                // Insérer dans un calque d'overlay au premier plan pour ne pas être masqué par les barres de vie
-                let overlayLayer = graphSvg.select('.places-overlay-layer')
-                if (!overlayLayer.node()) {
-                  overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
-                }
-
-                const unionPinG = overlayLayer.append('g')
+              const createUnionPin = (xPos, pinColor, titleText) => {
+                const pinG = overlayLayer.append('g')
                   .attr('class', 'place-marker union-place-marker')
-                  .attr('transform', `translate(${xStart + 12}, ${gapCenterY})`)
+                  .attr('transform', `translate(${xPos}, ${gapCenterY})`)
                   .style('cursor', 'pointer')
                   .on('click', () => this.showPersonProfile(personData.person))
 
-                unionPinG.append('path')
+                pinG.append('path')
                   .attr('class', 'map-pin-body')
                   .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
-                  .attr('fill', '#e11d48')
+                  .attr('fill', pinColor)
                   .attr('stroke', '#ffffff')
                   .attr('stroke-width', 1.3)
                   .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
 
-                unionPinG.append('circle')
+                pinG.append('circle')
                   .attr('class', 'map-pin-dot')
                   .attr('cx', 0)
                   .attr('cy', -10)
                   .attr('r', 2.2)
                   .attr('fill', '#ffffff')
 
-                unionPinG.append('title').text(`📍 ${uPlace}\n💍 ${typeName} de ${pName} & ${sName}${dateStr}`)
+                pinG.append('title').text(titleText)
+              }
+
+              // 1. Pastille Union civile (si existante avec lieu ou date)
+              const cuPlace = spouse.civil_union_place
+              if (uDate && (cuPlace || spouse.civil_union_date)) {
+                const cuX = xScale(uDate) + 12
+                const placeLabel = cuPlace ? `📍 ${cuPlace}\n` : ''
+                const dateStr = spouse.civil_union_date ? ` (${spouse.civil_union_date})` : ''
+                createUnionPin(cuX, '#e11d48', `${placeLabel}📜 Union civile de ${pName} & ${sName}${dateStr}`)
+              }
+
+              // 2. Pastille Mariage (si existant avec lieu ou date)
+              const mPlace = spouse.marriage_place
+              if (mDate && (mPlace || spouse.marriage_date)) {
+                let mX = xScale(mDate) + 12
+                // Si l'union civile et le mariage ont lieu la même année, décaler légèrement pour éviter la superposition
+                if (uDate && uDate === mDate) {
+                  mX += 16
+                }
+                const placeLabel = mPlace ? `📍 ${mPlace}\n` : ''
+                const dateStr = spouse.marriage_date ? ` (${spouse.marriage_date})` : ''
+                createUnionPin(mX, '#e11d48', `${placeLabel}💍 Mariage de ${pName} & ${sName}${dateStr}`)
               }
 
               // Marqueur de lieu de divorce à la fin de la bande d'union (si couple divorcé et lieu renseigné)
@@ -2423,9 +2522,11 @@ export default {
 
             const coupleColor = (bridge && bridge.bandColor) ? bridge.bandColor : '#475569'
 
-            // Si les parents sont en mode compact (repliés), le départ part du bout de la pastille du parent
+            // Si les parents sont en mode compact (repliés), le départ part sous les avatars
             const isParentsCollapsed = !topParent.isUnfolded && !botParent.isUnfolded
-            const startX = isParentsCollapsed ? Math.min(xBirth, botParent.barEndX || xBirth) : xBirth
+            const startX = isParentsCollapsed
+              ? Math.max(topParent.anchorXOut || 0, botParent.anchorXOut || 0)
+              : xBirth
 
             // Départ : centre de la bande d'union des deux parents à l'année de naissance
             const startY = bridge ? bridge.gapCenterY : (topParent.yBottom + botParent.yTop) / 2
@@ -2440,7 +2541,7 @@ export default {
               (e.event_type || '').toLowerCase() === 'birth' && e.event_place && e.event_place.trim()
             )
 
-            if (this.showPlaces && birthEv) {
+            if (this.showPlaces && birthEv && !isParentsCollapsed) {
               const birthPin = overlayLayer.append('g')
                 .attr('class', 'place-marker child-birth-marker')
                 .attr('transform', `translate(${startX}, ${startY})`)
@@ -2464,7 +2565,7 @@ export default {
 
               birthPin.append('title').text(`📍 ${birthEv.event_place}\n👶 Naissance de ${child.first_name} ${child.last_name} (${childData.birthYear})`)
             } else {
-              // Point neutre quand les lieux sont masqués ou sans lieu
+              // Point neutre quand les lieux sont masqués ou parents repliés
               linkG.append('circle')
                 .attr('class', 'anchor-couple')
                 .attr('cx', startX)
@@ -2496,8 +2597,10 @@ export default {
             const pData = this.renderedPersons.get(parentRelatives[0].id)
             if (!pData) return
 
-            const startX = !pData.isUnfolded ? Math.min(xBirth, pData.barEndX || xBirth) : xBirth
-            const startY = childData.yTop >= pData.yBottom ? pData.yBottom : pData.yTop
+            const isParentCollapsed = !pData.isUnfolded
+            // Si le parent est replié, le lien part proprement sous son avatar
+            const startX = isParentCollapsed ? (pData.anchorXOut ?? (xScale(pData.birthYear) + 20)) : xBirth
+            const startY = pData.yBottom
             const deltaY = endY - startY
             const cp1x = startX
             const cp1y = startY + deltaY * 0.4
@@ -2514,7 +2617,7 @@ export default {
               (e.event_type || '').toLowerCase() === 'birth' && e.event_place && e.event_place.trim()
             )
 
-            if (this.showPlaces && birthEv) {
+            if (this.showPlaces && birthEv && !isParentCollapsed) {
               const birthPin = overlayLayer.append('g')
                 .attr('class', 'place-marker child-birth-marker')
                 .attr('transform', `translate(${startX}, ${startY})`)
@@ -2539,12 +2642,12 @@ export default {
               birthPin.append('title').text(`📍 ${birthEv.event_place}\n👶 Naissance de ${child.first_name} ${child.last_name} (${childData.birthYear})`)
             } else {
               linkG.append('circle')
+                .attr('class', 'anchor-parent')
                 .attr('cx', startX)
                 .attr('cy', startY)
-                .attr('r', 3)
+                .attr('r', 3.5)
                 .attr('fill', '#475569')
                 .attr('stroke', '#ffffff')
-                .attr('stroke-width', 1)
             }
 
             linkG.append('path')

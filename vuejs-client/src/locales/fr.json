@@ -126,5 +126,7 @@
     "collapse-bar": "Replier la barre de vie",
     "places": "Lieux",
     "show-places": "Afficher les lieux",
-    "hide-places": "Masquer les lieux"
+    "hide-places": "Masquer les lieux",
+    "zoom-in": "Zoom avant (+)",
+    "zoom-out": "Zoom arrière (-)"
 }
