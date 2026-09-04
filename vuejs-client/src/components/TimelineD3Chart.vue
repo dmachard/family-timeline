@@ -181,9 +181,21 @@
           </div>
         </div>
 
-        <!-- Container for the timeline header and graph with scroll and zoom -->
-        <div id="timeline-wrapper" @wheel="onWheelZoom">
-          <div id="timeline-header-container" @mousedown="onPointerStart($event, 'mouse')" @mousemove="onPointerMove($event, 'mouse')" @mouseup="onPointerEnd()" @mouseleave="onPointerEnd()" @touchstart="onPointerStart($event, 'touch')" @touchmove="onPointerMove($event, 'touch')" @touchend="onPointerEnd()" @touchcancel="onPointerEnd()">
+        <!-- Container for the timeline header and graph with scroll, drag-pan, and zoom -->
+        <div
+          id="timeline-wrapper"
+          :class="{ 'is-dragging': moveGraphStarted }"
+          @wheel="onWheelZoom"
+          @mousedown="onPointerStart($event, 'mouse')"
+          @mousemove="onPointerMove($event, 'mouse')"
+          @mouseup="onPointerEnd()"
+          @mouseleave="onPointerEnd()"
+          @touchstart="onPointerStart($event, 'touch')"
+          @touchmove="onPointerMove($event, 'touch')"
+          @touchend="onPointerEnd()"
+          @touchcancel="onPointerEnd()"
+        >
+          <div id="timeline-header-container">
             <svg id="timeline-header" />
           </div>
           <div id="timeline-graph-container">
@@ -1402,77 +1414,70 @@ export default {
       return { svg }
     },
 
-    onPointerEnd() {
-      this.drawTimeline();
-      this.moveGraphStarted = false;
-    },
-
     onPointerStart(event, type) {
-      event.preventDefault();
+      // Ignorer si on clique sur un élément interactif (personne, pastille, bouton...)
+      if (event.target && event.target.closest('.person, .place-marker, .marriage-bar-badge, button, a, input, select, .action-btn')) {
+        return;
+      }
       
       const isTouchEvent = type === 'touch';
-      this.moveGraphStarted = true
+      this.moveGraphStarted = true;
 
-      // Get the current transform attribute
-      const svg = d3.select('#timeline-graph');
-      const transformAttr = svg.attr('transform') || 'translate(0,0)';
-
-      // Extract the current x translation from the transform attribute
-      this.initialTranslateX = parseFloat(transformAttr.split('translate(')[1].split(',')[0]) || 0;
-
-      // Store the initial pointer x-coordinate and domain
-      if (!isTouchEvent) {
-        this.initialPointerX = d3.pointer(event)[0];
-      } else {
-        this.initialPointerX = event.touches[0].clientX;
-      }
-      this.initialDomain = this.xViewScale.domain();
-
+      const clientX = !isTouchEvent ? event.clientX : event.touches[0].clientX;
+      this.initialPointerX = clientX;
+      this.initialDomain = [...this.xViewScale.domain()];
     },
 
     onPointerMove(event, type) {
-      if (!this.moveGraphStarted){
-        return
-      }
+      if (!this.moveGraphStarted) return;
 
       const isTouchEvent = type === 'touch';
+      const currentClientX = !isTouchEvent ? event.clientX : event.touches[0].clientX;
 
-      let currentPointerX = 0;
-      if (!isTouchEvent) {
-        currentPointerX = d3.pointer(event)[0];
-      } else {
-        currentPointerX = event.touches[0].clientX;
-      }
+      // Déplacement en pixels
+      const dx = currentClientX - this.initialPointerX;
+      if (Math.abs(dx) < 1) return;
 
-      // Calculate the change in x position
-      const dx = currentPointerX - this.initialPointerX;
+      // Conversion du déplacement en pixels vers un décalage en années
+      const domainSpan = this.initialDomain[1] - this.initialDomain[0];
+      const domainShift = dx * domainSpan / (this.timelineWidth || 1000);
 
-      // Calculate the corresponding shift in years
-      const domainShift = dx * (this.initialDomain[1] - this.initialDomain[0]) / this.timelineWidth;
-
-      // Calculate the new domain based on the shift
       let newDomainStart = this.initialDomain[0] - domainShift;
       let newDomainEnd = this.initialDomain[1] - domainShift;
 
-      if (newDomainStart < this.computedMinYear-5 || newDomainEnd > this.computedMaxYear+5) {
-        return
+      // Limites de déplacement
+      const minBound = this.computedMinYear - 10;
+      const maxBound = this.computedMaxYear + 10;
+      if (newDomainStart < minBound) {
+        newDomainStart = minBound;
+        newDomainEnd = newDomainStart + domainSpan;
+      }
+      if (newDomainEnd > maxBound) {
+        newDomainEnd = maxBound;
+        newDomainStart = newDomainEnd - domainSpan;
       }
 
-      // Move the svg group accordingly
-      this.newTranslateX = this.initialTranslateX + dx;
+      this.localStartViewYear = Math.round(newDomainStart);
+      this.localStopViewYear = Math.round(newDomainEnd);
+      this.xViewScale.domain([this.localStartViewYear, this.localStopViewYear]);
 
-      // Update the xViewScale domain
-      this.xViewScale.domain([newDomainStart, newDomainEnd]);
+      // Mettre à jour l'en-tête de la règle temporelle en direct
+      this.updateTimelineHeader([this.localStartViewYear, this.localStopViewYear]);
 
-      // Update the header with the new domain
-      this.updateTimelineHeader([newDomainStart, newDomainEnd]);
+      this.initialPointerX = currentClientX;
+      this.initialDomain = [this.localStartViewYear, this.localStopViewYear];
+    },
 
-      // Update initial values for the next drag event
-      this.initialPointerX = currentPointerX;
-      this.initialTranslateX = this.newTranslateX;
-      this.initialDomain = [newDomainStart, newDomainEnd];
-      this.localStartViewYear = newDomainStart;
-      this.localStopViewYear = newDomainEnd;
+    onPointerEnd() {
+      if (!this.moveGraphStarted) return;
+      this.moveGraphStarted = false;
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      });
+      this.drawTimeline();
     },
 
     updateTimelineHeader(newDomain) {
@@ -2703,6 +2708,12 @@ export default {
   height: 100%;
   overflow: auto;
   position: relative;
+  cursor: grab;
+  user-select: none;
+}
+
+#timeline-wrapper.is-dragging {
+  cursor: grabbing !important;
 }
 
 #timeline-header-container {
@@ -2712,10 +2723,11 @@ export default {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch; 
   height: 60px;
+  cursor: grab;
 }
 
-#timeline-header-container:hover {
-  cursor: grab;
+#timeline-wrapper.is-dragging #timeline-header-container {
+  cursor: grabbing !important;
 }
 
 #timeline-header {
@@ -2731,6 +2743,11 @@ export default {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  cursor: grab;
+}
+
+#timeline-wrapper.is-dragging #timeline-graph-container {
+  cursor: grabbing !important;
 }
 
 #timeline-graph {
