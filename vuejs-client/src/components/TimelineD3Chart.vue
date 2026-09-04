@@ -2216,7 +2216,7 @@ export default {
             const yLevel = (index % 2 === 0) ? 18 : 34
 
             // Choisir le texte le plus approprié selon la largeur réelle de la colonne
-            let displayText = ''
+            let displayText
             if (clampedWidth >= 220) {
               displayText = fullLabelWithDates
             } else if (clampedWidth >= 110) {

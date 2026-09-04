@@ -11,11 +11,11 @@ export async function addRelative(relativeData) {
     return response.data;
   } catch (error) {
     if (error.response) {
-      throw new Error(error.response.data.message || 'An error occurred');
+      throw new Error(error.response.data.message || 'An error occurred', { cause: error });
     } else if (error.request) {
-      throw new Error('No response from server.');
+      throw new Error('No response from server.', { cause: error });
     } else {
-      throw new Error('An error occurred');
+      throw new Error('An error occurred', { cause: error });
     }
   }
 }
