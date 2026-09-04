@@ -1,16 +1,25 @@
 # Use the official Node.js image as a base
-FROM node:25.9.0
+FROM node:26.8.1
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the rest of the application code
+# Install build tools and setuptools (required for node-gyp on Python 3.12+ for native addons like sqlite3)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-setuptools \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy package.json and package-lock.json
-COPY src/ ./src
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
+
+# Copy the rest of the application code
+COPY src/ ./src
 
 # Expose the port that the app will run on
 EXPOSE 5000
