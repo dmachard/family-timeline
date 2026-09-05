@@ -154,6 +154,11 @@ export default {
     ModalRelatives,
     ModalEvents
    },
+  provide() {
+    return {
+      openModalWithContext: this.openModalWithContext
+    }
+  },
   data () {
     return {
       loading: true,
@@ -163,7 +168,8 @@ export default {
       minYear: config.minYear || 1800,
       maxYear: config.maxYear || 2050,
       stepYear: config.stepYear || 25,
-      clientVersion: import.meta.env.VITE_APP_VERSION
+      clientVersion: import.meta.env.VITE_APP_VERSION,
+      pendingContext: null
     }
   },
   computed: {
@@ -222,6 +228,26 @@ export default {
         this.loading = false;
       } 
     },
+    async openModalWithContext(modalId, options = {}) {
+      this.closeMenu();
+      this.pendingContext = { modalId, options };
+      this.loading = true;
+      try {
+        if (modalId === 'persons') {
+          await this.$refs.modalPersons.fetchInitialData();
+        } else if (modalId === 'relatives') {
+          await this.$refs.modalRelatives.fetchInitialData();
+        } else if (modalId === 'events') {
+          await this.$refs.modalEvents.fetchInitialData();
+        } else if (modalId === 'activities') {
+          await this.$refs.modalActivities.fetchInitialData();
+        }
+      } catch (err) {
+        console.error('Failed to open modal with context:', err.message);
+        this.pendingContext = null;
+        this.loading = false;
+      }
+    },
     onDataLoaded(modalId, bounds) {
       this.loading = false;
 
@@ -233,8 +259,33 @@ export default {
           if (typeof bounds.stopViewYear === 'number') this.stopViewYear = bounds.stopViewYear;
         }
       } else {
-        const contentModal = new Modal(document.getElementById(`${modalId}Modal`));
-        contentModal.show();
+        if (this.pendingContext && this.pendingContext.modalId === modalId) {
+          const options = this.pendingContext.options || {};
+          this.pendingContext = null;
+
+          if (modalId === 'persons' && options.person) {
+            this.$refs.modalPersons.startEditPersonById(options.person.id);
+          } else if (modalId === 'events' && options.person) {
+            this.$refs.modalEvents.selectPersonById(options.person.id);
+            if (options.eventId) {
+              this.$refs.modalEvents.startEditEventById(options.eventId);
+            } else if (options.action === 'add') {
+              this.$refs.modalEvents.startAddEvent();
+            }
+          } else if (modalId === 'relatives' && options.person) {
+            if (options.action === 'add') {
+              this.$refs.modalRelatives.startAddForPerson(options.person);
+            } else {
+              this.$refs.modalRelatives.filterForPerson(options.person);
+            }
+          }
+        }
+
+        const modalEl = document.getElementById(`${modalId}Modal`);
+        if (modalEl) {
+          const contentModal = Modal.getInstance(modalEl) || new Modal(modalEl);
+          contentModal.show();
+        }
       }
     },
     closeMenu(){

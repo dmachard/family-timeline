@@ -302,13 +302,13 @@ export default {
     },
     filteredRelatives() {
       return this.relatives.filter(relative => {
-        const personName = this.getPersonName(relative.related_person_id);
-        if (personName === null) {
-          return '';
-        }
+        const personName1 = this.getPersonName(relative.related_person_id);
+        const personName2 = this.getPersonName(relative.person_id);
+        const name1 = personName1 !== null ? String(personName1).toLowerCase() : '';
+        const name2 = personName2 !== null ? String(personName2).toLowerCase() : '';
 
         const searchQueryLower = this.searchQuery.toLowerCase();
-        return personName.toLowerCase().includes(searchQueryLower);
+        return name1.includes(searchQueryLower) || name2.includes(searchQueryLower);
       });
     },
     paginatedRelatives() {
@@ -340,6 +340,17 @@ export default {
     handleModalClose() {
       this.resetState();
       this.triggerTimelineReload();
+    },
+    filterForPerson(person) {
+      this.resetState();
+      this.searchQuery = `${person.first_name} ${person.last_name}`.trim();
+      this.currentPage = 1;
+    },
+    startAddForPerson(person) {
+      this.resetState();
+      this.startAddRelative();
+      const personObj = this.persons.find(p => p.id === person.id) || person;
+      this.selectPrimaryPerson(personObj);
     },
     resetState() {
       this.isAddingRelative = false;

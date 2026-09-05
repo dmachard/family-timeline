@@ -128,5 +128,15 @@
     "show-places": "Show places",
     "hide-places": "Hide places",
     "zoom-in": "Zoom in (+)",
-    "zoom-out": "Zoom out (-)"
+    "zoom-out": "Zoom out (-)",
+    "show-siblings": "Show siblings",
+    "hide-siblings": "Hide siblings",
+    "show-cousins": "Show cousins",
+    "hide-cousins": "Hide cousins",
+    "show-uncles-aunts": "Show uncles/aunts",
+    "hide-uncles-aunts": "Hide uncles/aunts",
+    "view-profile": "View profile",
+    "set-as-root": "Set as tree root",
+    "fold-bar": "Collapse bar",
+    "unfold-bar": "Expand bar"
 }

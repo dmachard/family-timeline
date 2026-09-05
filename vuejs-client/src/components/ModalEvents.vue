@@ -473,6 +473,24 @@ export default {
       this.onPersonSelected();
     },
 
+    selectPersonById(personId) {
+      this.cancelEdit();
+      this.isDeleting = false;
+      this.isAttachmentsEditing = false;
+      this.isAssociatingPeople = false;
+      const person = this.persons.find(p => p.id === personId);
+      if (person) {
+        this.selectPersonFromList(person);
+      }
+    },
+
+    startEditEventById(eventId) {
+      const event = this.events.find(e => e.id === eventId);
+      if (event) {
+        this.startEditEvent(event);
+      }
+    },
+
     formatDate(date) {
       if (!date) return 'N/A';
       const year = new Date(date).getFullYear();

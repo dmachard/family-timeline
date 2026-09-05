@@ -449,6 +449,13 @@ export default {
       this.isEditing = true;
       this.notification = null;
     },
+    startEditPersonById(personId) {
+      this.resetState();
+      const person = this.persons.find(p => p.id === personId);
+      if (person) {
+        this.startEditPerson(person);
+      }
+    },
     cancelEdit() {
       this.personBeingEdited = null;
       this.isEditing = false;

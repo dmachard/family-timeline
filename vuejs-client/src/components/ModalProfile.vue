@@ -17,9 +17,14 @@
               </div>
               <div class="col-8">
                 <div class="card-body">
-                  <h5 class="card-title mb-0">
-                    {{ person?.first_name + " " + person?.last_name }}
-                  </h5>
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                    <h5 class="card-title mb-0">
+                      {{ person?.first_name + " " + person?.last_name }}
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" type="button" :title="$t('edit')" @click="editPerson">
+                      <i class="bi bi-pencil-fill me-1" /> {{ $t('edit') }}
+                    </button>
+                  </div>
                   <p class="card-text text-muted">
                     {{ person?.middle_names?.map(m => m.middle_name).join(', ') }}
                   </p>
@@ -41,9 +46,14 @@
           <!-- Relatives display -->
           <div class="card border-0">
             <div class="card-body mb-0">
-              <h5 class="card-title">
-                {{ $t('relatives') }}
-              </h5>
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                  {{ $t('relatives') }}
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary" type="button" :title="$t('manage-relatives')" @click="manageRelatives">
+                  <i class="bi bi-gear-fill me-1" /> {{ $t('manage') }}
+                </button>
+              </div>
               <hr>
               <div v-for="section in relativeSections" :key="section.label" class="row mb-3">
                 <div class="col-4">
@@ -70,11 +80,21 @@
           <!-- Events display -->
           <div class="card border-0 mb-4">
             <div class="card-body">
-              <h5 class="card-title">
-                {{ $t('events') }}
-              </h5>
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                  {{ $t('events') }}
+                </h5>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-success" type="button" :title="$t('add')" @click="addEvent">
+                    <i class="bi bi-plus-lg me-1" /> {{ $t('add') }}
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" type="button" :title="$t('manage-events')" @click="manageEvents">
+                    <i class="bi bi-gear-fill me-1" /> {{ $t('manage') }}
+                  </button>
+                </div>
+              </div>
               <hr>
-              <div v-for="event in person?.events" :key="event.id" class="row mb-3">
+              <div v-for="event in person?.events" :key="event.id" class="row mb-3 align-items-start">
                 <div class="col-3">
                   <p class="text-start h6">
                     {{ new Date(event.event_date).getFullYear() }}
@@ -84,24 +104,29 @@
                   </p>
                 </div>
                 <div class="col-9 text-muted ">
-                  <p class="text-start mb-0">
-                    <span v-if="event.event_type === 'birth' || event.event_type === 'death'">{{ $t(event.event_type) }}</span>
-                    <span v-if="event.event_type === 'marriage'">
-                      {{ $t('marriedTo') }} <span v-for="related in event.related_persons" :key="related.id">
-                        <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
+                  <div class="d-flex justify-content-between align-items-start">
+                    <p class="text-start mb-0">
+                      <span v-if="event.event_type === 'birth' || event.event_type === 'death'">{{ $t(event.event_type) }}</span>
+                      <span v-if="event.event_type === 'marriage'">
+                        {{ $t('marriedTo') }} <span v-for="related in event.related_persons" :key="related.id">
+                          <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
+                        </span>
                       </span>
-                    </span>
-                    <span v-if="event.event_type === 'child'">
-                      {{ $t('hasAChild') }} <span v-for="related in event.related_persons" :key="related.id">
-                        <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
+                      <span v-if="event.event_type === 'child'">
+                        {{ $t('hasAChild') }} <span v-for="related in event.related_persons" :key="related.id">
+                          <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
+                        </span>
                       </span>
-                    </span>
-                    <span v-if="event.event_type === 'divorce'">
-                      {{ $t('divorcedFrom') }} <span v-for="related in event.related_persons" :key="related.id">
-                        <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
+                      <span v-if="event.event_type === 'divorce'">
+                        {{ $t('divorcedFrom') }} <span v-for="related in event.related_persons" :key="related.id">
+                          <a href="#" @click.prevent="refreshProfile(related.id)">{{ getPersonName(related.id) }}</a>
+                        </span>
                       </span>
-                    </span>
-                  </p>
+                    </p>
+                    <button class="btn btn-sm btn-link text-secondary p-0 ms-2" type="button" :title="$t('edit')" @click="editEvent(event.id)">
+                      <i class="bi bi-pencil" />
+                    </button>
+                  </div>
                   <p class="card-text mb-0">
                     {{ event.event_date }}
                   </p>
@@ -141,6 +166,11 @@ import AttachmentViewModal from './ModalAttachmentView.vue'
 export default {
   components: {
     AttachmentViewModal
+  },
+  inject: {
+    openModalWithContext: {
+      default: null
+    }
   },
   props: {
     person: {
@@ -353,9 +383,46 @@ export default {
         this.$emit('refresh-profile', person)
       }
     },
+    editPerson () {
+      this.openContextModal('persons', { person: this.person })
+    },
+    manageRelatives () {
+      this.openContextModal('relatives', { person: this.person })
+    },
+    manageEvents () {
+      this.openContextModal('events', { person: this.person })
+    },
+    addEvent () {
+      this.openContextModal('events', { person: this.person, action: 'add' })
+    },
+    editEvent (eventId) {
+      this.openContextModal('events', { person: this.person, eventId })
+    },
+    openContextModal (modalId, options = {}) {
+      if (!this.openModalWithContext) {
+        return
+      }
+      const modalElement = document.getElementById('profileModal')
+      const bsModal = modalElement ? Modal.getInstance(modalElement) : null
+
+      const proceed = () => {
+        this.openModalWithContext(modalId, options)
+      }
+
+      if (bsModal && modalElement && modalElement.classList.contains('show')) {
+        const onHidden = () => {
+          modalElement.removeEventListener('hidden.bs.modal', onHidden)
+          proceed()
+        }
+        modalElement.addEventListener('hidden.bs.modal', onHidden)
+        bsModal.hide()
+      } else {
+        proceed()
+      }
+    },
     show () {
       const modalElement = document.getElementById('profileModal')
-      const modal = new Modal(modalElement)
+      const modal = Modal.getInstance(modalElement) || new Modal(modalElement)
       modal.show()
     },
     hide () {

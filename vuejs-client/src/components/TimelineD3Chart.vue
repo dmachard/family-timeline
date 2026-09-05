@@ -229,12 +229,12 @@
             <button
               v-if="getPersonParents(hoveredPerson.id).length > 0"
               class="btn btn-sm btn-outline-primary py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-primary text-white': expandedAscendantIds.has(hoveredPerson.id) }"
+              :class="{ 'btn-primary text-white': areAscendantsVisible(hoveredPerson.id) }"
               type="button"
               @click="toggleAscendants(hoveredPerson.id)"
             >
-              <span>▲ {{ expandedAscendantIds.has(hoveredPerson.id) ? $t('hide-parents') : $t('show-parents') }}</span>
-              <span class="badge rounded-pill" :class="expandedAscendantIds.has(hoveredPerson.id) ? 'bg-white text-primary' : 'bg-primary text-white'">
+              <span>▲ {{ areAscendantsVisible(hoveredPerson.id) ? $t('hide-parents') : $t('show-parents') }}</span>
+              <span class="badge rounded-pill" :class="areAscendantsVisible(hoveredPerson.id) ? 'bg-white text-primary' : 'bg-primary text-white'">
                 {{ getPersonParents(hoveredPerson.id).length }}
               </span>
             </button>
@@ -257,14 +257,199 @@
             <button
               v-if="getPersonChildren(hoveredPerson.id).length > 0"
               class="btn btn-sm btn-outline-success py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-success text-white': expandedDescendantIds.has(hoveredPerson.id) }"
+              :class="{ 'btn-success text-white': areDescendantsVisible(hoveredPerson.id) }"
               type="button"
               @click="toggleDescendants(hoveredPerson.id)"
             >
-              <span>▼ {{ expandedDescendantIds.has(hoveredPerson.id) ? $t('hide-children') : $t('show-children') }}</span>
-              <span class="badge rounded-pill" :class="expandedDescendantIds.has(hoveredPerson.id) ? 'bg-white text-success' : 'bg-success text-white'">
+              <span>▼ {{ areDescendantsVisible(hoveredPerson.id) ? $t('hide-children') : $t('show-children') }}</span>
+              <span class="badge rounded-pill" :class="areDescendantsVisible(hoveredPerson.id) ? 'bg-white text-success' : 'bg-success text-white'">
                 {{ getPersonChildren(hoveredPerson.id).length }}
               </span>
+            </button>
+
+            <!-- Bouton Frères / Sœurs -->
+            <button
+              v-if="getPersonSiblings(hoveredPerson.id).length > 0"
+              class="btn btn-sm btn-outline-info text-dark py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
+              :class="{ 'btn-info text-white': areSiblingsVisible(hoveredPerson.id) }"
+              type="button"
+              @click="toggleSiblings(hoveredPerson.id)"
+            >
+              <span>👥 {{ areSiblingsVisible(hoveredPerson.id) ? $t('hide-siblings') : $t('show-siblings') }}</span>
+              <span class="badge rounded-pill" :class="areSiblingsVisible(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-info text-white'">
+                {{ getPersonSiblings(hoveredPerson.id).length }}
+              </span>
+            </button>
+
+            <!-- Bouton Tantes / Oncles -->
+            <button
+              v-if="getPersonUnclesAunts(hoveredPerson.id).length > 0"
+              class="btn btn-sm btn-outline-secondary py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
+              :class="{ 'btn-secondary text-white': areUnclesAuntsVisible(hoveredPerson.id) }"
+              type="button"
+              @click="toggleUnclesAunts(hoveredPerson.id)"
+            >
+              <span>👔 {{ areUnclesAuntsVisible(hoveredPerson.id) ? $t('hide-uncles-aunts') : $t('show-uncles-aunts') }}</span>
+              <span class="badge rounded-pill" :class="areUnclesAuntsVisible(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-secondary text-white'">
+                {{ getPersonUnclesAunts(hoveredPerson.id).length }}
+              </span>
+            </button>
+
+            <!-- Bouton Cousins -->
+            <button
+              v-if="getPersonCousins(hoveredPerson.id).length > 0"
+              class="btn btn-sm btn-outline-dark py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
+              :class="{ 'btn-dark text-white': areCousinsVisible(hoveredPerson.id) }"
+              type="button"
+              @click="toggleCousins(hoveredPerson.id)"
+            >
+              <span>🌱 {{ areCousinsVisible(hoveredPerson.id) ? $t('hide-cousins') : $t('show-cousins') }}</span>
+              <span class="badge rounded-pill" :class="areCousinsVisible(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-dark text-white'">
+                {{ getPersonCousins(hoveredPerson.id).length }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Right-Click Context Menu on Person -->
+          <div
+            v-if="contextMenuPerson"
+            class="person-context-menu dropdown-menu show shadow-lg border py-1"
+            :style="contextMenuStyle"
+            @click.stop
+          >
+            <div class="px-3 py-1 border-bottom text-muted small fw-semibold">
+              {{ contextMenuPerson.first_name }} {{ contextMenuPerson.last_name }}
+            </div>
+
+            <!-- Voir profil -->
+            <button
+              class="dropdown-item d-flex align-items-center gap-2 py-2"
+              type="button"
+              @click="onContextMenuAction('view-profile')"
+            >
+              <i class="bi bi-person-lines-fill text-primary" />
+              <span>{{ $t('view-profile') }}</span>
+            </button>
+
+            <!-- Définir comme racine (dynamic mode) -->
+            <button
+              v-if="viewMode === 'dynamic'"
+              class="dropdown-item d-flex align-items-center gap-2 py-2"
+              type="button"
+              @click="onContextMenuAction('set-as-root')"
+            >
+              <i class="bi bi-diagram-3 text-secondary" />
+              <span>{{ $t('set-as-root') }}</span>
+            </button>
+
+            <div v-if="viewMode === 'dynamic'" class="dropdown-divider my-1" />
+
+            <!-- Parents (dynamic mode) -->
+            <button
+              v-if="viewMode === 'dynamic' && getPersonParents(contextMenuPerson.id).length > 0"
+              class="dropdown-item d-flex align-items-center justify-content-between gap-3 py-2"
+              type="button"
+              @click="onContextMenuAction('toggle-parents')"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-up-circle text-primary" />
+                <span>{{ areAscendantsVisible(contextMenuPerson.id) ? $t('hide-parents') : $t('show-parents') }}</span>
+              </span>
+              <span class="badge rounded-pill bg-light text-dark border">
+                {{ getPersonParents(contextMenuPerson.id).length }}
+              </span>
+            </button>
+
+            <!-- Conjoints (dynamic mode) -->
+            <button
+              v-if="viewMode === 'dynamic' && filterSpouses(contextMenuPerson.id).length > 0"
+              class="dropdown-item d-flex align-items-center justify-content-between gap-3 py-2"
+              type="button"
+              @click="onContextMenuAction('toggle-spouses')"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-heart-fill text-warning" />
+                <span>{{ expandedSpouseIds.has(contextMenuPerson.id) ? $t('hide-spouses') : $t('show-spouses') }}</span>
+              </span>
+              <span class="badge rounded-pill bg-light text-dark border">
+                {{ filterSpouses(contextMenuPerson.id).length }}
+              </span>
+            </button>
+
+            <!-- Enfants (dynamic mode) -->
+            <button
+              v-if="viewMode === 'dynamic' && getPersonChildren(contextMenuPerson.id).length > 0"
+              class="dropdown-item d-flex align-items-center justify-content-between gap-3 py-2"
+              type="button"
+              @click="onContextMenuAction('toggle-children')"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-down-circle text-success" />
+                <span>{{ areDescendantsVisible(contextMenuPerson.id) ? $t('hide-children') : $t('show-children') }}</span>
+              </span>
+              <span class="badge rounded-pill bg-light text-dark border">
+                {{ getPersonChildren(contextMenuPerson.id).length }}
+              </span>
+            </button>
+
+            <!-- Frères / Sœurs (dynamic mode) -->
+            <button
+              v-if="viewMode === 'dynamic' && getPersonSiblings(contextMenuPerson.id).length > 0"
+              class="dropdown-item d-flex align-items-center justify-content-between gap-3 py-2"
+              type="button"
+              @click="onContextMenuAction('toggle-siblings')"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-people-fill text-info" />
+                <span>{{ areSiblingsVisible(contextMenuPerson.id) ? $t('hide-siblings') : $t('show-siblings') }}</span>
+              </span>
+              <span class="badge rounded-pill bg-light text-dark border">
+                {{ getPersonSiblings(contextMenuPerson.id).length }}
+              </span>
+            </button>
+
+            <!-- Tantes / Oncles (dynamic mode) -->
+            <button
+              v-if="viewMode === 'dynamic' && getPersonUnclesAunts(contextMenuPerson.id).length > 0"
+              class="dropdown-item d-flex align-items-center justify-content-between gap-3 py-2"
+              type="button"
+              @click="onContextMenuAction('toggle-uncles-aunts')"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-person-badge-fill text-purple" />
+                <span>{{ areUnclesAuntsVisible(contextMenuPerson.id) ? $t('hide-uncles-aunts') : $t('show-uncles-aunts') }}</span>
+              </span>
+              <span class="badge rounded-pill bg-light text-dark border">
+                {{ getPersonUnclesAunts(contextMenuPerson.id).length }}
+              </span>
+            </button>
+
+            <!-- Cousins (dynamic mode) -->
+            <button
+              v-if="viewMode === 'dynamic' && getPersonCousins(contextMenuPerson.id).length > 0"
+              class="dropdown-item d-flex align-items-center justify-content-between gap-3 py-2"
+              type="button"
+              @click="onContextMenuAction('toggle-cousins')"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-diagram-2-fill text-teal" />
+                <span>{{ areCousinsVisible(contextMenuPerson.id) ? $t('hide-cousins') : $t('show-cousins') }}</span>
+              </span>
+              <span class="badge rounded-pill bg-light text-dark border">
+                {{ getPersonCousins(contextMenuPerson.id).length }}
+              </span>
+            </button>
+
+            <div class="dropdown-divider my-1" />
+
+            <!-- Replier / Déplier la barre -->
+            <button
+              class="dropdown-item d-flex align-items-center gap-2 py-2"
+              type="button"
+              @click="onContextMenuAction('toggle-bar')"
+            >
+              <i :class="unfoldedPersonIds.has(contextMenuPerson.id) ? 'bi bi-dash-square text-secondary' : 'bi bi-plus-square text-secondary'" />
+              <span>{{ unfoldedPersonIds.has(contextMenuPerson.id) ? $t('fold-bar') : $t('unfold-bar') }}</span>
             </button>
           </div>
         </div>
@@ -366,11 +551,18 @@ export default {
       expandedAscendantIds: new Set(),
       expandedDescendantIds: new Set(),
       expandedSpouseIds: new Set(),
+      expandedSiblingIds: new Set(),
+      expandedUncleAuntIds: new Set(),
+      expandedCousinIds: new Set(),
+      pinnedPersonIds: new Set(),
       unfoldedPersonIds: new Set(),
       hoveredPerson: null,
       floatingToolbarStyle: {},
       isHoveringToolbar: false,
       hoverToolbarTimer: null,
+      animatingExpansion: null,
+      contextMenuPerson: null,
+      contextMenuStyle: {}
     }
   },
   computed: {
@@ -414,6 +606,10 @@ export default {
         // redraw timeline
         this.drawTimeline()
 
+        if (this.selectedPerson) {
+          this.selectedPerson = this.dataPersons.find(p => p.id === this.selectedPerson.id) || this.selectedPerson;
+        }
+
         this.$store.dispatch('resetTimelineReload');
       }
     },
@@ -428,6 +624,8 @@ export default {
   mounted () {
     this.isMounted = true;
     window.addEventListener('resize', this.handleResize);
+    document.addEventListener('click', this.closeContextMenu);
+    document.addEventListener('keydown', this.handleKeyDown);
     if (this.isDataLoaded) {
       this.drawTimeline();
     } else {
@@ -440,7 +638,9 @@ export default {
     }
   },
   beforeUnmount () {
-    window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener('resize', this.handleResize);
+    document.removeEventListener('click', this.closeContextMenu);
+    document.removeEventListener('keydown', this.handleKeyDown);
   },
   methods: {
     async fetchInitialData() {
@@ -528,6 +728,7 @@ export default {
         latestYear = Math.max(latestYear, currentYear);
       }
 
+
       if (earliestYear === Infinity) {
         earliestYear = config.minYear || 1800;
       }
@@ -541,7 +742,6 @@ export default {
 
       // Auto bounds:
       // Début : petite marge (arrondi au multiple de 5 inférieur) pour ne pas coller l'avatar/barre au bord gauche
-      // Ex: 1738 -> 1735 (3 ans de respiration pour détacher le début du bord)
       const minYear = Math.max(0, Math.floor((earliestYear - 1) / 5) * 5);
 
       // Fin : calé exactement sur l'année la plus récente (ex: 2026) pour que la barre rejoigne le bord droit
@@ -562,12 +762,42 @@ export default {
     getPersonsForScale () {
       if (this.viewMode === 'dynamic') {
         const visibleIds = this.getDynamicVisiblePersonIds()
+        if (this.renderedPersons && this.renderedPersons.size > 0) {
+          this.renderedPersons.forEach((_, id) => visibleIds.add(id))
+        }
         const visiblePersons = this.dataPersons.filter(p => visibleIds.has(p.id))
         if (visiblePersons.length > 0) {
           return visiblePersons
         }
       }
       return this.dataPersons
+    },
+
+    getGlobalMinYear () {
+      let min = config.minYear || 1800;
+      if (this.dataPersons && this.dataPersons.length > 0) {
+        this.dataPersons.forEach(p => {
+          if (p.birth_date) {
+            const yr = parseInt(String(p.birth_date).substring(0, 4), 10);
+            if (!isNaN(yr) && yr < min) min = yr;
+          }
+        });
+      }
+      return min;
+    },
+
+    getGlobalMaxYear () {
+      let max = new Date().getFullYear();
+      if (this.dataPersons && this.dataPersons.length > 0) {
+        this.dataPersons.forEach(p => {
+          if (p.death_date) {
+            const yr = parseInt(String(p.death_date).substring(0, 4), 10);
+            if (!isNaN(yr) && yr > max) max = yr;
+          }
+        });
+      }
+      if (config.maxYear && config.maxYear > max) max = config.maxYear;
+      return max;
     },
 
     applyScaleBounds () {
@@ -607,9 +837,15 @@ export default {
       const end = this.localStopViewYear;
       const currentSpan = end - start;
 
+      const globalMin = this.getGlobalMinYear();
+      const globalMax = this.getGlobalMaxYear();
+      const minBound = Math.min(this.computedMinYear, globalMin) - 5;
+      const maxBound = Math.max(this.computedMaxYear, globalMax) + 5;
+      const totalSpan = maxBound - minBound;
+
       // Factor < 1 = Zoom In (span shrinks), Factor > 1 = Zoom Out (span grows)
       if (factor < 1 && currentSpan <= 5) return; // Limite minimum: 5 ans
-      if (factor > 1 && currentSpan >= (this.computedMaxYear - this.computedMinYear + 30)) return;
+      if (factor > 1 && currentSpan >= totalSpan) return;
 
       const newSpan = Math.max(5, currentSpan * factor);
 
@@ -622,8 +858,6 @@ export default {
       let newStart = Math.round(focusYear - ratio * newSpan);
       let newEnd = Math.round(newStart + newSpan);
 
-      const minBound = this.computedMinYear - 5;
-      const maxBound = this.computedMaxYear + 5;
       if (newStart < minBound) {
         newStart = minBound;
         newEnd = Math.round(newStart + newSpan);
@@ -688,20 +922,101 @@ export default {
 
     getPersonParents (personId) {
       const person = this.dataPersons.find(p => p.id === personId)
-      if (!person || !Array.isArray(person.relatives)) return []
-      const parentIds = person.relatives
-        .filter(r => r.relation_type === 'father' || r.relation_type === 'mother')
-        .map(r => r.id)
-      return this.dataPersons.filter(p => parentIds.includes(p.id))
+      const parentIds = new Set()
+      if (person && Array.isArray(person.relatives)) {
+        person.relatives
+          .filter(r => r.relation_type === 'father' || r.relation_type === 'mother')
+          .forEach(r => parentIds.add(r.id))
+      }
+      this.dataPersons.forEach(other => {
+        if (Array.isArray(other.relatives)) {
+          const isChildOfOther = other.relatives.some(r => r.relation_type === 'child' && r.id === personId)
+          if (isChildOfOther) parentIds.add(other.id)
+        }
+      })
+      return this.dataPersons.filter(p => parentIds.has(p.id))
     },
 
     getPersonChildren (personId) {
       const person = this.dataPersons.find(p => p.id === personId)
-      if (!person || !Array.isArray(person.relatives)) return []
-      const childIds = person.relatives
-        .filter(r => r.relation_type === 'child')
-        .map(r => r.id)
-      return this.dataPersons.filter(p => childIds.includes(p.id))
+      const childIds = new Set()
+      if (person && Array.isArray(person.relatives)) {
+        person.relatives
+          .filter(r => r.relation_type === 'child')
+          .forEach(r => childIds.add(r.id))
+      }
+      this.dataPersons.forEach(other => {
+        if (Array.isArray(other.relatives)) {
+          const isParentOfOther = other.relatives.some(r =>
+            (r.relation_type === 'father' || r.relation_type === 'mother') && r.id === personId
+          )
+          if (isParentOfOther) childIds.add(other.id)
+        }
+      })
+      return this.dataPersons.filter(p => childIds.has(p.id))
+    },
+
+    getPersonSiblings (personId) {
+      const parents = this.getPersonParents(personId)
+      const siblingIds = new Set()
+      parents.forEach(parent => {
+        const children = this.getPersonChildren(parent.id)
+        children.forEach(child => {
+          if (child.id !== personId) {
+            siblingIds.add(child.id)
+          }
+        })
+      })
+      const person = this.dataPersons.find(p => p.id === personId)
+      if (person && Array.isArray(person.relatives)) {
+        person.relatives
+          .filter(r => (r.relation_type === 'brother' || r.relation_type === 'sister' || r.relation_type === 'sibling') && r.id !== personId)
+          .forEach(r => siblingIds.add(r.id))
+      }
+      this.dataPersons.forEach(other => {
+        if (other.id !== personId && Array.isArray(other.relatives)) {
+          const isSibling = other.relatives.some(r =>
+            (r.relation_type === 'brother' || r.relation_type === 'sister' || r.relation_type === 'sibling') && r.id === personId
+          )
+          if (isSibling) siblingIds.add(other.id)
+        }
+      })
+      return this.dataPersons.filter(p => siblingIds.has(p.id))
+    },
+
+    getPersonUnclesAunts (personId) {
+      const parents = this.getPersonParents(personId)
+      const uncleAuntIds = new Set()
+      parents.forEach(parent => {
+        const parentSiblings = this.getPersonSiblings(parent.id)
+        parentSiblings.forEach(ps => {
+          uncleAuntIds.add(ps.id)
+          const spouses = this.filterSpouses(ps.id)
+          spouses.forEach(sp => uncleAuntIds.add(sp.id))
+        })
+      })
+      parents.forEach(p => uncleAuntIds.delete(p.id))
+      uncleAuntIds.delete(personId)
+      return this.dataPersons.filter(p => uncleAuntIds.has(p.id))
+    },
+
+    getPersonCousins (personId) {
+      const parents = this.getPersonParents(personId)
+      const siblingIds = new Set(this.getPersonSiblings(personId).map(s => s.id))
+      siblingIds.add(personId)
+      const cousinIds = new Set()
+      parents.forEach(parent => {
+        const parentSiblings = this.getPersonSiblings(parent.id)
+        parentSiblings.forEach(ps => {
+          const children = this.getPersonChildren(ps.id)
+          children.forEach(c => {
+            if (!siblingIds.has(c.id)) {
+              cousinIds.add(c.id)
+            }
+          })
+        })
+      })
+      return this.dataPersons.filter(p => cousinIds.has(p.id))
     },
 
     getDynamicVisiblePersonIds () {
@@ -713,6 +1028,11 @@ export default {
 
       // La personne racine est toujours visible
       visible.add(this.dynamicRootPersonId)
+
+      // Les personnes explicitement maintenues visibles (ex: personne cliquée pour masquer ses frères/sœurs)
+      if (this.pinnedPersonIds) {
+        this.pinnedPersonIds.forEach(id => visible.add(id))
+      }
 
       const checkAndAddSpouses = (pId) => {
         if (!this.expandedSpouseIds.has(pId)) return
@@ -738,6 +1058,30 @@ export default {
         })
       }
 
+      const visitSiblings = (pId) => {
+        if (!this.expandedSiblingIds.has(pId)) return
+        const siblings = this.getPersonSiblings(pId)
+        siblings.forEach(sibling => {
+          visible.add(sibling.id)
+        })
+      }
+
+      const visitUnclesAunts = (pId) => {
+        if (!this.expandedUncleAuntIds.has(pId)) return
+        const unclesAunts = this.getPersonUnclesAunts(pId)
+        unclesAunts.forEach(ua => {
+          visible.add(ua.id)
+        })
+      }
+
+      const visitCousins = (pId) => {
+        if (!this.expandedCousinIds.has(pId)) return
+        const cousins = this.getPersonCousins(pId)
+        cousins.forEach(cousin => {
+          visible.add(cousin.id)
+        })
+      }
+
       // Parcourir de manière itérative uniquement les branches connectées depuis les personnes actuellement visibles
       let prevSize = 0
       while (visible.size > prevSize) {
@@ -747,6 +1091,9 @@ export default {
           checkAndAddSpouses(id)
           visitAscendants(id)
           visitDescendants(id)
+          visitSiblings(id)
+          visitUnclesAunts(id)
+          visitCousins(id)
         })
       }
 
@@ -754,6 +1101,10 @@ export default {
     },
 
     toggleSpouses (personId) {
+      const prevIds = new Set(this.renderedPersons.keys())
+      const isExpanding = !this.expandedSpouseIds.has(personId)
+      this.animatingExpansion = { personId, type: 'spouses', prevIds, isExpanding }
+
       if (this.expandedSpouseIds.has(personId)) {
         this.expandedSpouseIds.delete(personId)
       } else {
@@ -769,16 +1120,49 @@ export default {
       this.drawTimeline()
     },
 
+    areAscendantsVisible (personId) {
+      if (!personId) return false
+      if (this.expandedAscendantIds.has(personId)) return true
+      const parents = this.getPersonParents(personId)
+      if (parents.length === 0) return false
+      const visibleIds = this.getDynamicVisiblePersonIds()
+      const nonRootParents = parents.filter(p => p.id !== this.dynamicRootPersonId)
+      return nonRootParents.length > 0 && nonRootParents.some(p => visibleIds.has(p.id))
+    },
+
+    areDescendantsVisible (personId) {
+      if (!personId) return false
+      if (this.expandedDescendantIds.has(personId)) return true
+      const spouses = this.filterSpouses(personId)
+      if (spouses.some(s => this.expandedDescendantIds.has(s.id))) return true
+      const children = this.getPersonChildren(personId)
+      if (children.length === 0) return false
+      const visibleIds = this.getDynamicVisiblePersonIds()
+      const nonRootChildren = children.filter(c => c.id !== this.dynamicRootPersonId)
+      return nonRootChildren.length > 0 && nonRootChildren.some(c => visibleIds.has(c.id))
+    },
+
     toggleAscendants (personId) {
-      if (this.expandedAscendantIds.has(personId)) {
+      const prevIds = new Set(this.renderedPersons.keys())
+      const isVisible = this.areAscendantsVisible(personId)
+      const isExpanding = !isVisible
+      this.animatingExpansion = { personId, type: 'ascendants', prevIds, isExpanding }
+
+      if (isVisible) {
         // Retirer récursivement les ascendants de cette branche
         const removeAscendants = (id) => {
           this.expandedAscendantIds.delete(id)
-          this.expandedSpouseIds.delete(id)
           const parents = this.getPersonParents(id)
           parents.forEach(parent => {
-            this.expandedAscendantIds.delete(parent.id)
-            this.expandedSpouseIds.delete(parent.id)
+            if (parent.id !== this.dynamicRootPersonId) {
+              if (this.pinnedPersonIds) this.pinnedPersonIds.delete(parent.id)
+              this.expandedAscendantIds.delete(parent.id)
+              this.expandedSpouseIds.delete(parent.id)
+              this.expandedDescendantIds.delete(parent.id)
+              this.expandedSiblingIds.delete(parent.id)
+              this.expandedUncleAuntIds.delete(parent.id)
+              this.expandedCousinIds.delete(parent.id)
+            }
             removeAscendants(parent.id)
           })
         }
@@ -786,6 +1170,7 @@ export default {
       } else {
         this.expandedAscendantIds.add(personId)
         // Déplier automatiquement les parents pour que leurs barres de vie et pont d'union atteignent les années de naissance
+        this.unfoldedPersonIds.add(personId)
         const parents = this.getPersonParents(personId)
         parents.forEach(p => this.unfoldedPersonIds.add(p.id))
       }
@@ -800,32 +1185,248 @@ export default {
     },
 
     toggleDescendants (personId) {
-      if (this.expandedDescendantIds.has(personId)) {
-        // Retirer récursivement personId et TOUS ses descendants de expandedDescendantIds et expandedSpouseIds
+      const prevIds = new Set(this.renderedPersons.keys())
+      const isVisible = this.areDescendantsVisible(personId)
+      const isExpanding = !isVisible
+      this.animatingExpansion = { personId, type: 'descendants', prevIds, isExpanding }
+
+      if (isVisible) {
+        // Retirer récursivement personId, ses conjoints et TOUS leurs descendants de expandedDescendantIds et autres sets
         const removeDescendants = (id) => {
           this.expandedDescendantIds.delete(id)
-          this.expandedSpouseIds.delete(id)
-          const children = this.getPersonChildren(id)
-          children.forEach(child => {
-            this.expandedDescendantIds.delete(child.id)
-            this.expandedSpouseIds.delete(child.id)
-            this.expandedAscendantIds.delete(child.id)
-            removeDescendants(child.id)
-          })
           const spouses = this.filterSpouses(id)
           spouses.forEach(s => {
             this.expandedDescendantIds.delete(s.id)
-            this.expandedSpouseIds.delete(s.id)
+          })
+          const children = this.getPersonChildren(id)
+          children.forEach(child => {
+            if (child.id !== this.dynamicRootPersonId) {
+              if (this.pinnedPersonIds) this.pinnedPersonIds.delete(child.id)
+              this.expandedDescendantIds.delete(child.id)
+              this.expandedSpouseIds.delete(child.id)
+              this.expandedAscendantIds.delete(child.id)
+              this.expandedSiblingIds.delete(child.id)
+              this.expandedUncleAuntIds.delete(child.id)
+              this.expandedCousinIds.delete(child.id)
+            }
+            removeDescendants(child.id)
           })
         }
         removeDescendants(personId)
+        const spouses = this.filterSpouses(personId)
+        spouses.forEach(s => removeDescendants(s.id))
       } else {
         this.expandedDescendantIds.add(personId)
         // Déplier automatiquement les parents pour que leurs barres de vie et pont d'union atteignent les années de naissance
         this.unfoldedPersonIds.add(personId)
         const spouses = this.filterSpouses(personId)
-        spouses.forEach(s => this.unfoldedPersonIds.add(s.id))
+        spouses.forEach(s => {
+          this.expandedDescendantIds.add(s.id)
+          this.unfoldedPersonIds.add(s.id)
+        })
       }
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    areSiblingsVisible (personId) {
+      if (!personId) return false
+      // 1. Directement marqué comme ayant déployé la fratrie
+      if (this.expandedSiblingIds.has(personId)) return true
+      const siblings = this.getPersonSiblings(personId)
+      if (siblings.length === 0) return false
+      if (siblings.some(s => this.expandedSiblingIds.has(s.id))) return true
+
+      // 2. Ou fratrie déployée via les parents
+      const parents = this.getPersonParents(personId)
+      if (parents.length > 0 && parents.some(p => this.expandedDescendantIds.has(p.id))) return true
+
+      // 3. Ou au moins un frère/sœur (autre que la racine globale de l'arbre) est visible
+      const visibleIds = this.getDynamicVisiblePersonIds()
+      const nonRootSiblings = siblings.filter(s => s.id !== this.dynamicRootPersonId)
+      if (nonRootSiblings.length > 0 && nonRootSiblings.some(s => visibleIds.has(s.id))) {
+        return true
+      }
+
+      return false
+    },
+
+    areUnclesAuntsVisible (personId) {
+      if (!personId) return false
+      if (this.expandedUncleAuntIds.has(personId)) return true
+      const unclesAunts = this.getPersonUnclesAunts(personId)
+      if (unclesAunts.length === 0) return false
+      const visibleIds = this.getDynamicVisiblePersonIds()
+      const nonRootUncles = unclesAunts.filter(u => u.id !== this.dynamicRootPersonId)
+      if (nonRootUncles.length > 0 && nonRootUncles.some(u => visibleIds.has(u.id))) {
+        return true
+      }
+      return false
+    },
+
+    areCousinsVisible (personId) {
+      if (!personId) return false
+      if (this.expandedCousinIds.has(personId)) return true
+      const cousins = this.getPersonCousins(personId)
+      if (cousins.length === 0) return false
+      const visibleIds = this.getDynamicVisiblePersonIds()
+      const nonRootCousins = cousins.filter(c => c.id !== this.dynamicRootPersonId)
+      if (nonRootCousins.length > 0 && nonRootCousins.some(c => visibleIds.has(c.id))) {
+        return true
+      }
+      return false
+    },
+
+    toggleSiblings (personId) {
+      const prevIds = new Set(this.renderedPersons.keys())
+      const siblings = this.getPersonSiblings(personId)
+      const allSiblingIds = [personId, ...siblings.map(s => s.id)]
+      const isVisible = this.areSiblingsVisible(personId)
+      const isExpanding = !isVisible
+
+      this.animatingExpansion = { personId, type: 'siblings', prevIds, isExpanding }
+
+      if (isVisible) {
+        // La personne sur laquelle l'utilisateur a cliqué DOIT TOUJOURS RESTER VISIBLE
+        this.pinnedPersonIds.add(personId)
+
+        // Retirer toute la fratrie de expandedSiblingIds
+        allSiblingIds.forEach(id => {
+          this.expandedSiblingIds.delete(id)
+        })
+
+        // Retirer aussi les enfants des parents si les frères et sœurs provenaient d'un déploiement descendant des parents
+        const parents = this.getPersonParents(personId)
+        parents.forEach(p => {
+          this.expandedDescendantIds.delete(p.id)
+        })
+
+        // Nettoyer les frères et sœurs masqués (sauf personId et dynamicRootPersonId)
+        siblings.forEach(s => {
+          if (s.id !== this.dynamicRootPersonId && s.id !== personId) {
+            this.pinnedPersonIds.delete(s.id)
+            this.expandedSiblingIds.delete(s.id)
+            this.expandedSpouseIds.delete(s.id)
+            this.expandedDescendantIds.delete(s.id)
+            this.expandedAscendantIds.delete(s.id)
+            this.expandedUncleAuntIds.delete(s.id)
+            this.expandedCousinIds.delete(s.id)
+          }
+        })
+      } else {
+        // AFFICHER : garantir que personId reste visible et ajouter à expandedSiblingIds
+        this.pinnedPersonIds.add(personId)
+        this.expandedSiblingIds.add(personId)
+      }
+
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    toggleUnclesAunts (personId) {
+      const prevIds = new Set(this.renderedPersons.keys())
+      const unclesAunts = this.getPersonUnclesAunts(personId)
+      const isVisible = this.areUnclesAuntsVisible(personId)
+      const isExpanding = !isVisible
+
+      this.animatingExpansion = { personId, type: 'uncles-aunts', prevIds, isExpanding }
+
+      if (isVisible) {
+        // La personne cliquée et ses parents doivent rester visibles
+        this.pinnedPersonIds.add(personId)
+        const parents = this.getPersonParents(personId)
+        parents.forEach(p => {
+          this.pinnedPersonIds.add(p.id)
+          // Retirer aussi les déploiements de frères/sœurs des parents
+          this.expandedSiblingIds.delete(p.id)
+          // Retirer aussi les enfants des grands-parents si les oncles/tantes provenaient du déploiement des grands-parents
+          const grandparents = this.getPersonParents(p.id)
+          grandparents.forEach(gp => {
+            this.expandedDescendantIds.delete(gp.id)
+            const gpSpouses = this.filterSpouses(gp.id)
+            gpSpouses.forEach(gps => this.expandedDescendantIds.delete(gps.id))
+          })
+        })
+
+        this.expandedUncleAuntIds.delete(personId)
+        unclesAunts.forEach(u => {
+          this.expandedUncleAuntIds.delete(u.id)
+          if (u.id !== this.dynamicRootPersonId && u.id !== personId) {
+            this.pinnedPersonIds.delete(u.id)
+            this.expandedSiblingIds.delete(u.id)
+            this.expandedSpouseIds.delete(u.id)
+            this.expandedDescendantIds.delete(u.id)
+            this.expandedAscendantIds.delete(u.id)
+            this.expandedUncleAuntIds.delete(u.id)
+            this.expandedCousinIds.delete(u.id)
+          }
+        })
+      } else {
+        this.pinnedPersonIds.add(personId)
+        this.expandedUncleAuntIds.add(personId)
+      }
+
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
+      this.drawTimeline()
+    },
+
+    toggleCousins (personId) {
+      const prevIds = new Set(this.renderedPersons.keys())
+      const cousins = this.getPersonCousins(personId)
+      const isVisible = this.areCousinsVisible(personId)
+      const isExpanding = !isVisible
+
+      this.animatingExpansion = { personId, type: 'cousins', prevIds, isExpanding }
+
+      if (isVisible) {
+        this.pinnedPersonIds.add(personId)
+        const parents = this.getPersonParents(personId)
+        parents.forEach(p => this.pinnedPersonIds.add(p.id))
+
+        // Retirer les déploiements descendants des oncles/tantes si les cousins provenaient de leurs enfants
+        const unclesAunts = this.getPersonUnclesAunts(personId)
+        unclesAunts.forEach(ua => {
+          this.expandedDescendantIds.delete(ua.id)
+          const uaSpouses = this.filterSpouses(ua.id)
+          uaSpouses.forEach(uas => this.expandedDescendantIds.delete(uas.id))
+        })
+
+        this.expandedCousinIds.delete(personId)
+        cousins.forEach(c => {
+          this.expandedCousinIds.delete(c.id)
+          if (c.id !== this.dynamicRootPersonId && c.id !== personId) {
+            this.pinnedPersonIds.delete(c.id)
+            this.expandedSiblingIds.delete(c.id)
+            this.expandedSpouseIds.delete(c.id)
+            this.expandedDescendantIds.delete(c.id)
+            this.expandedAscendantIds.delete(c.id)
+            this.expandedUncleAuntIds.delete(c.id)
+            this.expandedCousinIds.delete(c.id)
+          }
+        })
+      } else {
+        this.pinnedPersonIds.add(personId)
+        this.expandedCousinIds.add(personId)
+      }
+
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
         minYear: this.computedMinYear,
@@ -839,6 +1440,7 @@ export default {
     toggleViewMode (mode) {
       this.viewMode = mode
       this.hoveredPerson = null
+      this.closeContextMenu()
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
         minYear: this.computedMinYear,
@@ -853,7 +1455,12 @@ export default {
       this.expandedAscendantIds.clear()
       this.expandedDescendantIds.clear()
       this.expandedSpouseIds.clear()
+      this.expandedSiblingIds.clear()
+      this.expandedUncleAuntIds.clear()
+      this.expandedCousinIds.clear()
+      this.pinnedPersonIds.clear()
       this.hoveredPerson = null
+      this.closeContextMenu()
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
         minYear: this.computedMinYear,
@@ -869,7 +1476,12 @@ export default {
       this.expandedAscendantIds.clear()
       this.expandedDescendantIds.clear()
       this.expandedSpouseIds.clear()
+      this.expandedSiblingIds.clear()
+      this.expandedUncleAuntIds.clear()
+      this.expandedCousinIds.clear()
+      this.pinnedPersonIds.clear()
       this.hoveredPerson = null
+      this.closeContextMenu()
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
         minYear: this.computedMinYear,
@@ -878,6 +1490,82 @@ export default {
         stopViewYear: this.localStopViewYear
       })
       this.drawTimeline()
+    },
+
+    handleKeyDown (e) {
+      if (e.key === 'Escape') {
+        this.closeContextMenu()
+      }
+    },
+
+    openContextMenu (person, event) {
+      this.contextMenuPerson = person
+      if (this.hoverToolbarTimer) {
+        clearTimeout(this.hoverToolbarTimer)
+        this.hoverToolbarTimer = null
+      }
+      this.hoveredPerson = null
+
+      const wrapper = document.getElementById('timeline-wrapper')
+      if (wrapper) {
+        const wrapperRect = wrapper.getBoundingClientRect()
+        const mouseX = event.clientX - wrapperRect.left + wrapper.scrollLeft
+        const mouseY = event.clientY - wrapperRect.top + wrapper.scrollTop
+
+        this.contextMenuStyle = {
+          position: 'absolute',
+          left: `${Math.max(10, mouseX)}px`,
+          top: `${Math.max(10, mouseY)}px`,
+          zIndex: 1050
+        }
+      } else {
+        this.contextMenuStyle = {
+          position: 'fixed',
+          left: `${event.clientX}px`,
+          top: `${event.clientY}px`,
+          zIndex: 1050
+        }
+      }
+    },
+
+    closeContextMenu () {
+      this.contextMenuPerson = null
+    },
+
+    onContextMenuAction (action) {
+      if (!this.contextMenuPerson) return
+      const person = this.contextMenuPerson
+      this.closeContextMenu()
+
+      switch (action) {
+        case 'view-profile':
+          this.showPersonProfile(person)
+          break
+        case 'set-as-root':
+          this.setDynamicRootPerson(person.id)
+          break
+        case 'toggle-parents':
+          this.toggleAscendants(person.id)
+          break
+        case 'toggle-spouses':
+          this.toggleSpouses(person.id)
+          break
+        case 'toggle-children':
+          this.toggleDescendants(person.id)
+          break
+        case 'toggle-siblings':
+          this.toggleSiblings(person.id)
+          break
+        case 'toggle-uncles-aunts':
+          this.toggleUnclesAunts(person.id)
+          break
+        case 'toggle-cousins':
+          this.toggleCousins(person.id)
+          break
+        case 'toggle-bar':
+          this.togglePersonBar(person.id)
+          break
+      }
     },
 
     onPersonMouseEnter (person, event) {
@@ -973,14 +1661,20 @@ export default {
 
       // Extract the list of relatives
       const relatives = person.relatives || []
-
-      // Filter the relatives to get only those with relation_type 'spouse'
-      const spouses = relatives.filter(relative => relative.relation_type === 'spouse')
+      const spouseIds = new Set()
+      relatives.filter(r => r.relation_type === 'spouse').forEach(r => spouseIds.add(r.id))
+      this.dataPersons.forEach(other => {
+        if (Array.isArray(other.relatives)) {
+          const isSpouseOfOther = other.relatives.some(r => r.relation_type === 'spouse' && r.id === personId)
+          if (isSpouseOfOther) spouseIds.add(other.id)
+        }
+      })
 
       // Get the full details of the spouses from the data list
-      const spouseDetails = spouses.map(spouse => {
+      const spouseDetails = Array.from(spouseIds).map(spouseId => {
+        const spouse = { id: spouseId }
         // Find the full details of each spouse from the data
-        const spouseDetail = this.dataPersons.find(p => p.id === spouse.id)
+        const spouseDetail = this.dataPersons.find(p => p.id === spouseId)
 
         // Initialize the common dates and places to null
         let marriageDate = null
@@ -1039,71 +1733,19 @@ export default {
     },
 
     filterChildrenNoSpouse (personId) {
-      // Find the person with the given personId
-      const person = this.dataPersons.find(p => p.id === personId)
-
-      // If the person is not found, return an empty array
-      if (!person) {
-        return []
-      }
-
-      // Extract the list of relatives (children)
-      const relatives = person.relatives || []
-
-      // Filter the relatives to get only those with relation_type 'child'
-      const children = relatives.filter(relative => relative.relation_type === 'child')
-
-      // Get the full details of the children from the data list and filter by absence of spouse
-      const childrenWithoutSpouse = children.map(child => {
-        // Find the full details of each child from the data
-        const childDetail = this.dataPersons.find(p => p.id === child.id)
-
-        // Check if the child does not have another parent (spouse) in their relatives
-        const hasNoSpouse = !childDetail.relatives.some(relative =>
-          (relative.relation_type === 'father' && relative.id !== personId) ||
-          (relative.relation_type === 'mother' && relative.id !== personId)
-        )
-
-        // Return the child detail if no other spouse/parent is found
-        return hasNoSpouse ? childDetail : null
-      }).filter(child => child !== null)
-
-      // Return the list of children without spouse details
-      return childrenWithoutSpouse
+      const children = this.getPersonChildren(personId)
+      return children.filter(childDetail => {
+        const parents = this.getPersonParents(childDetail.id)
+        return !parents.some(parent => parent.id !== personId)
+      })
     },
 
     filterChildren (personId, spouseId) {
-      // Find the person with the given personId
-      const person = this.dataPersons.find(p => p.id === personId)
-
-      // If the person is not found, return an empty array
-      if (!person) {
-        return []
-      }
-
-      // Extract the list of relatives (children)
-      const relatives = person.relatives || []
-
-      // Filter the relatives to get only those with relation_type 'child'
-      const children = relatives.filter(relative => relative.relation_type === 'child')
-
-      // Get the full details of the children from the data list and filter by spouse
-      const childrenDetails = children.map(child => {
-        // Find the full details of each child from the data
-        const childDetail = this.dataPersons.find(p => p.id === child.id)
-
-        // Check if the child has both parents (personId and spouseId)
-        const hasBothParents = childDetail.relatives.some(relative =>
-          (relative.relation_type === 'father' && (relative.id === personId || relative.id === spouseId)) ||
-          (relative.relation_type === 'mother' && (relative.id === personId || relative.id === spouseId))
-        )
-
-        // Return the child detail if both parents are found
-        return hasBothParents ? childDetail : null
-      }).filter(child => child !== null)
-
-      // Return the list of children details
-      return childrenDetails
+      const children = this.getPersonChildren(personId)
+      return children.filter(childDetail => {
+        const parents = this.getPersonParents(childDetail.id)
+        return parents.some(parent => parent.id === spouseId)
+      })
     },
 
     filterOldestAncestor (personId) {
@@ -1446,8 +2088,10 @@ export default {
       let newDomainEnd = this.initialDomain[1] - domainShift;
 
       // Limites de déplacement
-      const minBound = this.computedMinYear - 10;
-      const maxBound = this.computedMaxYear + 10;
+      const globalMin = this.getGlobalMinYear();
+      const globalMax = this.getGlobalMaxYear();
+      const minBound = Math.min(this.computedMinYear, globalMin) - 10;
+      const maxBound = Math.max(this.computedMaxYear, globalMax) + 10;
       if (newDomainStart < minBound) {
         newDomainStart = minBound;
         newDomainEnd = newDomainStart + domainSpan;
@@ -1532,6 +2176,44 @@ export default {
 
       // 6. Draw family links (filiation parent-child attached to couple/parent at birth date)
       this.drawFamilyLinks(d3.select('#timeline-graph'), this.xViewScale)
+
+      // 7. Ajustement doux du défilement lors d'un déploiement
+      if (this.animatingExpansion && this.animatingExpansion.isExpanding) {
+        const newlyAdded = []
+        this.renderedPersons.forEach((data, id) => {
+          if (this.animatingExpansion.prevIds && !this.animatingExpansion.prevIds.has(id)) {
+            newlyAdded.push(data)
+          }
+        })
+
+        if (newlyAdded.length > 0) {
+          this.$nextTick(() => {
+            const wrapper = document.getElementById('timeline-wrapper')
+            if (wrapper) {
+              const maxY = Math.max(...newlyAdded.map(d => d.yBottom || d.yCenter || 0))
+              const minY = Math.min(...newlyAdded.map(d => d.yTop || d.yCenter || 0))
+              const wrapperHeight = wrapper.clientHeight
+              const currentScrollTop = wrapper.scrollTop
+
+              if (maxY > currentScrollTop + wrapperHeight - 40) {
+                wrapper.scrollTo({
+                  top: Math.max(0, maxY - wrapperHeight + 80),
+                  behavior: 'smooth'
+                })
+              } else if (minY < currentScrollTop + 20) {
+                wrapper.scrollTo({
+                  top: Math.max(0, minY - 40),
+                  behavior: 'smooth'
+                })
+              }
+            }
+          })
+        }
+
+        setTimeout(() => {
+          this.animatingExpansion = null
+        }, 700)
+      }
     },
 
     drawTimelineHeader (width, margin, yearStart, yearStop) {
@@ -1671,12 +2353,39 @@ export default {
       const y = yPosition * this.barHeight / 2 + topOffset
       const height = 40
       const isUnfolded = this.isBarUnfolded(person.id)
+      const isNewlyAdded = Boolean(
+        this.animatingExpansion &&
+        this.animatingExpansion.isExpanding &&
+        this.animatingExpansion.prevIds &&
+        !this.animatingExpansion.prevIds.has(person.id)
+      )
 
       const personGroup = grahSvg.append('g')
-        .attr('class', 'person')
+        .attr('class', `person${isNewlyAdded ? ' person-newly-deployed' : ''}`)
         .attr('id', `person-bar-${person.id}`)
-        .attr('transform', `translate(0, ${y})`)
         .datum(person)
+        .on('contextmenu', (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          this.openContextMenu(person, event)
+        })
+
+      if (isNewlyAdded) {
+        const animType = this.animatingExpansion.type
+        const offsetY = animType === 'descendants' ? -18 : (animType === 'ascendants' ? 18 : 0)
+        const offsetX = animType === 'spouses' ? -25 : 0
+
+        personGroup
+          .attr('transform', `translate(${offsetX}, ${y + offsetY})`)
+          .style('opacity', 0)
+          .transition()
+          .duration(550)
+          .ease(d3.easeCubicOut)
+          .attr('transform', `translate(0, ${y})`)
+          .style('opacity', 1)
+      } else {
+        personGroup.attr('transform', `translate(0, ${y})`)
+      }
 
       // URL de l'image : photo réelle si disponible, sinon générique selon le genre
       const dataUrl = import.meta.env.MODE === 'development'
@@ -1721,6 +2430,11 @@ export default {
           .style('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.15))')
           .style('cursor', 'pointer')
           .on('click', () => this.togglePersonBar(person.id))
+          .on('contextmenu', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
 
         // Avatar (image de profil)
         const avatarImage = personGroup.append('image')
@@ -1732,6 +2446,11 @@ export default {
           .attr('clip-path', 'circle(15px at 15px 15px)')
           .style('cursor', 'pointer')
           .on('click', () => this.togglePersonBar(person.id))
+          .on('contextmenu', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
 
         // Toolbar sur survol de l'avatar uniquement
         if (this.viewMode === 'dynamic') {
@@ -1829,6 +2548,11 @@ export default {
           .attr('stroke', '#ffffff')
           .attr('stroke-width', 2)
           .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))')
+          .on('contextmenu', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
 
         // Append the image inside the circle
         const avatarImageExp = personGroup.append('image')
@@ -1841,6 +2565,11 @@ export default {
           .attr('clip-path', 'circle(15px at 15px 15px)')
           .style('cursor', 'pointer')
           .on('click', () => this.showPersonProfile(person))
+          .on('contextmenu', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
 
         // Toolbar sur survol de l'avatar uniquement (mode déplié)
         if (this.viewMode === 'dynamic') {
@@ -2012,7 +2741,7 @@ export default {
           return birthA - birthB
         })
         for (const child of sortedNoSpouse) {
-          const shouldDrawChild = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || (visibleIds && visibleIds.has(child.id))
+          const shouldDrawChild = this.viewMode === 'all' || (visibleIds && visibleIds.has(child.id))
           if (shouldDrawChild && !this.displayedPersons.has(child.id)) {
             const childPeriods = this.getPeriods(child, familyNoSpouseColor, isChild)
             yPosition = this.drawPerson(child, childPeriods, grahSvg, yPosition + 1, xScale)
@@ -2045,7 +2774,7 @@ export default {
         // draw children sorted chronologically by birth date
         const children = this.filterChildren(person.id, spouse.id)
         const hasVisibleChild = visibleIds ? children.some(c => visibleIds.has(c.id)) : false
-        const shouldDrawChildren = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || this.expandedDescendantIds.has(spouse.id) || hasVisibleChild
+        const shouldDrawChildren = this.viewMode === 'all' || hasVisibleChild
         if (shouldDrawChildren) {
           const sortedChildren = [...children].sort((a, b) => {
             const birthA = this.getYearFromDate(a.birth_date) || 9999
@@ -2054,7 +2783,7 @@ export default {
           })
 
           for (const child of sortedChildren) {
-            const shouldDrawThisChild = this.viewMode === 'all' || this.expandedDescendantIds.has(person.id) || this.expandedDescendantIds.has(spouse.id) || (visibleIds && visibleIds.has(child.id))
+            const shouldDrawThisChild = this.viewMode === 'all' || (visibleIds && visibleIds.has(child.id))
             if (shouldDrawThisChild && !this.displayedPersons.has(child.id)) {
               isChild = true
               const childPeriods = this.getPeriods(child, familyColor, isChild)
@@ -2083,6 +2812,13 @@ export default {
         newSet.add(personId)
       }
       this.unfoldedPersonIds = newSet
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
       this.drawTimeline()
     },
 
@@ -2094,6 +2830,13 @@ export default {
         // Tout replier
         this.unfoldedPersonIds = new Set()
       }
+      this.applyScaleBounds()
+      this.$emit('data-loaded', 'timeline', {
+        minYear: this.computedMinYear,
+        maxYear: this.computedMaxYear,
+        startViewYear: this.localStartViewYear,
+        stopViewYear: this.localStopViewYear
+      })
       this.drawTimeline()
     },
 
@@ -2362,8 +3105,15 @@ export default {
             bandColor
           })
 
+          const isNewCouple = Boolean(
+            this.animatingExpansion &&
+            this.animatingExpansion.isExpanding &&
+            this.animatingExpansion.prevIds &&
+            (!this.animatingExpansion.prevIds.has(personData.person.id) || !this.animatingExpansion.prevIds.has(spouseData.person.id))
+          )
+
           // Bande translucide dans le gap pendant l'union / parentalité
-          bridgeLayer.append('rect')
+          const mBand = bridgeLayer.append('rect')
             .attr('class', 'marriage-band')
             .attr('x', xStart)
             .attr('y', gapTop)
@@ -2371,6 +3121,15 @@ export default {
             .attr('height', gapHeight)
             .attr('fill', bandFill)
             .attr('rx', 2)
+
+          if (isNewCouple) {
+            mBand
+              .style('opacity', 0)
+              .transition()
+              .duration(500)
+              .ease(d3.easeCubicOut)
+              .style('opacity', 1)
+          }
 
           // Marqueurs de lieu de l'union (Union civile et/ou Mariage) au centre de la bande d'union (au premier plan)
           if (this.showPlaces) {
@@ -2589,13 +3348,45 @@ export default {
             const cp2y = endY
             const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
 
-            linkG.append('path')
+            const isNewChild = Boolean(
+              this.animatingExpansion &&
+              this.animatingExpansion.isExpanding &&
+              this.animatingExpansion.prevIds &&
+              !this.animatingExpansion.prevIds.has(child.id)
+            )
+
+            const linkPath = linkG.append('path')
               .attr('class', 'link-line')
               .attr('d', pathD)
               .attr('fill', 'none')
               .attr('stroke', 'rgba(71, 85, 105, 0.65)')
               .attr('stroke-width', 1.8)
               .attr('stroke-linecap', 'round')
+
+            if (isNewChild) {
+              const node = linkPath.node()
+              if (node && typeof node.getTotalLength === 'function') {
+                try {
+                  const len = node.getTotalLength()
+                  if (len > 0) {
+                    linkPath
+                      .attr('stroke-dasharray', `${len} ${len}`)
+                      .attr('stroke-dashoffset', len)
+                      .transition()
+                      .delay(80)
+                      .duration(550)
+                      .ease(d3.easeCubicOut)
+                      .attr('stroke-dashoffset', 0)
+                  } else {
+                    linkPath.style('opacity', 0).transition().duration(500).style('opacity', 1)
+                  }
+                } catch {
+                  linkPath.style('opacity', 0).transition().duration(500).style('opacity', 1)
+                }
+              } else {
+                linkPath.style('opacity', 0).transition().duration(500).style('opacity', 1)
+              }
+            }
 
           } else {
             // Cas 2 : Un seul parent affiché
@@ -2655,13 +3446,45 @@ export default {
                 .attr('stroke', '#ffffff')
             }
 
-            linkG.append('path')
+            const isNewChild = Boolean(
+              this.animatingExpansion &&
+              this.animatingExpansion.isExpanding &&
+              this.animatingExpansion.prevIds &&
+              !this.animatingExpansion.prevIds.has(child.id)
+            )
+
+            const linkPath = linkG.append('path')
               .attr('class', 'link-line')
               .attr('d', pathD)
               .attr('fill', 'none')
               .attr('stroke', 'rgba(71, 85, 105, 0.65)')
               .attr('stroke-width', 1.8)
               .attr('stroke-linecap', 'round')
+
+            if (isNewChild) {
+              const node = linkPath.node()
+              if (node && typeof node.getTotalLength === 'function') {
+                try {
+                  const len = node.getTotalLength()
+                  if (len > 0) {
+                    linkPath
+                      .attr('stroke-dasharray', `${len} ${len}`)
+                      .attr('stroke-dashoffset', len)
+                      .transition()
+                      .delay(80)
+                      .duration(550)
+                      .ease(d3.easeCubicOut)
+                      .attr('stroke-dashoffset', 0)
+                  } else {
+                    linkPath.style('opacity', 0).transition().duration(500).style('opacity', 1)
+                  }
+                } catch {
+                  linkPath.style('opacity', 0).transition().duration(500).style('opacity', 1)
+                }
+              } else {
+                linkPath.style('opacity', 0).transition().duration(500).style('opacity', 1)
+              }
+            }
           }
         } catch (err) {
           console.error('Error drawing family link for child:', err)
@@ -2878,6 +3701,31 @@ export default {
   animation: personPulse 1.2s ease-in-out 3;
 }
 
+/* Animation de nouveau déploiement */
+@keyframes newlyDeployedGlow {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(37, 99, 235, 0.7));
+  }
+  40% {
+    filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.6));
+  }
+  100% {
+    filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.1));
+  }
+}
+
+.person-newly-deployed {
+  animation: newlyDeployedGlow 1.2s ease-out;
+}
+
+.person-floating-toolbar .btn {
+  transition: all 0.18s ease;
+}
+
+.person-floating-toolbar .btn:active {
+  transform: scale(0.96);
+}
+
 /* Compact pill mode */
 .person .expand-toggle-icon,
 .person .collapse-toggle-icon {
@@ -2896,5 +3744,35 @@ export default {
 .person:hover .collapse-btn-bg {
   fill: #dbeafe;
   stroke: #2563eb;
+}
+
+/* Person Context Menu on Right Click */
+.person-context-menu {
+  min-width: 230px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  z-index: 1050;
+  user-select: none;
+}
+
+.person-context-menu .dropdown-item {
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  font-size: 13px;
+}
+
+.person-context-menu .dropdown-item:hover {
+  background-color: #f1f5f9;
+}
+
+.text-purple {
+  color: #8b5cf6 !important;
+}
+
+.text-teal {
+  color: #0d9488 !important;
 }
 </style>

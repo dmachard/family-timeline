@@ -128,5 +128,15 @@
     "show-places": "Afficher les lieux",
     "hide-places": "Masquer les lieux",
     "zoom-in": "Zoom avant (+)",
-    "zoom-out": "Zoom arrière (-)"
+    "zoom-out": "Zoom arrière (-)",
+    "show-siblings": "Voir frères/sœurs",
+    "hide-siblings": "Masquer frères/sœurs",
+    "show-cousins": "Voir les cousins",
+    "hide-cousins": "Masquer les cousins",
+    "show-uncles-aunts": "Voir les tantes/oncles",
+    "hide-uncles-aunts": "Masquer les tantes/oncles",
+    "view-profile": "Voir la fiche profil",
+    "set-as-root": "Centrer comme racine",
+    "fold-bar": "Replier la barre",
+    "unfold-bar": "Déplier la barre"
 }
