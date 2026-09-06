@@ -15,9 +15,11 @@ import en from './locales/en.json'
 import fr from './locales/fr.json'
 
 // Setup i18n instance with options
+const savedLanguage = (typeof localStorage !== 'undefined' && localStorage.getItem('ft_language')) || config.language || 'en'
+
 const i18n = createI18n({
-  locale: config.language || 'en',
-  fallbackLocale: config.language || 'en',
+  locale: savedLanguage,
+  fallbackLocale: 'en',
   messages: {
     en,
     fr

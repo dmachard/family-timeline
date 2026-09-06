@@ -122,7 +122,7 @@
           @click="selectTab('map')"
         >
           <i class="bi bi-geo-alt-fill me-1 text-danger" />
-          <span>Carte</span>
+          <span>{{ $t('map') }}</span>
           <span class="badge rounded-pill ms-1" :class="activeTab === 'map' ? 'bg-danger text-white' : 'bg-light text-muted border'">
             {{ totalPlacesCount }}
           </span>
@@ -136,7 +136,7 @@
           @click="selectTab('gallery')"
         >
           <i class="bi bi-images me-1" />
-          <span>Documents</span>
+          <span>{{ $t('documents') }}</span>
           <span class="badge rounded-pill ms-1" :class="activeTab === 'gallery' ? 'bg-indigo text-white' : 'bg-light text-muted border'">
             {{ allAttachments.length }}
           </span>
@@ -149,7 +149,7 @@
       <!-- Header bar with manage action -->
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="text-muted small fw-semibold">
-          {{ totalRelativesCount }} relation{{ totalRelativesCount > 1 ? 's' : '' }} répertoriée{{ totalRelativesCount > 1 ? 's' : '' }}
+          {{ totalRelativesCount }} {{ totalRelativesCount > 1 ? $t('relatives-recorded-plural') : $t('relatives-recorded-singular') }}
         </div>
         <button
           class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-1 shadow-xs"
@@ -168,14 +168,14 @@
           <i class="bi bi-people fs-4" />
         </div>
         <h6 class="fw-bold text-dark mb-1">
-          Aucun lien de parenté enregistré
+          {{ $t('no-relatives-recorded') }}
         </h6>
         <p class="text-muted small mb-3">
-          Ajoutez des parents, conjoints ou enfants pour construire l'arbre généalogique.
+          {{ $t('add-relatives-hint') }}
         </p>
         <div>
           <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="button" @click="manageRelatives">
-            <i class="bi bi-plus-lg me-1" />Ajouter des liens de parenté
+            <i class="bi bi-plus-lg me-1" />{{ $t('add-relatives') }}
           </button>
         </div>
       </div>
@@ -186,7 +186,7 @@
           <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
             <i class="bi bi-house-heart-fill text-danger fs-5" />
             <h6 class="fw-bold text-dark mb-0 fs-6">
-              Foyer direct & Descendance
+              {{ $t('direct-household-descendants') }}
             </h6>
           </div>
 
@@ -198,7 +198,7 @@
             <div class="row g-2">
               <div v-for="item in spouses" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
                 <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Conjoint">
+                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('spouse')">
                   <div class="flex-grow-1 min-w-0">
                     <div class="fw-bold text-dark text-truncate relative-card-name">
                       {{ getRelativePerson(item.id)?.first_name }} {{ getRelativePerson(item.id)?.last_name }}
@@ -221,7 +221,7 @@
             <div class="row g-2">
               <div v-for="item in children" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
                 <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Enfant">
+                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('child')">
                   <div class="flex-grow-1 min-w-0">
                     <div class="fw-bold text-dark text-truncate relative-card-name">
                       {{ getRelativePerson(item.id)?.first_name }} {{ getRelativePerson(item.id)?.last_name }}
@@ -242,7 +242,7 @@
           <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
             <i class="bi bi-tree-fill text-success fs-5" />
             <h6 class="fw-bold text-dark mb-0 fs-6">
-              Ascendance directe
+              {{ $t('direct-ancestors') }}
             </h6>
           </div>
 
@@ -254,7 +254,7 @@
             <div class="row g-2">
               <div v-for="item in parents" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
                 <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Parent">
+                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('parent')">
                   <div class="flex-grow-1 min-w-0">
                     <div class="d-flex align-items-center gap-1">
                       <span class="badge bg-primary-subtle text-primary border rounded-pill px-1" style="font-size: 9px;">
@@ -282,7 +282,7 @@
             <div class="row g-2">
               <div v-for="item in paternalGrandparents" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
                 <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Grand-parent">
+                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('grandparent')">
                   <div class="flex-grow-1 min-w-0">
                     <div class="fw-bold text-dark text-truncate relative-card-name">
                       {{ item.first_name }} {{ item.last_name }}
@@ -305,7 +305,7 @@
             <div class="row g-2">
               <div v-for="item in maternalGrandparents" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
                 <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Grand-parent">
+                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('grandparent')">
                   <div class="flex-grow-1 min-w-0">
                     <div class="fw-bold text-dark text-truncate relative-card-name">
                       {{ item.first_name }} {{ item.last_name }}
@@ -332,7 +332,7 @@
           <div class="row g-2">
             <div v-for="item in siblings" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
               <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Frère ou sœur">
+                <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('sibling')">
                 <div class="flex-grow-1 min-w-0">
                   <div class="d-flex align-items-center gap-1">
                     <span class="badge bg-info-subtle text-info border rounded-pill px-1" style="font-size: 9px;">
@@ -357,7 +357,7 @@
           <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
             <i class="bi bi-diagram-2-fill text-purple fs-5" />
             <h6 class="fw-bold text-dark mb-0 fs-6">
-              Famille élargie
+              {{ $t('extended-family') }}
             </h6>
           </div>
 
@@ -369,7 +369,7 @@
             <div class="row g-2">
               <div v-for="item in unclesAndAuntsList" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
                 <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Oncle ou Tante">
+                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('uncle-aunt')">
                   <div class="flex-grow-1 min-w-0">
                     <div class="d-flex align-items-center gap-1">
                       <span class="badge bg-purple-subtle text-purple border rounded-pill px-1" style="font-size: 9px;">
@@ -397,7 +397,7 @@
             <div class="row g-2">
               <div v-for="item in cousinsList" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
                 <div class="relative-card d-flex align-items-center gap-2 p-2 rounded-3 border bg-light-subtle hover-card" @click="refreshProfile(item.id)">
-                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" alt="Cousin(e)">
+                  <img :src="getRelativeAvatar(item.id)" class="relative-card-avatar rounded-3" :alt="$t('cousin')">
                   <div class="flex-grow-1 min-w-0">
                     <div class="fw-bold text-dark text-truncate relative-card-name">
                       {{ getRelativePerson(item.id)?.first_name }} {{ getRelativePerson(item.id)?.last_name }}
@@ -420,7 +420,7 @@
       <!-- Header bar with manage action -->
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="text-muted small fw-semibold">
-          {{ sortedEvents.length }} événement{{ sortedEvents.length > 1 ? 's' : '' }} chronologique{{ sortedEvents.length > 1 ? 's' : '' }}
+          {{ sortedEvents.length }} {{ sortedEvents.length > 1 ? $t('chronological-events-plural') : $t('chronological-events-singular') }}
         </div>
         <div class="d-flex gap-2">
           <button
@@ -450,14 +450,14 @@
           <i class="bi bi-calendar-x fs-4" />
         </div>
         <h6 class="fw-bold text-dark mb-1">
-          Aucun événement enregistré
+          {{ $t('no-events-recorded') }}
         </h6>
         <p class="text-muted small mb-3">
-          Ajoutez des naissances, mariages, diplômes, résidences ou autres étapes de vie.
+          {{ $t('add-events-hint') }}
         </p>
         <div>
           <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="button" @click="addEvent">
-            <i class="bi bi-plus-lg me-1" />Ajouter un premier événement
+            <i class="bi bi-plus-lg me-1" />{{ $t('add-first-event') }}
           </button>
         </div>
       </div>
@@ -484,10 +484,7 @@
                 <div>
                   <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="badge rounded-pill px-2 py-1" :class="getEventBadgeClass(event.event_type)">
-                      <span v-if="event.event_type === 'birth' || event.event_type === 'death'">{{ $t(event.event_type) }}</span>
-                      <span v-else-if="event.event_type === 'marriage'">Mariage</span>
-                      <span v-else-if="event.event_type === 'divorce'">Divorce</span>
-                      <span v-else>{{ event.event_type }}</span>
+                      <span>{{ $t(event.event_type) || event.event_type }}</span>
                     </span>
                     <span class="fw-bold text-dark fs-6">{{ formatDate(event.event_date) }}</span>
                     <span
@@ -495,7 +492,7 @@
                       class="badge bg-light text-muted border rounded-pill"
                       style="font-size: 11px;"
                     >
-                      {{ calculateAgeAtEvent(person.birth_date, event.event_date) }} ans
+                      {{ calculateAgeAtEvent(person.birth_date, event.event_date) }} {{ calculateAgeAtEvent(person.birth_date, event.event_date) > 1 ? $t('yearsOld') : $t('yearOld') }}
                     </span>
                   </div>
 
@@ -524,7 +521,7 @@
               <!-- Associated Attachments Thumbnails -->
               <div v-if="event.related_attachments && event.related_attachments.length" class="mt-2 pt-2 border-top">
                 <div class="text-muted small mb-1 fw-semibold" style="font-size: 11px;">
-                  Documents associés ({{ event.related_attachments.length }})
+                  {{ $t('associated-documents') }} ({{ event.related_attachments.length }})
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                   <div
@@ -556,7 +553,7 @@
     <div v-show="activeTab === 'gallery'" class="tab-pane-fade">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="text-muted small fw-semibold">
-          {{ allAttachments.length }} document{{ allAttachments.length > 1 ? 's' : '' }} et photo{{ allAttachments.length > 1 ? 's' : '' }}
+          {{ allAttachments.length }} {{ $t('documents-and-photos') }}
         </div>
       </div>
 
@@ -826,8 +823,9 @@ export default {
       const p = this.getRelativePerson(id)
       if (!p) return ''
       const bYear = p.birth_date ? new Date(p.birth_date).getFullYear() : '?'
-      const dYear = p.death_date ? new Date(p.death_date).getFullYear() : (p.death_date === null ? 'présent' : '')
-      if (dYear === 'présent') return `${bYear} – présent`
+      const presentLabel = this.$t('present') || 'présent'
+      const dYear = p.death_date ? new Date(p.death_date).getFullYear() : (p.death_date === null ? presentLabel : '')
+      if (dYear === presentLabel) return `${bYear} – ${presentLabel}`
       if (dYear) return `${bYear} – ${dYear}`
       return `${bYear}`
     },

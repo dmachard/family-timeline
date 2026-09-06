@@ -220,9 +220,10 @@ export default {
     }
   },
   data () {
+    const activeLang = (typeof localStorage !== 'undefined' && localStorage.getItem('ft_language')) || config.language || 'en'
     return {
       loading: true,
-      selectedLanguage: 'en',
+      selectedLanguage: activeLang,
       startViewYear: config.startViewYear || 1800,
       stopViewYear: config.endViewYear || 2050,
       minYear: config.minYear || 1800,
@@ -230,6 +231,13 @@ export default {
       stepYear: config.stepYear || 25,
       clientVersion: import.meta.env.VITE_APP_VERSION,
       pendingContext: null
+    }
+  },
+  created () {
+    const activeLang = (typeof localStorage !== 'undefined' && localStorage.getItem('ft_language')) || config.language || this.$i18n?.locale || 'en'
+    this.selectedLanguage = activeLang
+    if (this.$i18n) {
+      this.$i18n.locale = activeLang
     }
   },
   computed: {
@@ -265,7 +273,14 @@ export default {
     ...mapMutations(['removeToken']),
     setLanguage (language) {
       this.selectedLanguage = language
-      this.$i18n.locale = this.selectedLanguage
+      if (this.$i18n) {
+        this.$i18n.locale = language
+      }
+      try {
+        localStorage.setItem('ft_language', language)
+      } catch {
+        // ignore
+      }
     },
     async openModal(modalId) {
       this.closeMenu();

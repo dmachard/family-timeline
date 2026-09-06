@@ -6,19 +6,19 @@
         <i class="bi bi-geo-alt-fill text-danger fs-5" />
         <div>
           <h6 class="fw-bold text-dark mb-0 fs-6">
-            Déplacements & Lieux de vie
+            {{ $t('places-and-moves') }}
           </h6>
           <div v-if="itinerarySteps.length > 1" class="text-muted small" style="font-size: 11px;">
-            Itinéraire chronologique de vie ({{ itinerarySteps.length }} étapes)
+            {{ $t('chronological-itinerary') }} ({{ itinerarySteps.length }} {{ itinerarySteps.length > 1 ? $t('steps') : $t('step') }})
           </div>
         </div>
         <span v-if="placesWithEvents.length" class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle ms-1">
-          {{ placesWithEvents.length }} lieu{{ placesWithEvents.length > 1 ? 'x' : '' }}
+          {{ placesWithEvents.length }} {{ placesWithEvents.length > 1 ? $t('places-count-plural') : $t('places-count-singular') }}
         </span>
       </div>
       <div v-if="loadingGeocodes" class="d-flex align-items-center gap-1 text-muted small">
         <span class="spinner-border spinner-border-sm text-primary" role="status" />
-        <span style="font-size: 11px;">Localisation...</span>
+        <span style="font-size: 11px;">{{ $t('locating') }}</span>
       </div>
     </div>
 
@@ -28,14 +28,14 @@
         <i class="bi bi-geo-alt fs-4" />
       </div>
       <h6 class="fw-bold text-dark mb-1">
-        Aucun lieu renseigné
+        {{ $t('no-places-recorded') }}
       </h6>
       <p class="text-muted small mb-3">
-        Renseignez les lieux de naissance, mariage, résidence ou décès dans les événements pour visualiser le parcours et les déplacements sur la carte.
+        {{ $t('no-places-hint') }}
       </p>
       <div>
         <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="button" @click="$emit('add-event')">
-          <i class="bi bi-plus-lg me-1" />Ajouter un événement avec un lieu
+          <i class="bi bi-plus-lg me-1" />{{ $t('add-event-with-place') }}
         </button>
       </div>
     </div>
@@ -52,11 +52,11 @@
             class="btn btn-sm btn-white bg-white border shadow-sm rounded-pill px-2 py-1 d-flex align-items-center gap-1 text-dark hover-card"
             style="font-size: 11px; font-weight: 600;"
             type="button"
-            title="Recadrer la carte sur l'ensemble de l'itinéraire"
+            :title="$t('fit-map-bounds')"
             @click="fitMapToBounds"
           >
             <i class="bi bi-arrows-fullscreen text-primary" />
-            <span>Vue d'ensemble</span>
+            <span>{{ $t('overview') }}</span>
           </button>
         </div>
       </div>
@@ -66,10 +66,10 @@
         <div class="d-flex align-items-center justify-content-between mb-2">
           <div class="text-muted small fw-bold text-uppercase d-flex align-items-center gap-1" style="font-size: 11px; letter-spacing: 0.04em;">
             <i class="bi bi-compass text-primary fs-6" />
-            <span>Parcours chronologique (cliquer pour suivre le déplacement)</span>
+            <span>{{ $t('chronological-path-hint') }}</span>
           </div>
           <span v-if="itinerarySteps.length > 1" class="badge rounded-pill bg-light text-muted border" style="font-size: 10px;">
-            Relié par le tracé bleu
+            {{ $t('connected-by-blue-trace') }}
           </span>
         </div>
 

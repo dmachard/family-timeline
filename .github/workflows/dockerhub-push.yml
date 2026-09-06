@@ -19,9 +19,17 @@ jobs:
         with:
           node-version: '26'
 
-      - name: Get version from backend package.json
+      - name: Extract version from release tag
         id: get_version_backend
-        run: echo "version=$(node -p "require('./backend-server/package.json').version")" >> $GITHUB_OUTPUT
+        run: |
+          TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          VERSION="${TAG#v}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(node -p "require('./backend-server/package.json').version")
+          else
+            npm --prefix backend-server version $VERSION --no-git-tag-version --allow-same-version
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build Docker image for Backend
         run: |
@@ -51,9 +59,17 @@ jobs:
         with:
           node-version: '26'
 
-      - name: Get version from frontend package.json
+      - name: Extract version from release tag
         id: get_version_frontend
-        run: echo "version=$(node -p "require('./vuejs-client/package.json').version")" >> $GITHUB_OUTPUT
+        run: |
+          TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          VERSION="${TAG#v}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(node -p "require('./vuejs-client/package.json').version")
+          else
+            npm --prefix vuejs-client version $VERSION --no-git-tag-version --allow-same-version
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build Docker image for Frontend
         run: |

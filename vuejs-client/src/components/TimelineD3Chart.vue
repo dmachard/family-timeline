@@ -535,6 +535,9 @@ export default {
     },
   },
   watch: {
+    '$i18n.locale' () {
+      this.drawTimeline()
+    },
     startViewYear(newValue) {
       this.localStartViewYear = newValue;
       this.drawTimeline();
