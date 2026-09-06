@@ -113,6 +113,9 @@
     "full-tree": "Vue complète",
     "dynamic-tree-title": "Explorer l'arbre de manière vivante et interactive",
     "full-tree-title": "Afficher l'ensemble de la famille",
+    "tree-root": "Racine de l'arbre",
+    "center-on-root": "Recentrer sur la racine",
+    "center-on-root-short": "Racine",
     "reset-tree": "Réinitialiser l'arbre",
     "show-parents": "Voir les parents",
     "hide-parents": "Masquer les parents",
@@ -139,5 +142,6 @@
     "set-as-root": "Centrer comme racine",
     "fold-bar": "Replier la barre",
     "unfold-bar": "Déplier la barre",
-    "living": "Vivant(e)"
+    "living": "Vivant(e)",
+    "no-results": "Aucun résultat"
 }

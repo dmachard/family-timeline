@@ -3,15 +3,21 @@
   <div id="app">
     <!-- Header / Top bar -->
     <nav v-if="isAuthenticated" class="navbar navbar-light bg-white fixed-top border-bottom app-navbar shadow-sm py-0">
-      <div class="container-fluid px-3 h-100 d-flex align-items-center justify-content-between">
+      <div class="container-fluid px-3 h-100 d-flex align-items-center gap-2 flex-nowrap">
         <!-- Brand Logo & Name -->
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-dark m-0" href="/">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-dark m-0 flex-shrink-0" href="/">
           <img src="/favicon.png" width="28" height="28" class="d-inline-block align-top" alt="Logo">
-          <span class="brand-title">Family Timeline</span>
+          <span class="brand-title d-none d-xxl-inline">Family Timeline</span>
         </a>
 
-        <!-- Right Side Controls -->
-        <div class="d-flex align-items-center gap-2">
+        <!-- Mount point for Timeline Controls (Teleported from TimelineD3Chart) -->
+        <div id="top-navbar-timeline-controls" class="d-flex align-items-center gap-2 overflow-x-auto py-1 min-w-0 flex-shrink-1" />
+
+        <!-- Right Side Controls: Search + Language + User Profile -->
+        <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-auto">
+          <!-- Mount point for Person Search (Teleported from TimelineD3Chart) -->
+          <div id="top-navbar-search" class="position-relative flex-shrink-0" />
+
           <!-- Quick Language Selector -->
           <div class="dropdown">
             <button
@@ -394,12 +400,26 @@ body {
   border-bottom: 1px solid #e2e8f0 !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
   z-index: 1030;
+  flex-wrap: nowrap !important;
+}
+
+.app-navbar > .container-fluid {
+  flex-wrap: nowrap !important;
 }
 
 .brand-title {
   font-size: 16px;
   letter-spacing: -0.02em;
   color: #0f172a;
+}
+
+#top-navbar-timeline-controls {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#top-navbar-timeline-controls::-webkit-scrollbar {
+  display: none;
 }
 
 /* User Capsule & Controls */

@@ -70,13 +70,13 @@ export const historicalPeriods = [
   },
   {
     id: 'ww1',
-    nameFr: '1ère Guerre Mondiale',
-    shortNameFr: '14-18',
+    nameFr: 'Première Guerre mondiale',
+    shortNameFr: '1ère Guerre',
     nameEn: 'World War I',
     shortNameEn: 'WW1',
     startYear: 1914,
     endYear: 1918,
-    color: 'rgba(239, 68, 68, 0.14)', // Voile rouge alerte
+    color: 'rgba(239, 68, 68, 0.12)', // Voile rouge alerte
     borderColor: 'rgba(220, 38, 38, 0.4)',
   },
   {
@@ -84,7 +84,7 @@ export const historicalPeriods = [
     nameFr: 'Années folles & Entre-deux-guerres',
     shortNameFr: 'Années folles',
     nameEn: 'Roaring Twenties & Interwar',
-    shortNameEn: 'Interwar',
+    shortNameEn: 'Roaring Twenties',
     startYear: 1919,
     endYear: 1939,
     color: 'rgba(192, 132, 252, 0.08)', // Lilas violet doux
@@ -92,13 +92,13 @@ export const historicalPeriods = [
   },
   {
     id: 'ww2',
-    nameFr: '2nde Guerre Mondiale',
-    shortNameFr: '39-45',
+    nameFr: 'Seconde Guerre mondiale',
+    shortNameFr: '2nde Guerre',
     nameEn: 'World War II',
     shortNameEn: 'WW2',
     startYear: 1939,
     endYear: 1945,
-    color: 'rgba(220, 38, 38, 0.15)', // Voile rouge alerte
+    color: 'rgba(220, 38, 38, 0.13)', // Voile rouge alerte
     borderColor: 'rgba(185, 28, 28, 0.4)',
   },
   {
@@ -113,6 +113,17 @@ export const historicalPeriods = [
     borderColor: 'rgba(22, 163, 74, 0.3)',
   },
   {
+    id: 'fin-xxe',
+    nameFr: 'Fin du XXe siècle & Mondialisation',
+    shortNameFr: 'Fin XXe s.',
+    nameEn: 'Late 20th Century',
+    shortNameEn: 'Late 20th c.',
+    startYear: 1975,
+    endYear: 1990,
+    color: 'rgba(99, 102, 241, 0.07)', // Indigo doux
+    borderColor: 'rgba(79, 70, 229, 0.3)',
+  },
+  {
     id: 'ere-numerique',
     nameFr: 'Ère numérique & Contemporaine',
     shortNameFr: 'Ère numérique',
@@ -124,3 +135,31 @@ export const historicalPeriods = [
     borderColor: 'rgba(13, 148, 136, 0.3)',
   },
 ];
+
+/**
+ * Loads historical periods from an external JSON file (e.g. /history_periods.json)
+ * with fallback to the default periods if unavailable or invalid.
+ */
+export async function loadHistoricalPeriods(url = '/history_periods.json') {
+  try {
+    const fetchFn = typeof window !== 'undefined' && window.fetch ? window.fetch : (typeof fetch === 'function' ? fetch : null);
+    if (fetchFn) {
+      let resolvedUrl = url;
+      if (typeof window !== 'undefined' && window.location && window.location.origin && url.startsWith('/')) {
+        resolvedUrl = `${window.location.origin}${url}`;
+      }
+      const response = await fetchFn(resolvedUrl);
+      if (response && response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return data;
+        }
+      }
+    }
+  } catch {
+    // Gracefully fall back to defaults without breaking the UI
+  }
+  return historicalPeriods;
+}
+
+

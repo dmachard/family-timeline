@@ -1,19 +1,20 @@
 <template>
-  <div class="container-fluid">
-    <div class="row">
-      <div id="timeline-content">
+  <div class="timeline-app-container w-100 p-0 overflow-hidden">
+    <div class="timeline-split-layout d-flex w-100 h-100 overflow-hidden">
+      <!-- Left Panel: Timeline Content (toolbar + graph) -->
+      <div id="timeline-content" class="timeline-left-section position-relative flex-grow-1 d-flex flex-column overflow-hidden h-100" :class="{ 'with-sidebar': isProfileSidebarOpen }">
         <!-- Error Message -->
-        <div v-if="error" class="alert alert-danger" role="alert">
-          <p>Error: {{ error }}</p>
+        <div v-if="error" class="alert alert-danger mb-0" role="alert">
+          <p class="mb-0">Error: {{ error }}</p>
         </div>
 
-        <!-- Timeline Interactive Toolbar -->
-        <div class="timeline-toolbar d-flex flex-wrap align-items-center justify-content-between px-3 py-2 border-bottom bg-white">
-          <!-- Quick Person Search with Autocomplete -->
-          <div class="search-box-wrapper position-relative me-3 my-1">
+        <!-- Teleport Person Search to Top Navbar (unclipped container) -->
+        <Teleport to="#top-navbar-search" :disabled="!isNavbarTargetReady">
+          <div class="search-box-wrapper position-relative">
             <div class="search-pill-group d-flex align-items-center">
               <i class="bi bi-search search-icon text-muted ps-3 pe-2" />
               <input
+                ref="searchInput"
                 v-model="searchQuery"
                 type="text"
                 class="search-input flex-grow-1"
@@ -21,11 +22,14 @@
                 autocomplete="off"
                 @focus="isSearchOpen = true"
                 @input="isSearchOpen = true"
+                @keydown.enter.prevent="selectFirstResult"
+                @keydown.esc.prevent="isSearchOpen = false"
               >
               <button
                 v-if="searchQuery"
                 class="search-clear-btn pe-3 text-muted"
                 type="button"
+                :title="$t('clear') || 'Clear'"
                 @click="clearSearch"
               >
                 <i class="bi bi-x-circle-fill" />
@@ -34,40 +38,49 @@
 
             <!-- Autocomplete suggestions dropdown -->
             <ul
-              v-if="isSearchOpen && filteredPersons.length > 0"
-              class="dropdown-menu show shadow-lg mt-2 py-1 w-100 search-dropdown border rounded-3"
+              v-if="isSearchOpen && searchQuery && searchQuery.trim().length > 0"
+              class="dropdown-menu show shadow-lg mt-1 py-1 search-dropdown border rounded-3"
             >
-              <li
-                v-for="person in filteredPersons"
-                :key="person.id"
-              >
-                <a
-                  class="dropdown-item d-flex align-items-center py-2 px-3 search-result-item"
-                  href="#"
-                  @click.prevent="focusPerson(person)"
+              <template v-if="filteredPersons.length > 0">
+                <li
+                  v-for="person in filteredPersons"
+                  :key="person.id"
                 >
-                  <img
-                    :src="person.gender === 'Male' ? 'profile_men.png' : 'profile_women.png'"
-                    width="28"
-                    height="28"
-                    class="rounded-circle me-2 border shadow-xs"
-                    alt=""
+                  <a
+                    class="dropdown-item d-flex align-items-center py-2 px-3 search-result-item"
+                    href="#"
+                    @click.prevent="focusPerson(person)"
                   >
-                  <div class="lh-sm flex-grow-1">
-                    <div class="fw-semibold text-dark">{{ person.first_name }} {{ person.last_name }}</div>
-                    <small class="text-muted" style="font-size: 11px;">
-                      {{ getYearFromDate(person.birth_date) || '?' }} &mdash; {{ getYearFromDate(person.death_date) || (person.death_date_verified ? '?' : 'vivant(e)') }}
-                    </small>
-                  </div>
-                  <i class="bi bi-arrow-right-short text-muted fs-5 opacity-50" />
-                </a>
+                    <img
+                      :src="getPersonAvatar(person)"
+                      width="28"
+                      height="28"
+                      class="rounded-circle me-2 border shadow-xs"
+                      alt=""
+                    >
+                    <div class="lh-sm flex-grow-1">
+                      <div class="fw-semibold text-dark">{{ person.first_name }} {{ person.last_name }}</div>
+                      <small class="text-muted" style="font-size: 11px;">
+                        {{ getYearFromDate(person.birth_date) || '?' }} &mdash; {{ getYearFromDate(person.death_date) || (person.death_date_verified ? '?' : $t('living')) }}
+                      </small>
+                    </div>
+                    <i class="bi bi-arrow-right-short text-muted fs-5 opacity-50" />
+                  </a>
+                </li>
+              </template>
+              <li v-else class="px-3 py-2 text-muted small text-center fst-italic">
+                {{ $t('no-results') }}
               </li>
             </ul>
           </div>
+        </Teleport>
 
-          <div class="d-flex flex-wrap align-items-center gap-2 my-1">
+        <!-- Teleport Timeline Controls to Top Navbar -->
+        <Teleport to="#top-navbar-timeline-controls" :disabled="!isNavbarTargetReady">
+          <div class="d-flex align-items-center gap-2 flex-nowrap">
+
             <!-- Mode switch: Dynamic Tree vs Full Tree -->
-            <div class="segmented-control" role="group">
+            <div class="segmented-control flex-shrink-0" role="group">
               <button
                 type="button"
                 class="segmented-btn"
@@ -76,7 +89,7 @@
                 @click="toggleViewMode('dynamic')"
               >
                 <i class="bi bi-diagram-3-fill" />
-                <span>{{ $t('dynamic-tree') }}</span>
+                <span class="d-none d-sm-inline">{{ $t('dynamic-tree') }}</span>
               </button>
               <button
                 type="button"
@@ -86,59 +99,40 @@
                 @click="toggleViewMode('all')"
               >
                 <i class="bi bi-people-fill" />
-                <span>{{ $t('full-tree') }}</span>
+                <span class="d-none d-sm-inline">{{ $t('full-tree') }}</span>
               </button>
             </div>
 
-            <!-- In dynamic mode: root person badge & reset button -->
-            <div v-if="viewMode === 'dynamic' && dynamicRootPerson" class="d-flex align-items-center gap-1">
-              <span class="dynamic-root-badge border d-flex align-items-center gap-1 py-1 px-2 rounded-pill">
-                <i class="bi bi-person-fill text-primary" />
-                <span class="fw-medium text-dark">{{ dynamicRootPerson.first_name }} {{ dynamicRootPerson.last_name }}</span>
-              </span>
-              <button
-                class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 py-1 px-2 border rounded-pill bg-white text-muted"
-                type="button"
-                :title="$t('reset-tree')"
-                @click="resetDynamicTree"
-              >
-                <i class="bi bi-arrow-counterclockwise" />
-                <span class="d-none d-md-inline">{{ $t('reset-tree') }}</span>
-              </button>
-            </div>
-
-            <!-- History Context Layer Toggle Button -->
+            <!-- In dynamic mode: Reset Tree button -->
             <button
-              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill"
+              v-if="viewMode === 'dynamic'"
+              id="btn-reset-dynamic-tree"
+              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill flex-shrink-0 bg-white text-muted"
+              type="button"
+              :title="$t('reset-tree')"
+              @click="resetDynamicTree"
+            >
+              <i class="bi bi-arrow-counterclockwise" />
+              <span class="d-none d-xxl-inline">{{ $t('reset-tree') }}</span>
+            </button>
+
+            <!-- Historical Context Toggle Button -->
+            <button
+              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill flex-shrink-0"
               :class="showHistoryContext ? 'btn-tool-active-primary' : 'bg-white text-muted'"
               type="button"
-              :title="$t('toggle-history')"
+              :title="showHistoryContext ? $t('hide-history') : $t('show-history')"
               @click="toggleHistoryContext"
             >
               <i class="bi bi-hourglass-split" />
-              <span class="fw-medium">{{ $t('history-context') }}</span>
+              <span class="fw-medium d-none d-xxl-inline">{{ $t('history-context') }}</span>
               <span class="mini-status-badge ms-1" :class="showHistoryContext ? 'status-on' : 'status-off'">
                 {{ showHistoryContext ? 'ON' : 'OFF' }}
               </span>
             </button>
 
-            <!-- Toggle Places / Locations Markers Button -->
-            <button
-              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill"
-              :class="showPlaces ? 'btn-tool-active-danger' : 'bg-white text-muted'"
-              type="button"
-              :title="showPlaces ? $t('hide-places') : $t('show-places')"
-              @click="togglePlaces"
-            >
-              <i class="bi bi-geo-alt-fill" />
-              <span class="fw-medium">{{ $t('places') }}</span>
-              <span class="mini-status-badge ms-1" :class="showPlaces ? 'status-on-danger' : 'status-off'">
-                {{ showPlaces ? 'ON' : 'OFF' }}
-              </span>
-            </button>
-
             <!-- Zoom & Fit Scale Controls Group -->
-            <div class="zoom-pill-group border rounded-pill d-flex align-items-center bg-white shadow-xs" role="group">
+            <div class="zoom-pill-group border rounded-pill d-flex align-items-center bg-white shadow-xs flex-shrink-0" role="group">
               <button
                 class="btn btn-sm zoom-btn d-flex align-items-center justify-content-center"
                 type="button"
@@ -164,23 +158,36 @@
                 @click="resetToAutoScale"
               >
                 <i class="bi bi-arrows-angle-expand" />
-                <span class="d-none d-lg-inline">{{ $t('fit-scale') }}</span>
+                <span class="d-none d-xl-inline">{{ $t('fit-scale') }}</span>
               </button>
+              <template v-if="viewMode === 'dynamic' && dynamicRootPerson">
+                <div class="zoom-divider" />
+                <button
+                  id="btn-center-on-root"
+                  class="btn btn-sm zoom-btn d-flex align-items-center gap-1 px-2"
+                  type="button"
+                  :title="$t('center-on-root')"
+                  @click="centerOnRootPerson"
+                >
+                  <i class="bi bi-crosshair" />
+                  <span class="d-none d-xxl-inline">{{ $t('center-on-root-short') }}</span>
+                </button>
+              </template>
             </div>
 
             <!-- Expand / Collapse All Bars Button -->
             <button
-              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill"
+              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill flex-shrink-0"
               :class="unfoldedPersonIds.size === 0 ? 'bg-white text-muted' : 'btn-tool-active-info'"
               type="button"
               :title="unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars')"
               @click="toggleAllBars"
             >
               <i :class="unfoldedPersonIds.size === 0 ? 'bi bi-layout-three-columns' : 'bi bi-dash-square'" />
-              <span class="fw-medium">{{ unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars') }}</span>
+              <span class="fw-medium d-none d-xl-inline">{{ unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars') }}</span>
             </button>
           </div>
-        </div>
+        </Teleport>
 
         <!-- Container for the timeline header and graph with scroll, drag-pan, and zoom -->
         <div
@@ -378,7 +385,21 @@
         </div>
       </div>
 
-      <ModalProfile ref="profileModal" class="px-0" :person="selectedPerson" :data-persons="dataPersons" @refresh-profile="refreshPersonProfile" />
+      <!-- Right Panel: Docked Profile Sidebar -->
+      <aside
+        v-if="isProfileSidebarOpen && selectedPerson"
+        class="timeline-profile-sidebar border-start bg-white d-flex flex-column shadow-sm"
+      >
+        <ModalProfile
+          ref="profileModal"
+          class="px-0"
+          :person="selectedPerson"
+          :data-persons="dataPersons"
+          :is-docked="true"
+          @refresh-profile="refreshPersonProfile"
+          @close="closeProfileSidebar"
+        />
+      </aside>
     </div>
   </div>
 </template>
@@ -392,7 +413,7 @@ import debounce from 'lodash/debounce'
 import config from '@/config'
 import fetchDataMixin from '@/mixins/fetchDataMixin'
 import { fetchEnrichedPersons } from '@/services/personsService.js'
-import { historicalPeriods } from '@/services/historyEvents.js'
+import { historicalPeriods, loadHistoricalPeriods } from '@/services/historyEvents.js'
 
 import ModalProfile from './ModalProfile.vue'
 
@@ -428,6 +449,8 @@ export default {
     return {
       graphMargin: { top: 20, right: 20, left: 20 },
       selectedPerson: null,
+      isProfileSidebarOpen: true,
+      isNavbarTargetReady: false,
       dataPersons: [],
       rootPersons: [],
       isDataLoaded: false,
@@ -464,7 +487,7 @@ export default {
       totalHeight: 0,
       moveGraphStarted: false,
       showHistoryContext: true,
-      showPlaces: true,
+      historicalPeriods: [...historicalPeriods],
       renderedPersons: new Map(),
       coupleBridges: new Map(),
       searchQuery: '',
@@ -491,12 +514,22 @@ export default {
       return this.dataPersons.find(p => p.id === this.dynamicRootPersonId) || null
     },
     filteredPersons () {
-      if (!this.searchQuery || this.searchQuery.trim().length < 2) return []
-      const q = this.searchQuery.toLowerCase().trim()
-      return this.dataPersons.filter(p => {
-        const fullName = `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase()
+      if (!this.searchQuery || !this.searchQuery.trim()) return []
+      const normalize = (str) =>
+        (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+      const queryNorm = normalize(this.searchQuery)
+      const queryTokens = queryNorm.split(/\s+/).filter(Boolean)
+      if (queryTokens.length === 0) return []
+
+      return (this.dataPersons || []).filter(p => {
+        const first = normalize(p.first_name)
+        const last = normalize(p.last_name)
+        const fullName = `${first} ${last} ${first}`
         const birthYear = p.birth_date ? p.birth_date.substring(0, 4) : ''
-        return fullName.includes(q) || birthYear.includes(q)
+        const deathYear = p.death_date ? p.death_date.substring(0, 4) : ''
+        return queryTokens.every(token =>
+          fullName.includes(token) || birthYear.includes(token) || deathYear.includes(token)
+        )
       }).slice(0, 8)
     },
   },
@@ -535,15 +568,27 @@ export default {
   },
   async created () {
     this.dataPersons = await this.fetchData(fetchEnrichedPersons)
+    try {
+      const loadedPeriods = await loadHistoricalPeriods()
+      if (loadedPeriods && loadedPeriods.length > 0) {
+        this.historicalPeriods = loadedPeriods
+      }
+    } catch {
+      // Fallback to default historicalPeriods already initialized
+    }
     this.dynamicRootPersonId = this.getDefaultDynamicRootPersonId()
+    if (!this.selectedPerson && this.dataPersons && this.dataPersons.length > 0) {
+      this.selectedPerson = this.dataPersons.find(p => p.id === this.dynamicRootPersonId) || this.dataPersons[0]
+    }
     const bounds = this.applyScaleBounds()
     this.isDataLoaded = true
     this.$emit('data-loaded', 'timeline', bounds); 
   },
   mounted () {
+    this.isNavbarTargetReady = !!document.getElementById('top-navbar-search') || !!document.getElementById('top-navbar-timeline-controls');
     this.isMounted = true;
     window.addEventListener('resize', this.handleResize);
-    document.addEventListener('click', this.closeContextMenu);
+    document.addEventListener('click', this.handleDocumentClick);
     document.addEventListener('keydown', this.handleKeyDown);
     if (this.isDataLoaded) {
       this.drawTimeline();
@@ -558,7 +603,7 @@ export default {
   },
   beforeUnmount () {
     window.removeEventListener('resize', this.handleResize);
-    document.removeEventListener('click', this.closeContextMenu);
+    document.removeEventListener('click', this.handleDocumentClick);
     document.removeEventListener('keydown', this.handleKeyDown);
   },
   methods: {
@@ -571,6 +616,9 @@ export default {
         ]);
         
         this.dataPersons = persons;
+        if (!this.selectedPerson && persons && persons.length > 0) {
+          this.selectedPerson = persons.find(p => p.id === this.dynamicRootPersonId) || persons[0]
+        }
         bounds = this.applyScaleBounds();
       } catch (err) {
         console.error('Failed to fetch enriched persons', err.message);
@@ -1364,6 +1412,7 @@ export default {
     },
 
     resetDynamicTree () {
+      this.dynamicRootPersonId = this.getDefaultDynamicRootPersonId()
       this.expandedAscendantIds.clear()
       this.expandedDescendantIds.clear()
       this.expandedSpouseIds.clear()
@@ -1380,6 +1429,40 @@ export default {
         stopViewYear: this.localStopViewYear
       })
       this.drawTimeline()
+      this.centerOnRootPerson()
+    },
+
+    centerOnRootPerson () {
+      if (!this.dynamicRootPerson) return
+      const personId = this.dynamicRootPerson.id
+      this.$nextTick(() => {
+        const pData = this.renderedPersons.get(personId)
+        if (pData) {
+          const wrapper = document.getElementById('timeline-wrapper')
+          if (wrapper && wrapper.scrollHeight > wrapper.clientHeight) {
+            wrapper.scrollTo({
+              top: Math.max(0, pData.yTop - 120),
+              behavior: 'smooth'
+            })
+          }
+          const graphContainer = document.getElementById('timeline-graph-container')
+          if (graphContainer && graphContainer.scrollHeight > graphContainer.clientHeight) {
+            graphContainer.scrollTo({
+              top: Math.max(0, pData.yTop - 120),
+              behavior: 'smooth'
+            })
+          }
+          const el = document.getElementById(`person-bar-${personId}`)
+          if (el) {
+            el.classList.remove('person-highlighted')
+            void el.offsetWidth
+            el.classList.add('person-highlighted')
+            setTimeout(() => {
+              el.classList.remove('person-highlighted')
+            }, 3000)
+          }
+        }
+      })
     },
 
     setDynamicRootPerson (personId) {
@@ -1405,6 +1488,15 @@ export default {
     handleKeyDown (e) {
       if (e.key === 'Escape') {
         this.closeContextMenu()
+        this.isSearchOpen = false
+      }
+    },
+
+    handleDocumentClick (e) {
+      this.closeContextMenu()
+      const searchBox = document.querySelector('.search-box-wrapper')
+      if (searchBox && !searchBox.contains(e.target)) {
+        this.isSearchOpen = false
       }
     },
 
@@ -1899,7 +1991,9 @@ export default {
     },
 
     handleResize: debounce(function () {
-      const { innerWidth: width, innerHeight: height } = window;
+      const timelineContent = document.getElementById('timeline-content')
+      const width = timelineContent ? timelineContent.clientWidth : window.innerWidth
+      const height = window.innerHeight
 
       if (width !== this.previousWidth || height !== this.previousHeight) {
         this.previousWidth = width
@@ -1962,7 +2056,7 @@ export default {
       }
 
       // Ignorer si on clique sur un élément interactif (personne, pastille, bouton...)
-      if (event.target && event.target.closest('.person, .place-marker, .marriage-bar-badge, button, a, input, select, .action-btn')) {
+      if (event.target && event.target.closest('.person, .marriage-bar-badge, button, a, input, select, .action-btn')) {
         return;
       }
       
@@ -2321,7 +2415,7 @@ export default {
       const birthYear = this.getYearFromDate(person.birth_date)
 
       // Draw each period as a segment of the timeline
-      const topOffset = this.showHistoryContext ? 52 : 15
+      const topOffset = this.showHistoryContext ? 38 : 15
       const y = yPosition * this.barHeight / 2 + topOffset
       const height = 40
       const isUnfolded = this.isBarUnfolded(person.id)
@@ -2369,6 +2463,8 @@ export default {
 
       const pillWidth = 175
       const avatarCx = xScale(birthYear) + 20
+      const isDynamicRoot = this.viewMode === 'dynamic' && person.id === this.dynamicRootPersonId
+      const fullName = `${person.first_name} ${person.last_name}`
 
       if (!isUnfolded) {
         // ── MODE COMPACT (par défaut) ─────────────────────────────────────────
@@ -2409,9 +2505,9 @@ export default {
           .attr('cy', y + height / 2)
           .attr('r', 16)
           .attr('fill', '#ffffff')
-          .attr('stroke', '#ffffff')
-          .attr('stroke-width', 2.5)
-          .style('filter', 'drop-shadow(0 2px 5px rgba(15, 23, 42, 0.2))')
+          .attr('stroke', isDynamicRoot ? '#2563eb' : '#ffffff')
+          .attr('stroke-width', isDynamicRoot ? 3 : 2.5)
+          .style('filter', isDynamicRoot ? 'drop-shadow(0 0 6px rgba(37, 99, 235, 0.45))' : 'drop-shadow(0 2px 5px rgba(15, 23, 42, 0.2))')
           .style('cursor', 'pointer')
           .on('click', (event) => {
             event.preventDefault()
@@ -2423,6 +2519,9 @@ export default {
             event.stopPropagation()
             this.openContextMenu(person, event)
           })
+
+        // Prénom et nom
+        const displayName = fullName.length > 13 ? fullName.substring(0, 13) + '…' : fullName
 
         // Avatar (image de profil)
         const avatarImage = personGroup.append('image')
@@ -2444,9 +2543,9 @@ export default {
             this.openContextMenu(person, event)
           })
 
+        avatarImage.append('title').text(isDynamicRoot ? `${fullName} (${this.$t('tree-root') || 'Racine de l\'arbre'})` : fullName)
+
         // Prénom et nom (texte blanc net avec ombre portée pour lisibilité parfaite sur toutes couleurs)
-        const fullName = `${person.first_name} ${person.last_name}`
-        const displayName = fullName.length > 13 ? fullName.substring(0, 13) + '…' : fullName
         personGroup.append('text')
           .attr('x', avatarCx + 22)
           .attr('y', y + height / 2)
@@ -2504,7 +2603,6 @@ export default {
           .attr('stroke-linejoin', 'round')
 
         expandBtn.append('title').text('Déplier la barre de vie')
-
       } else {
         // ── MODE DÉPLIÉ (barre de vie complète) ───────────────────────────────
         // Groupe pour les tranches temporelles de la personne
@@ -2593,9 +2691,9 @@ export default {
           .attr('cy', y + height / 2)
           .attr('r', 16)
           .attr('fill', '#ffffff')
-          .attr('stroke', '#ffffff')
-          .attr('stroke-width', 2.5)
-          .style('filter', 'drop-shadow(0 2px 6px rgba(15, 23, 42, 0.22))')
+          .attr('stroke', isDynamicRoot ? '#2563eb' : '#ffffff')
+          .attr('stroke-width', isDynamicRoot ? 3 : 2.5)
+          .style('filter', isDynamicRoot ? 'drop-shadow(0 0 6px rgba(37, 99, 235, 0.45))' : 'drop-shadow(0 2px 6px rgba(15, 23, 42, 0.22))')
           .style('cursor', 'pointer')
           .on('click', (event) => {
             event.preventDefault()
@@ -2629,6 +2727,8 @@ export default {
             this.openContextMenu(person, event)
           })
 
+        avatarImageExp.append('title').text(isDynamicRoot ? `${fullName} (${this.$t('tree-root') || 'Racine de l\'arbre'})` : fullName)
+
         // Nom de la personne sur la barre (texte blanc net avec ombre)
         personGroup.append('text')
           .attr('class', 'person-bar-name')
@@ -2641,7 +2741,7 @@ export default {
           .attr('font-family', 'var(--ft-font)')
           .attr('fill', '#ffffff')
           .style('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.45)')
-          .text(`${person.first_name} ${person.last_name}`)
+          .text(fullName)
           .style('cursor', 'pointer')
           .style('user-select', 'none')
           .on('click', () => this.showPersonProfile(person))
@@ -2681,70 +2781,6 @@ export default {
               .style('user-select', 'none')
               .style('pointer-events', 'none')
               .text(vitalText)
-          }
-        }
-
-        // ── Marqueurs de lieux géolocalisés sur la barre de vie ────────────────
-        if (this.showPlaces && person.events && person.events.length > 0) {
-          const placeEvents = person.events.filter(e => {
-            if (!e.event_place || !e.event_place.trim() || !e.event_date) return false
-            const type = (e.event_type || '').toLowerCase()
-            // Naissance, décès (menu avatar), mariages et divorces (au milieu dans le pont), enfants (liens) : exclus de la barre
-            if (['birth', 'death', 'marriage', 'civil union', 'civil_union', 'divorce', 'civil_separation', 'child'].includes(type)) {
-              return false
-            }
-            return true
-          })
-
-          if (placeEvents.length > 0) {
-            const eventsByYear = new Map()
-            placeEvents.forEach(e => {
-              const yr = this.getYearFromDate(e.event_date)
-              if (!yr) return
-              if (!eventsByYear.has(yr)) eventsByYear.set(yr, [])
-              eventsByYear.get(yr).push(e)
-            })
-
-            const placesG = personGroup.append('g').attr('class', 'person-places-layer')
-
-            eventsByYear.forEach((evList, yr) => {
-              const px = xScale(yr)
-              if (px < 0 || px > this.timelineWidth) return
-
-              // Marqueur élégant sous forme de pin de carte géographique
-              const markerG = placesG.append('g')
-                .attr('class', 'place-marker')
-                .attr('transform', `translate(${px}, ${y + height / 2 + 5})`)
-                .style('cursor', 'pointer')
-                .on('click', () => this.showPersonProfile(person))
-
-              // Forme de pin de carte (goutte inversée pointant sur l'année)
-              markerG.append('path')
-                .attr('class', 'map-pin-body')
-                .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
-                .attr('fill', '#e11d48')
-                .attr('stroke', '#ffffff')
-                .attr('stroke-width', 1.3)
-                .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
-
-              // Point blanc au centre du pin
-              markerG.append('circle')
-                .attr('class', 'map-pin-dot')
-                .attr('cx', 0)
-                .attr('cy', -10)
-                .attr('r', 2.2)
-                .attr('fill', '#ffffff')
-
-              // Tooltip soigné au survol
-              const tooltipLines = evList.map(e => {
-                const typeLabel = this.$t(e.event_type) || e.event_type
-                const datePart = e.event_date ? ` (${e.event_date})` : ''
-                const notePart = e.event_notes ? `\n   Note : ${e.event_notes}` : ''
-                return `📍 ${e.event_place}\n   ${typeLabel}${datePart}${notePart}`
-              }).join('\n\n')
-
-              markerG.append('title').text(tooltipLines)
-            })
           }
         }
 
@@ -2898,21 +2934,51 @@ export default {
 
     showPersonProfile (person) {
       this.selectedPerson = person
-      this.$refs.profileModal.show()
+      if (!this.isProfileSidebarOpen) {
+        this.isProfileSidebarOpen = true
+        this.$nextTick(() => {
+          this.drawTimeline()
+        })
+      }
+    },
+
+    toggleProfileSidebar () {
+      this.isProfileSidebarOpen = !this.isProfileSidebarOpen
+      if (this.isProfileSidebarOpen && !this.selectedPerson && this.dataPersons && this.dataPersons.length > 0) {
+        this.selectedPerson = this.dataPersons.find(p => p.id === this.dynamicRootPersonId) || this.dataPersons[0]
+      }
+      this.$nextTick(() => {
+        this.drawTimeline()
+      })
+    },
+
+    closeProfileSidebar () {
+      this.isProfileSidebarOpen = false
+      this.$nextTick(() => {
+        this.drawTimeline()
+      })
     },
 
     isBarUnfolded (personId) {
       return this.unfoldedPersonIds.has(personId)
     },
 
-    togglePersonBar (personId) {
+    togglePersonBar (personId, forceShowProfile = false) {
       const newSet = new Set(this.unfoldedPersonIds)
-      if (newSet.has(personId)) {
+      const isUnfolding = !newSet.has(personId)
+      if (!isUnfolding) {
         newSet.delete(personId)
       } else {
         newSet.add(personId)
       }
       this.unfoldedPersonIds = newSet
+      if (isUnfolding || forceShowProfile) {
+        const person = (this.dataPersons || []).find(p => p.id === personId)
+        if (person) {
+          this.selectedPerson = person
+          this.isProfileSidebarOpen = true
+        }
+      }
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
         minYear: this.computedMinYear,
@@ -2950,39 +3016,51 @@ export default {
       this.drawTimeline()
     },
 
-    togglePlaces () {
-      this.showPlaces = !this.showPlaces
-      this.drawTimeline()
-    },
-
     clearSearch () {
       this.searchQuery = ''
       this.isSearchOpen = false
     },
 
+    selectFirstResult () {
+      if (this.filteredPersons && this.filteredPersons.length > 0) {
+        this.focusPerson(this.filteredPersons[0])
+      }
+    },
+
+    getPersonAvatar (person) {
+      if (!person) return 'profile_men.png'
+      if (person.picture) {
+        const dataUrl = import.meta.env.MODE === 'development'
+          ? (import.meta.env.VITE_DATA_URL || '/data')
+          : '/data'
+        return dataUrl + person.picture
+      }
+      return person.gender === 'Male' ? 'profile_men.png' : 'profile_women.png'
+    },
+
     focusPerson (person) {
       this.searchQuery = `${person.first_name} ${person.last_name}`
       this.isSearchOpen = false
+      this.selectedPerson = person
 
       if (this.viewMode === 'dynamic') {
         this.setDynamicRootPerson(person.id)
-        return
-      }
+      } else {
+        const birthYear = this.getYearFromDate(person.birth_date)
+        const deathYear = this.getYearFromDate(person.death_date) || (birthYear ? birthYear + 70 : 2000)
 
-      const birthYear = this.getYearFromDate(person.birth_date)
-      const deathYear = this.getYearFromDate(person.death_date) || (birthYear ? birthYear + 70 : 2000)
+        // 1. Adapter le domaine temporel si la personne est hors champ
+        let needRedraw = false
+        if (birthYear && (birthYear < this.localStartViewYear || birthYear > this.localStopViewYear)) {
+          const margin = 25
+          this.localStartViewYear = Math.max(this.computedMinYear, Math.floor((birthYear - margin) / 10) * 10)
+          this.localStopViewYear = Math.min(this.computedMaxYear, Math.ceil((deathYear + margin) / 10) * 10)
+          needRedraw = true
+        }
 
-      // 1. Adapter le domaine temporel si la personne est hors champ
-      let needRedraw = false
-      if (birthYear && (birthYear < this.localStartViewYear || birthYear > this.localStopViewYear)) {
-        const margin = 25
-        this.localStartViewYear = Math.max(this.computedMinYear, Math.floor((birthYear - margin) / 10) * 10)
-        this.localStopViewYear = Math.min(this.computedMaxYear, Math.ceil((deathYear + margin) / 10) * 10)
-        needRedraw = true
-      }
-
-      if (needRedraw) {
-        this.drawTimeline()
+        if (needRedraw) {
+          this.drawTimeline()
+        }
       }
 
       // 2. Scroll vertical jusqu'à la personne et mise en lumière
@@ -3016,8 +3094,15 @@ export default {
       const historyGroup = graphSvg.append('g').attr('class', 'history-context-layer')
 
       const isEn = this.$i18n && this.$i18n.locale === 'en'
+      const ribbonHeight = 26
 
-      historicalPeriods.forEach((period, index) => {
+      // Définitions SVG pour les dégradés et les clipPaths
+      let defs = graphSvg.select('defs.history-defs')
+      if (defs.empty()) {
+        defs = graphSvg.append('defs').attr('class', 'history-defs')
+      }
+
+      this.historicalPeriods.forEach((period, index) => {
         const xStart = xScale(period.startYear)
         const xEnd = xScale(period.endYear)
         const width = xEnd - xStart
@@ -3028,95 +3113,192 @@ export default {
 
           const fullName = isEn ? period.nameEn : period.nameFr
           const shortName = isEn ? (period.shortNameEn || period.nameEn) : (period.shortNameFr || period.nameFr)
-          const fullLabelWithDates = `${fullName} (${period.startYear}-${period.endYear})`
+          const fullLabelWithDates = `${fullName} (${period.startYear}–${period.endYear})`
 
-          // Bande de fond de l'époque sur toute la hauteur
+          // 1. Dégradé vertical tout en douceur pour la colonne pleine hauteur
+          const gradId = `hist-col-grad-${period.id}`
+          const grad = defs.append('linearGradient')
+            .attr('id', gradId)
+            .attr('x1', '0%').attr('y1', '0%')
+            .attr('x2', '0%').attr('y2', '100%')
+
+          grad.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', period.borderColor)
+            .attr('stop-opacity', 0.12)
+
+          grad.append('stop')
+            .attr('offset', '35%')
+            .attr('stop-color', period.borderColor)
+            .attr('stop-opacity', 0.04)
+
+          grad.append('stop')
+            .attr('offset', '100%')
+            .attr('stop-color', period.borderColor)
+            .attr('stop-opacity', 0.01)
+
+          // Colonne de fond avec dégradé subtil
           const band = historyGroup.append('rect')
             .attr('class', 'history-band')
             .attr('x', clampedX)
-            .attr('y', 0)
+            .attr('y', ribbonHeight)
             .attr('width', clampedWidth)
-            .attr('height', height)
-            .attr('fill', period.color)
+            .attr('height', Math.max(0, height - ribbonHeight))
+            .attr('fill', `url(#${gradId})`)
             .style('cursor', 'default')
 
-          // Infobulle native SVG au survol
           band.append('title').text(fullLabelWithDates)
 
-          // Ligne séparatrice au début de la période: discrète et douce
+          // Ligne séparatrice verticale fine au début de la période
           if (xStart >= 0 && xStart <= this.timelineWidth) {
             historyGroup.append('line')
+              .attr('class', 'history-separator-line')
               .attr('x1', xStart)
               .attr('y1', 0)
               .attr('x2', xStart)
               .attr('y2', height)
               .attr('stroke', period.borderColor)
               .attr('stroke-width', 1)
-              .attr('stroke-opacity', 0.4)
+              .attr('stroke-opacity', 0.35)
+              .attr('stroke-dasharray', '3,3')
           }
 
-          // Label textuel étagé sous forme de badge pilule flottant élégant
-          if (clampedWidth >= 28 && xStart < this.timelineWidth) {
-            const yLevel = (index % 2 === 0) ? 8 : 34
-
-            // Choisir le texte le plus approprié selon la largeur réelle de la colonne
-            let displayText
-            if (clampedWidth >= 230) {
-              displayText = fullLabelWithDates
-            } else if (clampedWidth >= 120) {
-              displayText = `${shortName} (${period.startYear}-${period.endYear})`
-            } else if (clampedWidth >= 55) {
-              displayText = shortName
-            } else {
-              displayText = `${period.startYear}`
-            }
-
-            const badgeGroup = historyGroup.append('g')
-              .attr('class', 'history-pill-badge')
-              .attr('transform', `translate(${clampedX + 6}, ${yLevel})`)
+          // 2. Segment de ruban supérieur (Historical Era Ribbon)
+          if (clampedWidth >= 16) {
+            const ribbonGroup = historyGroup.append('g')
+              .attr('class', 'history-ribbon-segment')
+              .attr('transform', `translate(${clampedX}, 0)`)
               .style('cursor', 'default')
 
-            const approxTextWidth = displayText.length * 6.5 + 24
-            const badgeWidth = Math.min(approxTextWidth, clampedWidth - 12)
+            // Clip path pour éviter tout débordement de texte
+            const clipId = `hist-clip-${period.id}-${index}`
+            defs.append('clipPath')
+              .attr('id', clipId)
+              .append('rect')
+              .attr('x', 0)
+              .attr('y', 0)
+              .attr('width', clampedWidth)
+              .attr('height', ribbonHeight)
 
-            if (badgeWidth > 18) {
-              // Fond pilule blanc avec micro-ombre
-              badgeGroup.append('rect')
-                .attr('x', 0)
-                .attr('y', 0)
-                .attr('width', badgeWidth)
-                .attr('height', 20)
-                .attr('rx', 6)
-                .attr('ry', 6)
-                .attr('fill', '#ffffff')
-                .attr('stroke', period.borderColor)
-                .attr('stroke-width', 1)
-                .attr('stroke-opacity', 0.55)
-                .style('filter', 'drop-shadow(0 1px 2px rgba(15, 23, 42, 0.07))')
+            // Fond du segment de ruban
+            ribbonGroup.append('rect')
+              .attr('class', 'history-ribbon-bg')
+              .attr('x', 0)
+              .attr('y', 0)
+              .attr('width', clampedWidth)
+              .attr('height', ribbonHeight)
+              .attr('fill', period.color)
+              .attr('stroke', '#e2e8f0')
+              .attr('stroke-width', 1)
 
-              // Point indicateur de couleur
-              badgeGroup.append('circle')
-                .attr('cx', 8)
-                .attr('cy', 10)
-                .attr('r', 3)
-                .attr('fill', period.borderColor)
+            // Accent bar supérieure colorée (3px)
+            ribbonGroup.append('rect')
+              .attr('class', 'history-ribbon-accent')
+              .attr('x', 0)
+              .attr('y', 0)
+              .attr('width', clampedWidth)
+              .attr('height', 3)
+              .attr('fill', period.borderColor)
 
-              // Libellé texte net
-              badgeGroup.append('text')
-                .attr('x', 15)
-                .attr('y', 14)
-                .attr('font-size', '10.5px')
+            // Libellé textuel intelligent : mesure précise pour ne JAMAIS couper ni déborder sur les barres verticales
+            const displayText = this.getFittingHistoricalText(period, clampedWidth, isEn)
+
+            if (displayText) {
+              const textEl = ribbonGroup.append('text')
+                .attr('class', 'history-ribbon-text')
+                .attr('x', 8)
+                .attr('y', 14.5)
+                .attr('dominant-baseline', 'central')
+                .attr('clip-path', `url(#${clipId})`)
+                .attr('font-size', '11px')
                 .attr('font-weight', '600')
-                .attr('fill', '#1e293b')
+                .attr('letter-spacing', '0.15px')
+                .attr('fill', '#334155')
                 .attr('font-family', 'var(--ft-font)')
                 .style('user-select', 'none')
                 .text(displayText)
 
-              badgeGroup.append('title').text(fullLabelWithDates)
+              textEl.append('title').text(fullLabelWithDates)
             }
+
+            ribbonGroup.append('title').text(fullLabelWithDates)
           }
         }
       })
+
+      // Ligne continue sous le ruban
+      historyGroup.append('line')
+        .attr('class', 'history-ribbon-bottom-border')
+        .attr('x1', 0)
+        .attr('y1', ribbonHeight)
+        .attr('x2', this.timelineWidth)
+        .attr('y2', ribbonHeight)
+        .attr('stroke', '#cbd5e1')
+        .attr('stroke-width', 1)
+    },
+
+    getFittingHistoricalText (period, clampedWidth, isEn) {
+      // Marge de sécurité de 8px de chaque côté (16px au total) pour préserver un espace net
+      // avec les séparateurs verticaux de début et de fin d'époque
+      const availWidth = clampedWidth - 16
+      if (availWidth < 20) {
+        return ''
+      }
+
+      const fullName = isEn ? period.nameEn : period.nameFr
+      const shortName = isEn ? (period.shortNameEn || period.nameEn) : (period.shortNameFr || period.nameFr)
+      const font = '600 11px Inter, system-ui, -apple-system, sans-serif'
+
+      const candidates = [
+        `${fullName} (${period.startYear}–${period.endYear})`,
+        `${fullName}`,
+        `${shortName} (${period.startYear}–${period.endYear})`,
+        `${shortName}`,
+        `${period.startYear}–${period.endYear}`,
+        `${period.startYear}`
+      ]
+
+      for (const cand of candidates) {
+        if (this.measureTextWidth(cand, font) <= availWidth) {
+          return cand
+        }
+      }
+
+      // Si l'espace est encore suffisant (>= 32px), tronquer proprement avec ellipse (…)
+      if (availWidth >= 32) {
+        let truncated = shortName
+        while (truncated.length > 2 && this.measureTextWidth(truncated + '…', font) > availWidth) {
+          truncated = truncated.slice(0, -1).trim()
+        }
+        if (truncated.length > 2) {
+          return truncated + '…'
+        }
+      }
+
+      return ''
+    },
+
+    measureTextWidth (text, font = '600 11px sans-serif') {
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        if (navigator && navigator.userAgent && navigator.userAgent.includes('jsdom')) {
+          return text.length * 7.2
+        }
+        if (!this._measureCanvas) {
+          this._measureCanvas = document.createElement('canvas')
+        }
+        if (this._measureCanvas) {
+          try {
+            const ctx = this._measureCanvas.getContext && this._measureCanvas.getContext('2d')
+            if (ctx) {
+              ctx.font = font
+              return ctx.measureText(text).width
+            }
+          } catch {
+            // fallback
+          }
+        }
+      }
+      return text.length * 7.2
     },
 
     drawMarriageBridges (graphSvg, xScale) {
@@ -3269,114 +3451,6 @@ export default {
               .ease(d3.easeCubicOut)
               .style('opacity', 1)
           }
-
-          // Marqueurs de lieu de l'union (Union civile et/ou Mariage) au centre de la bande d'union (au premier plan)
-          if (this.showPlaces) {
-            try {
-              let overlayLayer = graphSvg.select('.places-overlay-layer')
-              if (!overlayLayer.node()) {
-                overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
-              }
-
-              const pName = (personData && personData.person && personData.person.first_name) || ''
-              const sName = (spouse && spouse.first_name) || (spouseData && spouseData.person && spouseData.person.first_name) || ''
-
-              const createUnionPin = (xPos, pinColor, titleText) => {
-                const pinG = overlayLayer.append('g')
-                  .attr('class', 'place-marker union-place-marker')
-                  .attr('transform', `translate(${xPos}, ${gapCenterY})`)
-                  .style('cursor', 'pointer')
-                  .on('click', () => this.showPersonProfile(personData.person))
-
-                pinG.append('path')
-                  .attr('class', 'map-pin-body')
-                  .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
-                  .attr('fill', pinColor)
-                  .attr('stroke', '#ffffff')
-                  .attr('stroke-width', 1.3)
-                  .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
-
-                pinG.append('circle')
-                  .attr('class', 'map-pin-dot')
-                  .attr('cx', 0)
-                  .attr('cy', -10)
-                  .attr('r', 2.2)
-                  .attr('fill', '#ffffff')
-
-                pinG.append('title').text(titleText)
-              }
-
-              // 1. Pastille Union civile (si existante avec lieu ou date)
-              const cuPlace = spouse.civil_union_place
-              if (uDate && (cuPlace || spouse.civil_union_date)) {
-                const cuX = xScale(uDate) + 12
-                const placeLabel = cuPlace ? `📍 ${cuPlace}\n` : ''
-                const dateStr = spouse.civil_union_date ? ` (${spouse.civil_union_date})` : ''
-                createUnionPin(cuX, '#e11d48', `${placeLabel}📜 Union civile de ${pName} & ${sName}${dateStr}`)
-              }
-
-              // 2. Pastille Mariage (si existant avec lieu ou date)
-              const mPlace = spouse.marriage_place
-              if (mDate && (mPlace || spouse.marriage_date)) {
-                let mX = xScale(mDate) + 12
-                // Si l'union civile et le mariage ont lieu la même année, décaler légèrement pour éviter la superposition
-                if (uDate && uDate === mDate) {
-                  mX += 16
-                }
-                const placeLabel = mPlace ? `📍 ${mPlace}\n` : ''
-                const dateStr = spouse.marriage_date ? ` (${spouse.marriage_date})` : ''
-                createUnionPin(mX, '#e11d48', `${placeLabel}💍 Mariage de ${pName} & ${sName}${dateStr}`)
-              }
-
-              // Marqueur de lieu de divorce à la fin de la bande d'union (si couple divorcé et lieu renseigné)
-              let dPlace = spouse.divorce_place
-              if (!dPlace && spouse.divorce_date) {
-                const pEvents = (personData.person && personData.person.events) || []
-                const sEvents = (spouseData.person && spouseData.person.events) || []
-                const dEv = [...pEvents, ...sEvents].find(e =>
-                  ['divorce', 'civil_separation'].includes((e.event_type || '').toLowerCase()) &&
-                  e.event_place && e.event_place.trim()
-                )
-                if (dEv) dPlace = dEv.event_place
-              }
-
-              if (dPlace && dPlace.trim() && spouse.divorce_date) {
-                const pName = (personData && personData.person && personData.person.first_name) || ''
-                const sName = (spouse && spouse.first_name) || (spouseData && spouseData.person && spouseData.person.first_name) || ''
-                const dDateStr = ` (${spouse.divorce_date})`
-
-                let overlayLayer = graphSvg.select('.places-overlay-layer')
-                if (!overlayLayer.node()) {
-                  overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
-                }
-
-                const divorcePinG = overlayLayer.append('g')
-                  .attr('class', 'place-marker divorce-place-marker')
-                  .attr('transform', `translate(${xEnd - 6}, ${gapCenterY})`)
-                  .style('cursor', 'pointer')
-                  .on('click', () => this.showPersonProfile(personData.person))
-
-                divorcePinG.append('path')
-                  .attr('class', 'map-pin-body')
-                  .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
-                  .attr('fill', '#e11d48')
-                  .attr('stroke', '#ffffff')
-                  .attr('stroke-width', 1.3)
-                  .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
-
-                divorcePinG.append('circle')
-                  .attr('class', 'map-pin-dot')
-                  .attr('cx', 0)
-                  .attr('cy', -10)
-                  .attr('r', 2.2)
-                  .attr('fill', '#ffffff')
-
-                divorcePinG.append('title').text(`📍 ${dPlace}\n💔 Divorce de ${pName} & ${sName}${dDateStr}`)
-              }
-            } catch (err) {
-              console.error('Error drawing union place marker:', err)
-            }
-          }
         })
       })
     },
@@ -3434,50 +3508,15 @@ export default {
             // Départ : centre de la bande d'union des deux parents à l'année de naissance
             const startY = bridge ? bridge.gapCenterY : (topParent.yBottom + botParent.yTop) / 2
 
-            // Calque d'overlay au premier plan pour les pastilles de lieux
-            let overlayLayer = graphSvg.select('.places-overlay-layer')
-            if (!overlayLayer.node()) {
-              overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
-            }
-
-            const birthEv = (child.events || []).find(e =>
-              (e.event_type || '').toLowerCase() === 'birth' && e.event_place && e.event_place.trim()
-            )
-
-            if (this.showPlaces && birthEv && !isParentsCollapsed) {
-              const birthPin = overlayLayer.append('g')
-                .attr('class', 'place-marker child-birth-marker')
-                .attr('transform', `translate(${startX}, ${startY})`)
-                .style('cursor', 'pointer')
-                .on('click', () => this.showPersonProfile(child))
-
-              birthPin.append('path')
-                .attr('class', 'map-pin-body')
-                .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
-                .attr('fill', '#e11d48')
-                .attr('stroke', '#ffffff')
-                .attr('stroke-width', 1.3)
-                .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
-
-              birthPin.append('circle')
-                .attr('class', 'map-pin-dot')
-                .attr('cx', 0)
-                .attr('cy', -10)
-                .attr('r', 2.2)
-                .attr('fill', '#ffffff')
-
-              birthPin.append('title').text(`📍 ${birthEv.event_place}\n👶 Naissance de ${child.first_name} ${child.last_name} (${childData.birthYear})`)
-            } else {
-              // Point neutre quand les lieux sont masqués ou parents repliés
-              linkG.append('circle')
-                .attr('class', 'anchor-couple')
-                .attr('cx', startX)
-                .attr('cy', startY)
-                .attr('r', 3.5)
-                .attr('fill', coupleColor)
-                .attr('stroke', '#ffffff')
-                .attr('stroke-width', 1.5)
-            }
+            // Point d'ancrage sous le couple
+            linkG.append('circle')
+              .attr('class', 'anchor-couple')
+              .attr('cx', startX)
+              .attr('cy', startY)
+              .attr('r', 3.5)
+              .attr('fill', coupleColor)
+              .attr('stroke', '#ffffff')
+              .attr('stroke-width', 1.5)
 
             // Trait descendant du pont (part de la pointe du pin si affiché, ou du centre de la bande)
             const deltaY = endY - startY
@@ -3543,47 +3582,14 @@ export default {
             const cp2y = endY
             const pathD = `M ${startX},${startY} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${endX},${endY}`
 
-            let overlayLayer = graphSvg.select('.places-overlay-layer')
-            if (!overlayLayer.node()) {
-              overlayLayer = graphSvg.append('g').attr('class', 'places-overlay-layer')
-            }
-
-            const birthEv = (child.events || []).find(e =>
-              (e.event_type || '').toLowerCase() === 'birth' && e.event_place && e.event_place.trim()
-            )
-
-            if (this.showPlaces && birthEv && !isParentCollapsed) {
-              const birthPin = overlayLayer.append('g')
-                .attr('class', 'place-marker child-birth-marker')
-                .attr('transform', `translate(${startX}, ${startY})`)
-                .style('cursor', 'pointer')
-                .on('click', () => this.showPersonProfile(child))
-
-              birthPin.append('path')
-                .attr('class', 'map-pin-body')
-                .attr('d', 'M 0,0 C -2,-2.5 -6,-6 -6,-10 C -6,-13.5 -3.3,-16.5 0,-16.5 C 3.3,-16.5 6,-13.5 6,-10 C 6,-6 2,-2.5 0,0 Z')
-                .attr('fill', '#e11d48')
-                .attr('stroke', '#ffffff')
-                .attr('stroke-width', 1.3)
-                .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))')
-
-              birthPin.append('circle')
-                .attr('class', 'map-pin-dot')
-                .attr('cx', 0)
-                .attr('cy', -10)
-                .attr('r', 2.2)
-                .attr('fill', '#ffffff')
-
-              birthPin.append('title').text(`📍 ${birthEv.event_place}\n👶 Naissance de ${child.first_name} ${child.last_name} (${childData.birthYear})`)
-            } else {
-              linkG.append('circle')
-                .attr('class', 'anchor-parent')
-                .attr('cx', startX)
-                .attr('cy', startY)
-                .attr('r', 3.5)
-                .attr('fill', '#475569')
-                .attr('stroke', '#ffffff')
-            }
+            // Point d'ancrage sous le parent
+            linkG.append('circle')
+              .attr('class', 'anchor-parent')
+              .attr('cx', startX)
+              .attr('cy', startY)
+              .attr('r', 3.5)
+              .attr('fill', '#475569')
+              .attr('stroke', '#ffffff')
 
             const isNewChild = Boolean(
               this.animatingExpansion &&
@@ -3638,12 +3644,47 @@ export default {
 
 <style>
 
-#timeline-content {
+.timeline-app-container {
   margin-top: 56px;
-  padding: 0;
   height: calc(100vh - 56px);
+  width: 100vw;
+  overflow: hidden;
+}
+
+.timeline-split-layout {
+  height: 100%;
+  width: 100%;
+}
+
+#timeline-content {
+  margin-top: 0;
+  padding: 0;
+  height: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+.timeline-profile-sidebar {
+  width: clamp(380px, 32vw, 500px);
+  min-width: 360px;
+  max-width: 540px;
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+@media (max-width: 991.98px) {
+  .timeline-profile-sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(460px, 92vw);
+    z-index: 1050;
+    box-shadow: -4px 0 24px rgba(15, 23, 42, 0.18) !important;
+  }
 }
 
 /* Toolbar */
@@ -3658,11 +3699,19 @@ export default {
   padding-bottom: 8px !important;
 }
 
-/* Search Box in Toolbar */
+/* Search Box in Navbar / Toolbar */
 .search-box-wrapper {
-  min-width: 240px;
-  max-width: 360px;
-  flex: 1;
+  min-width: 140px;
+  max-width: 220px;
+  width: 190px;
+}
+
+@media (max-width: 1199px) {
+  .search-box-wrapper {
+    min-width: 120px;
+    max-width: 160px;
+    width: 145px;
+  }
 }
 
 .search-pill-group {
@@ -3718,7 +3767,12 @@ export default {
 }
 
 .search-dropdown {
-  max-height: 320px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1060;
+  min-width: 280px;
+  max-height: 360px;
   overflow-y: auto;
   border-radius: 14px !important;
   border: 1px solid #e2e8f0 !important;
@@ -3823,11 +3877,8 @@ export default {
   background-color: #ccfbf1 !important;
 }
 
-.dynamic-root-badge {
-  background-color: #eff6ff;
-  border-color: #bfdbfe !important;
-  font-size: 12px;
-  height: 32px;
+.cursor-pointer {
+  cursor: pointer;
 }
 
 /* Mini status badge inside toggle buttons */
@@ -4012,26 +4063,6 @@ export default {
   stroke: #d97706;
 }
 
-/* Map Pin Place markers on life bars */
-.place-marker {
-  cursor: pointer;
-}
-
-.place-marker .map-pin-body {
-  transition: fill 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
-}
-
-.place-marker:hover .map-pin-body {
-  fill: #9f1239;
-  stroke: #ffffff;
-  stroke-width: 1.8;
-  filter: drop-shadow(0 3px 8px rgba(159, 18, 57, 0.65));
-}
-
-.place-marker:hover .map-pin-dot {
-  fill: #fef08a;
-}
-
 /* Highlight pulse on search focus */
 @keyframes personPulse {
   0% {
@@ -4134,54 +4165,6 @@ export default {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
-.search-box-wrapper .input-group {
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.search-box-wrapper .input-group:focus-within {
-  background-color: #ffffff;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-.search-box-wrapper .input-group-text {
-  background: transparent;
-  border: none;
-}
-
-.search-box-wrapper input.form-control {
-  background: transparent;
-  border: none;
-  font-size: 13px;
-  color: #1e293b;
-}
-
-.search-box-wrapper input.form-control:focus {
-  box-shadow: none;
-}
-
-.search-dropdown {
-  min-width: 280px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 14px 35px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  padding: 6px;
-  background: #ffffff;
-  animation: fadeInContextMenu 0.15s ease-out;
-}
-
-.search-result-item {
-  border-radius: 8px;
-  transition: background-color 0.15s ease;
-}
-
-.search-result-item:hover {
-  background-color: #f1f5f9;
-}
 
 /* Person Context Menu (Magnifique style harmonisé) */
 .person-context-menu {

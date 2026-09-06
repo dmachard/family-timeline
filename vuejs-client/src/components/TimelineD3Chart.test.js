@@ -66,6 +66,9 @@ describe('Timeline Methods', () => {
       },
       global: {
         plugins: [store],
+        stubs: {
+          Teleport: false
+        },
         mocks: {
           $t: (msg) => msg,
           $i18n: {
@@ -193,6 +196,20 @@ describe('Timeline Methods', () => {
     // Toggle again → should be folded back
     wrapper.vm.togglePersonBar(personId)
     expect(wrapper.vm.isBarUnfolded(personId)).toBe(false)
+  })
+
+  test('togglePersonBar should select person and open profile sidebar when unfolding a folded bar', () => {
+    const mockPerson = { id: 42, first_name: 'Arthur', last_name: 'Pendelton' }
+    wrapper.vm.dataPersons = [mockPerson]
+    wrapper.vm.selectedPerson = null
+    wrapper.vm.isProfileSidebarOpen = false
+    wrapper.vm.drawTimeline = vi.fn()
+
+    // Unfold person bar → should unfold AND display profile in sidebar immediately
+    wrapper.vm.togglePersonBar(42)
+    expect(wrapper.vm.isBarUnfolded(42)).toBe(true)
+    expect(wrapper.vm.selectedPerson).toEqual(mockPerson)
+    expect(wrapper.vm.isProfileSidebarOpen).toBe(true)
   })
 
   test('toggleAllBars should expand all rendered persons, then collapse all', () => {
@@ -565,4 +582,124 @@ describe('Timeline Methods', () => {
     expect(visible.has(1)).toBe(true)
     expect(visible.has(5)).toBe(true)
   })
+
+  test('search filteredPersons should match query across first/last names, birth/death years and ignore accents', () => {
+    wrapper.vm.dataPersons = [
+      { id: 1, first_name: 'Hélène', last_name: 'Dupont', birth_date: '1975-04-12', death_date: null },
+      { id: 2, first_name: 'Jean', last_name: 'Dupont', birth_date: '1940-02-01', death_date: '2010-05-10' },
+      { id: 3, first_name: 'Arthur', last_name: 'Martin', birth_date: '1982-11-20', death_date: null }
+    ]
+
+    // Empty query returns empty
+    wrapper.vm.searchQuery = ''
+    expect(wrapper.vm.filteredPersons).toEqual([])
+
+    // Case and accent insensitive matching (Helene matches Hélène)
+    wrapper.vm.searchQuery = 'helene'
+    expect(wrapper.vm.filteredPersons.length).toBe(1)
+    expect(wrapper.vm.filteredPersons[0].id).toBe(1)
+
+    // Token matching across first and last name in any order
+    wrapper.vm.searchQuery = 'dupont jean'
+    expect(wrapper.vm.filteredPersons.length).toBe(1)
+    expect(wrapper.vm.filteredPersons[0].id).toBe(2)
+
+    // Year matching
+    wrapper.vm.searchQuery = '1982'
+    expect(wrapper.vm.filteredPersons.length).toBe(1)
+    expect(wrapper.vm.filteredPersons[0].id).toBe(3)
+
+    // Clear search
+    wrapper.vm.clearSearch()
+    expect(wrapper.vm.searchQuery).toBe('')
+    expect(wrapper.vm.isSearchOpen).toBe(false)
+  })
+
+  test('focusPerson should update root person and search query', () => {
+    wrapper.vm.drawTimeline = vi.fn()
+    const target = { id: 2, first_name: 'Jean', last_name: 'Dupont' }
+    wrapper.vm.dataPersons = [target]
+    wrapper.vm.viewMode = 'dynamic'
+
+    wrapper.vm.focusPerson(target)
+    expect(wrapper.vm.dynamicRootPersonId).toBe(2)
+    expect(wrapper.vm.searchQuery).toBe('Jean Dupont')
+    expect(wrapper.vm.isSearchOpen).toBe(false)
+  })
+
+  test('dynamic root controls are visible in dynamic mode with root person', async () => {
+    wrapper.vm.viewMode = 'dynamic'
+    wrapper.vm.dataPersons = [{ id: 1, first_name: 'Jean', last_name: 'Dupont' }]
+    wrapper.vm.dynamicRootPersonId = 1
+    await wrapper.vm.$nextTick()
+
+    const resetBtn = wrapper.find('#btn-reset-dynamic-tree')
+    expect(resetBtn.exists()).toBe(true)
+    const centerBtn = wrapper.find('#btn-center-on-root')
+    expect(centerBtn.exists()).toBe(true)
+  })
+
+  test('dynamic root controls are hidden in all mode', async () => {
+    wrapper.vm.viewMode = 'all'
+    await wrapper.vm.$nextTick()
+
+    const resetBtn = wrapper.find('#btn-reset-dynamic-tree')
+    expect(resetBtn.exists()).toBe(false)
+    const centerBtn = wrapper.find('#btn-center-on-root')
+    expect(centerBtn.exists()).toBe(false)
+  })
+
+  test('resetDynamicTree resets root person and expanded sets', () => {
+    wrapper.vm.drawTimeline = vi.fn()
+    wrapper.vm.centerOnRootPerson = vi.fn()
+    wrapper.vm.getDefaultDynamicRootPersonId = vi.fn().mockReturnValue(1)
+    wrapper.vm.dynamicRootPersonId = 99
+    wrapper.vm.expandedAscendantIds.add(4)
+    wrapper.vm.expandedDescendantIds.add(5)
+
+    wrapper.vm.resetDynamicTree()
+
+    expect(wrapper.vm.dynamicRootPersonId).toBe(1)
+    expect(wrapper.vm.expandedAscendantIds.size).toBe(0)
+    expect(wrapper.vm.expandedDescendantIds.size).toBe(0)
+    expect(wrapper.vm.drawTimeline).toHaveBeenCalled()
+    expect(wrapper.vm.centerOnRootPerson).toHaveBeenCalled()
+  })
+
+  test('centerOnRootPerson should execute safely without crashing', () => {
+    wrapper.vm.dynamicRootPersonId = 1
+    wrapper.vm.renderedPersons = new Map([
+      [1, { id: 1, yTop: 200 }]
+    ])
+    expect(() => wrapper.vm.centerOnRootPerson()).not.toThrow()
+  })
+
+  test('getFittingHistoricalText returns appropriate candidate and does not overflow width', () => {
+    const period = {
+      id: 'ww2',
+      nameFr: 'Seconde Guerre mondiale',
+      shortNameFr: '2nde Guerre',
+      startYear: 1939,
+      endYear: 1945
+    }
+
+    // Large width: should return full name with dates
+    const large = wrapper.vm.getFittingHistoricalText(period, 400, false)
+    expect(large).toBe('Seconde Guerre mondiale (1939–1945)')
+
+    // Medium width: should return short name or full name without dates
+    const medium = wrapper.vm.getFittingHistoricalText(period, 120, false)
+    expect(medium).toBeTruthy()
+    expect(medium.length).toBeLessThan(large.length)
+
+    // Very narrow width: should return startYear or empty, never chopped text
+    const narrow = wrapper.vm.getFittingHistoricalText(period, 50, false)
+    expect(['1939', '1939–1945', '2nde G…', '']).toContain(narrow)
+
+    // Tiny sliver: returns empty string so no vertical collision
+    const tiny = wrapper.vm.getFittingHistoricalText(period, 20, false)
+    expect(tiny).toBe('')
+  })
 })
+
+

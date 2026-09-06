@@ -113,6 +113,9 @@
     "full-tree": "Full tree",
     "dynamic-tree-title": "Explore tree interactively (ancestors / descendants)",
     "full-tree-title": "Display the whole family",
+    "tree-root": "Tree root",
+    "center-on-root": "Center on root",
+    "center-on-root-short": "Root",
     "reset-tree": "Reset tree",
     "show-parents": "Show parents",
     "hide-parents": "Hide parents",
@@ -139,5 +142,6 @@
     "set-as-root": "Set as tree root",
     "fold-bar": "Collapse bar",
     "unfold-bar": "Expand bar",
-    "living": "Living"
+    "living": "Living",
+    "no-results": "No results found"
 }
