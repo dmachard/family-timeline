@@ -40,7 +40,9 @@
               </thead>
               <tbody>
                 <tr v-for="(activity, index) in paginatedActivities" :key="activity.id">
-                  <td class="text-muted small">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+                  <td class="text-muted small">
+                    {{ (currentPage - 1) * itemsPerPage + index + 1 }}
+                  </td>
                   <td>
                     <span class="badge bg-light text-dark border px-2 py-1">
                       <i class="bi bi-person me-1 text-muted" />{{ activity.username }}
@@ -49,7 +51,9 @@
                   <td class="text-muted small" style="white-space: nowrap;">
                     <i class="bi bi-clock me-1 text-muted" />{{ new Date(activity.timestamp).toLocaleString() }}
                   </td>
-                  <td class="fw-semibold text-dark">{{ formatWho(activity.person_id) }}</td>
+                  <td class="fw-semibold text-dark">
+                    {{ formatWho(activity.person_id) }}
+                  </td>
                   <td>
                     <span class="text-secondary small">{{ formatWhat(activity) }}</span>
                   </td>

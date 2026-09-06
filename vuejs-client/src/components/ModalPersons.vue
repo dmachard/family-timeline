@@ -162,8 +162,12 @@
                 <tbody>
                   <!-- Data Rows -->
                   <tr v-for="person in paginatedPersons" :key="person.id">
-                    <td class="text-muted small">{{ person.id }}</td>
-                    <td class="fw-semibold text-dark">{{ person.last_name }}</td>
+                    <td class="text-muted small">
+                      {{ person.id }}
+                    </td>
+                    <td class="fw-semibold text-dark">
+                      {{ person.last_name }}
+                    </td>
                     <td>{{ person.first_name }}</td>
                     <td>
                       <span v-for="middleName in getMiddleNames(person.id)" :key="middleName.id" class="badge bg-light text-secondary border me-1">

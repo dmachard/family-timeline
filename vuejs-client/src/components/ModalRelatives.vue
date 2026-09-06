@@ -185,23 +185,33 @@
               <table class="table table-hover align-middle mb-0">
                 <thead>
                   <tr>
-                    <th scope="col" style="width: 50px;">#</th>
+                    <th scope="col" style="width: 50px;">
+                      #
+                    </th>
                     <th>{{ $t('person') || 'Person' }}</th>
                     <th>{{ $t('relation-type') || 'Relation' }}</th>
                     <th>{{ $t('related-person') || 'Related' }}</th>
-                    <th class="text-end" style="width: 70px;">{{ $t('actions') }}</th>
+                    <th class="text-end" style="width: 70px;">
+                      {{ $t('actions') }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="relative in paginatedRelatives" :key="relative.id">
-                    <td class="text-muted small">{{ relative.id }}</td>
-                    <td class="fw-semibold text-dark">{{ getPersonName(relative.related_person_id) }}</td>
+                    <td class="text-muted small">
+                      {{ relative.id }}
+                    </td>
+                    <td class="fw-semibold text-dark">
+                      {{ getPersonName(relative.related_person_id) }}
+                    </td>
                     <td>
                       <span class="badge bg-light text-primary border px-2 py-1">
                         {{ $t("relative-"+relative.relation_type) }}
                       </span>
                     </td>
-                    <td class="fw-semibold text-dark">{{ getPersonName(relative.person_id) }}</td>
+                    <td class="fw-semibold text-dark">
+                      {{ getPersonName(relative.person_id) }}
+                    </td>
                     <td class="text-end">
                       <button class="btn btn-action-icon text-danger" type="button" :title="$t('delete')" @click.prevent="deleteRelative(relative)">
                         <i class="bi bi-trash-fill" />

@@ -5,7 +5,9 @@
       <div id="timeline-content" class="timeline-left-section position-relative flex-grow-1 d-flex flex-column overflow-hidden h-100" :class="{ 'with-sidebar': isProfileSidebarOpen }">
         <!-- Error Message -->
         <div v-if="error" class="alert alert-danger mb-0" role="alert">
-          <p class="mb-0">Error: {{ error }}</p>
+          <p class="mb-0">
+            Error: {{ error }}
+          </p>
         </div>
 
         <!-- Teleport Person Search to Top Navbar (unclipped container) -->
@@ -78,7 +80,6 @@
         <!-- Teleport Timeline Controls to Top Navbar -->
         <Teleport to="#top-navbar-timeline-controls" :disabled="!isNavbarTargetReady">
           <div class="d-flex align-items-center gap-2 flex-nowrap">
-
             <!-- Mode switch: Dynamic Tree vs Full Tree -->
             <div class="segmented-control flex-shrink-0" role="group">
               <button
@@ -2500,7 +2501,7 @@ export default {
           .style('pointer-events', 'none')
 
         // Cercle blanc derrière l'avatar pour le détacher nettement
-        const avatarCircle = personGroup.append('circle')
+        personGroup.append('circle')
           .attr('cx', avatarCx)
           .attr('cy', y + height / 2)
           .attr('r', 16)
@@ -2686,7 +2687,7 @@ export default {
         })
 
         // Cercle de fond blanc pour détacher l'avatar
-        const avatarCircleExp = personGroup.append('circle')
+        personGroup.append('circle')
           .attr('cx', avatarCx)
           .attr('cy', y + height / 2)
           .attr('r', 16)
@@ -3112,7 +3113,6 @@ export default {
           const clampedWidth = Math.min(this.timelineWidth - clampedX, width - (clampedX - xStart))
 
           const fullName = isEn ? period.nameEn : period.nameFr
-          const shortName = isEn ? (period.shortNameEn || period.nameEn) : (period.shortNameFr || period.nameFr)
           const fullLabelWithDates = `${fullName} (${period.startYear}–${period.endYear})`
 
           // 1. Dégradé vertical tout en douceur pour la colonne pleine hauteur

@@ -1,3 +1,4 @@
+/* global global */
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import { historicalPeriods, loadHistoricalPeriods } from './historyEvents.js'
 

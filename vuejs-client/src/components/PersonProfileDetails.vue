@@ -52,6 +52,9 @@
                 <i class="bi bi-sun-fill" />
               </div>
               <span class="vital-fact-sublabel text-muted text-uppercase mb-0">{{ $t('birth') }}</span>
+              <span v-if="!person?.death_date && age" class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle py-0 px-2 fw-semibold" style="font-size: 10px;">
+                {{ age }} {{ age > 1 ? $t('yearsOld') : $t('yearOld') }}
+              </span>
             </div>
             <span class="fw-bold text-dark vital-fact-main-text">{{ formatDate(person.birth_date) }}</span>
           </div>
@@ -78,22 +81,6 @@
           <div v-if="deathPlace" class="vital-fact-place-text text-muted small mt-1 d-flex align-items-center gap-1" :title="deathPlace">
             <i class="bi bi-geo-alt-fill text-danger flex-shrink-0" style="font-size: 11px;" />
             <span class="text-truncate">{{ deathPlace }}</span>
-          </div>
-        </div>
-
-        <!-- Statut en vie -->
-        <div v-else-if="person?.birth_date && person?.death_date === null" class="vital-fact-row p-2 px-3 rounded-3 border bg-white shadow-2xs">
-          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-            <div class="d-flex align-items-center gap-2">
-              <div class="vital-fact-icon-badge bg-emerald-light text-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
-                <span class="status-pulse-dot m-0" />
-              </div>
-              <span class="vital-fact-sublabel text-success fw-bold text-uppercase mb-0">Statut</span>
-              <span v-if="age" class="badge rounded-pill bg-success-subtle text-success border border-success-subtle py-0 px-2 fw-semibold" style="font-size: 10px;">
-                {{ age }} {{ age > 1 ? $t('yearsOld') : $t('yearOld') }}
-              </span>
-            </div>
-            <span class="fw-bold text-success vital-fact-main-text">En vie</span>
           </div>
         </div>
       </div>
@@ -180,8 +167,12 @@
         <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
           <i class="bi bi-people fs-4" />
         </div>
-        <h6 class="fw-bold text-dark mb-1">Aucun lien de parenté enregistré</h6>
-        <p class="text-muted small mb-3">Ajoutez des parents, conjoints ou enfants pour construire l'arbre généalogique.</p>
+        <h6 class="fw-bold text-dark mb-1">
+          Aucun lien de parenté enregistré
+        </h6>
+        <p class="text-muted small mb-3">
+          Ajoutez des parents, conjoints ou enfants pour construire l'arbre généalogique.
+        </p>
         <div>
           <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="button" @click="manageRelatives">
             <i class="bi bi-plus-lg me-1" />Ajouter des liens de parenté
@@ -194,7 +185,9 @@
         <div v-if="spouses.length || children.length" class="family-group-card bg-white border rounded-4 p-3 shadow-xs">
           <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
             <i class="bi bi-house-heart-fill text-danger fs-5" />
-            <h6 class="fw-bold text-dark mb-0 fs-6">Foyer direct & Descendance</h6>
+            <h6 class="fw-bold text-dark mb-0 fs-6">
+              Foyer direct & Descendance
+            </h6>
           </div>
 
           <!-- Conjoints -->
@@ -248,7 +241,9 @@
         <div v-if="parents.length || hasGrandparents" class="family-group-card bg-white border rounded-4 p-3 shadow-xs">
           <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
             <i class="bi bi-tree-fill text-success fs-5" />
-            <h6 class="fw-bold text-dark mb-0 fs-6">Ascendance directe</h6>
+            <h6 class="fw-bold text-dark mb-0 fs-6">
+              Ascendance directe
+            </h6>
           </div>
 
           <!-- Parents -->
@@ -330,7 +325,9 @@
         <div v-if="siblings.length" class="family-group-card bg-white border rounded-4 p-3 shadow-xs">
           <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
             <i class="bi bi-people-fill text-info fs-5" />
-            <h6 class="fw-bold text-dark mb-0 fs-6">{{ $t('siblings') }} ({{ siblings.length }})</h6>
+            <h6 class="fw-bold text-dark mb-0 fs-6">
+              {{ $t('siblings') }} ({{ siblings.length }})
+            </h6>
           </div>
           <div class="row g-2">
             <div v-for="item in siblings" :key="item.id" class="col-12" :class="{ 'col-sm-6': !isDocked }">
@@ -359,7 +356,9 @@
         <div v-if="hasExtendedFamily" class="family-group-card bg-white border rounded-4 p-3 shadow-xs">
           <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
             <i class="bi bi-diagram-2-fill text-purple fs-5" />
-            <h6 class="fw-bold text-dark mb-0 fs-6">Famille élargie</h6>
+            <h6 class="fw-bold text-dark mb-0 fs-6">
+              Famille élargie
+            </h6>
           </div>
 
           <!-- Oncles & Tantes -->
@@ -450,8 +449,12 @@
         <div class="rounded-circle bg-light text-muted d-inline-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
           <i class="bi bi-calendar-x fs-4" />
         </div>
-        <h6 class="fw-bold text-dark mb-1">Aucun événement enregistré</h6>
-        <p class="text-muted small mb-3">Ajoutez des naissances, mariages, diplômes, résidences ou autres étapes de vie.</p>
+        <h6 class="fw-bold text-dark mb-1">
+          Aucun événement enregistré
+        </h6>
+        <p class="text-muted small mb-3">
+          Ajoutez des naissances, mariages, diplômes, résidences ou autres étapes de vie.
+        </p>
         <div>
           <button class="btn btn-sm btn-outline-primary rounded-pill px-3" type="button" @click="addEvent">
             <i class="bi bi-plus-lg me-1" />Ajouter un premier événement
@@ -806,7 +809,7 @@ export default {
           }
         }
         return dateStr
-      } catch (e) {
+      } catch {
         return dateStr
       }
     },
@@ -909,7 +912,7 @@ export default {
           age--
         }
         return age >= 0 ? age : ''
-      } catch (e) {
+      } catch {
         return ''
       }
     },
@@ -1016,25 +1019,6 @@ export default {
   padding-left: 36px;
 }
 
-.status-pulse-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #10b981;
-  border-radius: 50%;
-  display: inline-block;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-  animation: pulseStatus 2s infinite;
-}
-
-@keyframes pulseStatus {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.bg-emerald-light {
-  background-color: #ecfdf5;
-}
 
 /* Tabs */
 .profile-tabs-wrapper {

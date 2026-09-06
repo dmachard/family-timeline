@@ -91,8 +91,12 @@
                     <i class="bi bi-person-circle fs-5 text-primary" />
                   </div>
                   <div>
-                    <div class="fw-bold text-dark lh-sm" style="font-size: 13px;">{{ userName }}</div>
-                    <div class="text-muted" style="font-size: 11px;">Connecté</div>
+                    <div class="fw-bold text-dark lh-sm" style="font-size: 13px;">
+                      {{ userName }}
+                    </div>
+                    <div class="text-muted" style="font-size: 11px;">
+                      Connecté
+                    </div>
                   </div>
                 </div>
                 <span class="badge bg-light text-muted border rounded-pill" style="font-size: 10px;">v{{ clientVersion }}</span>

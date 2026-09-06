@@ -84,7 +84,9 @@
                   <tr>
                     <th>{{ $t('event-type') }}</th>
                     <th>{{ $t('event-date') }}</th>
-                    <th class="text-end" style="width: 140px;">{{ $t('actions') }}</th>
+                    <th class="text-end" style="width: 140px;">
+                      {{ $t('actions') }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -94,7 +96,9 @@
                         {{ $t(event.event_type) }}
                       </span>
                     </td>
-                    <td class="text-dark fw-semibold">{{ event.event_date }}</td>
+                    <td class="text-dark fw-semibold">
+                      {{ event.event_date }}
+                    </td>
                     <td class="text-end">
                       <div class="d-flex justify-content-end gap-1">
                         <button class="btn btn-action-icon text-primary" type="button" :title="$t('edit')" @click.prevent="startEditEvent(event)">
@@ -261,7 +265,9 @@
             <div class="drop-zone mb-3 rounded-3" @drop.prevent="handleDrop($event)" @dragover.prevent>
               <div class="d-flex flex-column align-items-center justify-content-center py-3">
                 <i class="bi bi-cloud-arrow-up text-primary fs-2 mb-2" />
-                <p class="mb-0 fw-medium text-muted">{{ $t('drag-drop-files-here') }}</p>
+                <p class="mb-0 fw-medium text-muted">
+                  {{ $t('drag-drop-files-here') }}
+                </p>
               </div>
             </div>
 
@@ -337,9 +343,12 @@
                 <!-- Logo or Placeholder Image -->
                 <img :src="person.gender === 'Male' ? '/profile_men.png' : '/profile_women.png'" class="img-thumbnail rounded-circle mb-2" width="70" height="70" alt="Person Logo">
 
-                <!-- Person's Name -->
-                <div class="small fw-semibold text-dark">{{ person.first_name }} {{ person.last_name }}</div>
-                <div class="text-muted" style="font-size: 11px;">{{ formatDate(person.birth_date) }}</div>
+                <div class="small fw-semibold text-dark">
+                  {{ person.first_name }} {{ person.last_name }}
+                </div>
+                <div class="text-muted" style="font-size: 11px;">
+                  {{ formatDate(person.birth_date) }}
+                </div>
 
                 <!-- Delete Icon -->
                 <button class="btn btn-danger btn-sm rounded-circle p-1 position-absolute top-0 end-0 translate-middle" type="button" @click.prevent="removeAssociatedPerson(person.associationId)">

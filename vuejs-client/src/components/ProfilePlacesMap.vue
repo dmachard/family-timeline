@@ -27,7 +27,9 @@
       <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
         <i class="bi bi-geo-alt fs-4" />
       </div>
-      <h6 class="fw-bold text-dark mb-1">Aucun lieu renseigné</h6>
+      <h6 class="fw-bold text-dark mb-1">
+        Aucun lieu renseigné
+      </h6>
       <p class="text-muted small mb-3">
         Renseignez les lieux de naissance, mariage, résidence ou décès dans les événements pour visualiser le parcours et les déplacements sur la carte.
       </p>
@@ -447,7 +449,7 @@ export default {
           this.cachedCoordinates.set(cleanKey, parsed)
           return parsed
         }
-      } catch (e) {
+      } catch {
         // Ignorer
       }
 
@@ -469,13 +471,13 @@ export default {
               this.cachedCoordinates.set(cleanKey, coords)
               try {
                 localStorage.setItem('ft_geo_' + encodeURIComponent(cleanKey), JSON.stringify(coords))
-              } catch (e) {
+              } catch {
                 // Ignore storage limits
               }
               return coords
             }
           }
-        } catch (e) {
+        } catch {
           // Continuer au candidat suivant
         }
       }
