@@ -2,13 +2,16 @@
   <!-- Bootstrap modal structure -->
   <div class="modal d-block" tabindex="-1" role="dialog" aria-labelledby="loadingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-body text-center">
-          <div class="spinner-border" role="status">
+      <div class="modal-content loading-glass-card shadow-lg p-4">
+        <div class="modal-body text-center p-0">
+          <div class="spinner-border text-primary mb-3" role="status" style="width: 2.75rem; height: 2.75rem; border-width: 3px;">
             <span class="visually-hidden">Loading...</span>
           </div>
-          <p class="mt-3">
-            Loading data, please wait...
+          <h6 class="fw-bold text-dark mb-1">
+            {{ $t('loading') || 'Loading data...' }}
+          </h6>
+          <p class="text-muted small mb-0">
+            Please wait...
           </p>
         </div>
       </div>
@@ -17,7 +20,6 @@
 </template>
 
 <style scoped>
-/* Ensure modal takes full viewport height for proper vertical centering */
 .modal-dialog {
   display: flex;
   justify-content: center;
@@ -25,30 +27,24 @@
   height: 100vh;
 }
 
-/* Hide the default modal backdrop */
 .modal-backdrop {
-  display: none !important; /* Ensure backdrop is not displayed */
+  display: none !important;
 }
 
-/* Ensure modal-content is fully transparent and has no border */
-.modal-content {
-  border: none;
-  background-color: transparent;
+.loading-glass-card {
+  max-width: 280px;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15) !important;
 }
 
-/* Ensure the spinner is centered and on top */
 .modal-body {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  position: relative;
-  z-index: 1050; /* Ensure spinner is above other content */
-}
-
-/* Optionally, ensure the spinner is large and centered */
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
 }
 </style>

@@ -2,24 +2,34 @@
   <div id="activitiesModal" class="modal fade" tabindex="-1" aria-labelledby="activitiesModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 id="activitiesModalLabel" class="modal-title">
-            {{ $t('activity-logs') }}
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+        <div class="modal-header d-flex align-items-center justify-content-between px-4 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-clock-history fs-5" />
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <h5 id="activitiesModalLabel" class="modal-title mb-0 fw-bold text-dark">
+                {{ $t('activity-logs') }}
+              </h5>
+              <span v-if="activities && activities.length" class="badge bg-light text-secondary border rounded-pill fw-normal">
+                {{ activities.length }}
+              </span>
+            </div>
+          </div>
+          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close" />
         </div>
-        <div class="modal-body">
+        <div class="modal-body p-4">
           <!-- Error Message -->
-          <div v-if="error" class="alert alert-danger" role="alert">
-            {{ error }}
+          <div v-if="error" class="alert alert-danger mb-4" role="alert">
+            <i class="bi bi-exclamation-circle me-2" />{{ error }}
           </div>
           
           <!-- Activities Table -->
-          <div class="table-responsive">
-            <table class="table table-hover bg-white mb-4">
+          <div class="table-responsive border rounded-3 overflow-hidden shadow-xs mb-3">
+            <table class="table table-hover align-middle mb-0">
               <thead>
                 <tr>
-                  <th scope="col">
+                  <th scope="col" style="width: 50px;">
                     #
                   </th>
                   <th>{{ $t('user') }}</th>
@@ -30,21 +40,34 @@
               </thead>
               <tbody>
                 <tr v-for="(activity, index) in paginatedActivities" :key="activity.id">
-                  <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                  <td>{{ activity.username }}</td>
-                  <td>{{ new Date(activity.timestamp).toLocaleString() }}</td>
-                  <td>{{ formatWho(activity.person_id) }}</td>
-                  <td>{{ formatWhat(activity) }}</td>
+                  <td class="text-muted small">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+                  <td>
+                    <span class="badge bg-light text-dark border px-2 py-1">
+                      <i class="bi bi-person me-1 text-muted" />{{ activity.username }}
+                    </span>
+                  </td>
+                  <td class="text-muted small" style="white-space: nowrap;">
+                    <i class="bi bi-clock me-1 text-muted" />{{ new Date(activity.timestamp).toLocaleString() }}
+                  </td>
+                  <td class="fw-semibold text-dark">{{ formatWho(activity.person_id) }}</td>
+                  <td>
+                    <span class="text-secondary small">{{ formatWhat(activity) }}</span>
+                  </td>
+                </tr>
+                <tr v-if="!paginatedActivities.length">
+                  <td colspan="5" class="text-center py-4 text-muted">
+                    {{ $t('no-result') }}
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- Pagination and Controls -->
-          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 mb-2 pt-1">
             <!-- Pagination -->
             <nav aria-label="Page navigation">
-              <ul class="pagination mb-3 mb-sm-0">
+              <ul class="pagination mb-0">
                 <li class="page-item" :class="{ disabled: currentPage === 1 }">
                   <a class="page-link" href="#" aria-label="Previous" @click.prevent="previousPage">
                     <span aria-hidden="true">&laquo;</span>
@@ -68,9 +91,9 @@
             </nav>
 
             <!-- Items Per Page -->
-            <div class="d-flex align-items-center mt-3 mt-sm-0">
-              <label for="itemsPerPage" class="me-2 mb-0">{{ $t('items-per-page') }}</label>
-              <select id="itemsPerPage" v-model="itemsPerPage" class="form-select d-inline-block w-auto">
+            <div class="d-flex align-items-center">
+              <label for="itemsPerPage" class="me-2 mb-0 small text-muted">{{ $t('items-per-page') }}</label>
+              <select id="itemsPerPage" v-model="itemsPerPage" class="form-select form-select-sm d-inline-block w-auto">
                 <option v-for="size in [5, 10, 15, 20]" :key="size" :value="size">
                   {{ size }}
                 </option>

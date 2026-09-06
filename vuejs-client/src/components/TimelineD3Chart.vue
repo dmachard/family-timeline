@@ -11,14 +11,12 @@
         <div class="timeline-toolbar d-flex flex-wrap align-items-center justify-content-between px-3 py-2 border-bottom bg-white">
           <!-- Quick Person Search with Autocomplete -->
           <div class="search-box-wrapper position-relative me-3 my-1">
-            <div class="input-group input-group-sm">
-              <span class="input-group-text bg-light border-end-0">
-                <i class="bi bi-search text-muted" />
-              </span>
+            <div class="search-pill-group d-flex align-items-center">
+              <i class="bi bi-search search-icon text-muted ps-3 pe-2" />
               <input
                 v-model="searchQuery"
                 type="text"
-                class="form-control form-control-sm border-start-0 ps-0"
+                class="search-input flex-grow-1"
                 :placeholder="$t('search-person-placeholder')"
                 autocomplete="off"
                 @focus="isSearchOpen = true"
@@ -26,18 +24,18 @@
               >
               <button
                 v-if="searchQuery"
-                class="btn btn-outline-secondary btn-sm border-start-0"
+                class="search-clear-btn pe-3 text-muted"
                 type="button"
                 @click="clearSearch"
               >
-                <i class="bi bi-x" />
+                <i class="bi bi-x-circle-fill" />
               </button>
             </div>
 
             <!-- Autocomplete suggestions dropdown -->
             <ul
               v-if="isSearchOpen && filteredPersons.length > 0"
-              class="dropdown-menu show shadow mt-1 py-1 w-100 search-dropdown"
+              class="dropdown-menu show shadow-lg mt-2 py-1 w-100 search-dropdown border rounded-3"
             >
               <li
                 v-for="person in filteredPersons"
@@ -50,17 +48,18 @@
                 >
                   <img
                     :src="person.gender === 'Male' ? 'profile_men.png' : 'profile_women.png'"
-                    width="24"
-                    height="24"
-                    class="rounded-circle me-2 border"
+                    width="28"
+                    height="28"
+                    class="rounded-circle me-2 border shadow-xs"
                     alt=""
                   >
-                  <div class="lh-sm">
+                  <div class="lh-sm flex-grow-1">
                     <div class="fw-semibold text-dark">{{ person.first_name }} {{ person.last_name }}</div>
-                    <small class="text-muted">
+                    <small class="text-muted" style="font-size: 11px;">
                       {{ getYearFromDate(person.birth_date) || '?' }} &mdash; {{ getYearFromDate(person.death_date) || (person.death_date_verified ? '?' : 'vivant(e)') }}
                     </small>
                   </div>
+                  <i class="bi bi-arrow-right-short text-muted fs-5 opacity-50" />
                 </a>
               </li>
             </ul>
@@ -68,11 +67,11 @@
 
           <div class="d-flex flex-wrap align-items-center gap-2 my-1">
             <!-- Mode switch: Dynamic Tree vs Full Tree -->
-            <div class="btn-group btn-group-sm" role="group">
+            <div class="segmented-control" role="group">
               <button
                 type="button"
-                class="btn d-flex align-items-center gap-1"
-                :class="viewMode === 'dynamic' ? 'btn-primary' : 'btn-outline-secondary'"
+                class="segmented-btn"
+                :class="{ active: viewMode === 'dynamic' }"
                 :title="$t('dynamic-tree-title')"
                 @click="toggleViewMode('dynamic')"
               >
@@ -81,8 +80,8 @@
               </button>
               <button
                 type="button"
-                class="btn d-flex align-items-center gap-1"
-                :class="viewMode === 'all' ? 'btn-primary' : 'btn-outline-secondary'"
+                class="segmented-btn"
+                :class="{ active: viewMode === 'all' }"
                 :title="$t('full-tree-title')"
                 @click="toggleViewMode('all')"
               >
@@ -93,12 +92,12 @@
 
             <!-- In dynamic mode: root person badge & reset button -->
             <div v-if="viewMode === 'dynamic' && dynamicRootPerson" class="d-flex align-items-center gap-1">
-              <span class="badge bg-light text-dark border d-flex align-items-center gap-1 py-1 px-2">
+              <span class="dynamic-root-badge border d-flex align-items-center gap-1 py-1 px-2 rounded-pill">
                 <i class="bi bi-person-fill text-primary" />
-                <span>{{ dynamicRootPerson.first_name }} {{ dynamicRootPerson.last_name }}</span>
+                <span class="fw-medium text-dark">{{ dynamicRootPerson.first_name }} {{ dynamicRootPerson.last_name }}</span>
               </span>
               <button
-                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 py-1 px-2"
+                class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 py-1 px-2 border rounded-pill bg-white text-muted"
                 type="button"
                 :title="$t('reset-tree')"
                 @click="resetDynamicTree"
@@ -110,54 +109,56 @@
 
             <!-- History Context Layer Toggle Button -->
             <button
-              class="btn btn-sm d-flex align-items-center gap-1"
-              :class="showHistoryContext ? 'btn-primary' : 'btn-outline-secondary'"
+              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill"
+              :class="showHistoryContext ? 'btn-tool-active-primary' : 'bg-white text-muted'"
               type="button"
               :title="$t('toggle-history')"
               @click="toggleHistoryContext"
             >
               <i class="bi bi-hourglass-split" />
-              <span>{{ $t('history-context') }}</span>
-              <span class="badge ms-1" :class="showHistoryContext ? 'bg-white text-primary' : 'bg-secondary text-white'">
+              <span class="fw-medium">{{ $t('history-context') }}</span>
+              <span class="mini-status-badge ms-1" :class="showHistoryContext ? 'status-on' : 'status-off'">
                 {{ showHistoryContext ? 'ON' : 'OFF' }}
               </span>
             </button>
 
             <!-- Toggle Places / Locations Markers Button -->
             <button
-              class="btn btn-sm d-flex align-items-center gap-1"
-              :class="showPlaces ? 'btn-danger text-white' : 'btn-outline-secondary'"
+              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill"
+              :class="showPlaces ? 'btn-tool-active-danger' : 'bg-white text-muted'"
               type="button"
               :title="showPlaces ? $t('hide-places') : $t('show-places')"
               @click="togglePlaces"
             >
               <i class="bi bi-geo-alt-fill" />
-              <span>{{ $t('places') }}</span>
-              <span class="badge ms-1" :class="showPlaces ? 'bg-white text-danger' : 'bg-secondary text-white'">
+              <span class="fw-medium">{{ $t('places') }}</span>
+              <span class="mini-status-badge ms-1" :class="showPlaces ? 'status-on-danger' : 'status-off'">
                 {{ showPlaces ? 'ON' : 'OFF' }}
               </span>
             </button>
 
             <!-- Zoom & Fit Scale Controls Group -->
-            <div class="btn-group btn-group-sm" role="group">
+            <div class="zoom-pill-group border rounded-pill d-flex align-items-center bg-white shadow-xs" role="group">
               <button
-                class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-2"
+                class="btn btn-sm zoom-btn d-flex align-items-center justify-content-center"
                 type="button"
                 :title="$t('zoom-in')"
                 @click="zoomIn"
               >
                 <i class="bi bi-zoom-in" />
               </button>
+              <div class="zoom-divider" />
               <button
-                class="btn btn-outline-secondary d-flex align-items-center justify-content-center px-2"
+                class="btn btn-sm zoom-btn d-flex align-items-center justify-content-center"
                 type="button"
                 :title="$t('zoom-out')"
                 @click="zoomOut"
               >
                 <i class="bi bi-zoom-out" />
               </button>
+              <div class="zoom-divider" />
               <button
-                class="btn btn-outline-secondary d-flex align-items-center gap-1"
+                class="btn btn-sm zoom-btn d-flex align-items-center gap-1 px-2"
                 type="button"
                 :title="$t('fit-scale-title')"
                 @click="resetToAutoScale"
@@ -169,14 +170,14 @@
 
             <!-- Expand / Collapse All Bars Button -->
             <button
-              class="btn btn-sm d-flex align-items-center gap-1"
-              :class="unfoldedPersonIds.size === 0 ? 'btn-outline-secondary' : 'btn-info'"
+              class="btn btn-sm btn-tool-pill d-flex align-items-center gap-1 border rounded-pill"
+              :class="unfoldedPersonIds.size === 0 ? 'bg-white text-muted' : 'btn-tool-active-info'"
               type="button"
               :title="unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars')"
               @click="toggleAllBars"
             >
               <i :class="unfoldedPersonIds.size === 0 ? 'bi bi-layout-three-columns' : 'bi bi-dash-square'" />
-              <span>{{ unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars') }}</span>
+              <span class="fw-medium">{{ unfoldedPersonIds.size === 0 ? $t('expand-all-bars') : $t('collapse-all-bars') }}</span>
             </button>
           </div>
         </div>
@@ -202,123 +203,45 @@
             <svg id="timeline-graph" />
           </div>
 
-          <!-- Floating Action Toolbar on Person Hover -->
-          <div
-            v-if="hoveredPerson && viewMode === 'dynamic'"
-            class="person-floating-toolbar shadow border d-flex flex-column gap-1 p-2 bg-white rounded-3"
-            :style="floatingToolbarStyle"
-            @mouseenter="onToolbarMouseEnter"
-            @mouseleave="onToolbarMouseLeave"
-          >
-            <!-- Nom de la personne, lieu de naissance et lieu de décès -->
-            <div class="px-2 py-1 border-bottom text-center">
-              <div class="fw-bold text-dark small text-truncate">
-                {{ hoveredPerson.first_name }} {{ hoveredPerson.last_name }}
-              </div>
-              <div v-if="getPersonBirthInfo(hoveredPerson)" class="text-muted d-flex align-items-center justify-content-center gap-1 mt-1" style="font-size: 11px;">
-                <i class="bi bi-geo-alt-fill text-danger" />
-                <span class="text-truncate">{{ getPersonBirthInfo(hoveredPerson) }}</span>
-              </div>
-              <div v-if="getPersonDeathInfo(hoveredPerson)" class="text-muted d-flex align-items-center justify-content-center gap-1 mt-1" style="font-size: 11px;">
-                <span class="text-secondary fw-bold" style="font-size: 10px;">✝</span>
-                <span class="text-truncate">{{ getPersonDeathInfo(hoveredPerson) }}</span>
-              </div>
-            </div>
-
-            <!-- Bouton Parents ▲ -->
-            <button
-              v-if="getPersonParents(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-primary py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-primary text-white': areAscendantsVisible(hoveredPerson.id) }"
-              type="button"
-              @click="toggleAscendants(hoveredPerson.id)"
-            >
-              <span>▲ {{ areAscendantsVisible(hoveredPerson.id) ? $t('hide-parents') : $t('show-parents') }}</span>
-              <span class="badge rounded-pill" :class="areAscendantsVisible(hoveredPerson.id) ? 'bg-white text-primary' : 'bg-primary text-white'">
-                {{ getPersonParents(hoveredPerson.id).length }}
-              </span>
-            </button>
-
-            <!-- Bouton Conjoints 💍 -->
-            <button
-              v-if="filterSpouses(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-warning text-dark py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-warning': expandedSpouseIds.has(hoveredPerson.id) }"
-              type="button"
-              @click="toggleSpouses(hoveredPerson.id)"
-            >
-              <span>💍 {{ expandedSpouseIds.has(hoveredPerson.id) ? $t('hide-spouses') : $t('show-spouses') }}</span>
-              <span class="badge rounded-pill" :class="expandedSpouseIds.has(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-warning text-dark'">
-                {{ filterSpouses(hoveredPerson.id).length }}
-              </span>
-            </button>
-
-            <!-- Bouton Enfants ▼ -->
-            <button
-              v-if="getPersonChildren(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-success py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-success text-white': areDescendantsVisible(hoveredPerson.id) }"
-              type="button"
-              @click="toggleDescendants(hoveredPerson.id)"
-            >
-              <span>▼ {{ areDescendantsVisible(hoveredPerson.id) ? $t('hide-children') : $t('show-children') }}</span>
-              <span class="badge rounded-pill" :class="areDescendantsVisible(hoveredPerson.id) ? 'bg-white text-success' : 'bg-success text-white'">
-                {{ getPersonChildren(hoveredPerson.id).length }}
-              </span>
-            </button>
-
-            <!-- Bouton Frères / Sœurs -->
-            <button
-              v-if="getPersonSiblings(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-info text-dark py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-info text-white': areSiblingsVisible(hoveredPerson.id) }"
-              type="button"
-              @click="toggleSiblings(hoveredPerson.id)"
-            >
-              <span>👥 {{ areSiblingsVisible(hoveredPerson.id) ? $t('hide-siblings') : $t('show-siblings') }}</span>
-              <span class="badge rounded-pill" :class="areSiblingsVisible(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-info text-white'">
-                {{ getPersonSiblings(hoveredPerson.id).length }}
-              </span>
-            </button>
-
-            <!-- Bouton Tantes / Oncles -->
-            <button
-              v-if="getPersonUnclesAunts(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-secondary py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-secondary text-white': areUnclesAuntsVisible(hoveredPerson.id) }"
-              type="button"
-              @click="toggleUnclesAunts(hoveredPerson.id)"
-            >
-              <span>👔 {{ areUnclesAuntsVisible(hoveredPerson.id) ? $t('hide-uncles-aunts') : $t('show-uncles-aunts') }}</span>
-              <span class="badge rounded-pill" :class="areUnclesAuntsVisible(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-secondary text-white'">
-                {{ getPersonUnclesAunts(hoveredPerson.id).length }}
-              </span>
-            </button>
-
-            <!-- Bouton Cousins -->
-            <button
-              v-if="getPersonCousins(hoveredPerson.id).length > 0"
-              class="btn btn-sm btn-outline-dark py-1 px-2 d-flex align-items-center justify-content-between gap-2 rounded-2 text-start"
-              :class="{ 'btn-dark text-white': areCousinsVisible(hoveredPerson.id) }"
-              type="button"
-              @click="toggleCousins(hoveredPerson.id)"
-            >
-              <span>🌱 {{ areCousinsVisible(hoveredPerson.id) ? $t('hide-cousins') : $t('show-cousins') }}</span>
-              <span class="badge rounded-pill" :class="areCousinsVisible(hoveredPerson.id) ? 'bg-white text-dark' : 'bg-dark text-white'">
-                {{ getPersonCousins(hoveredPerson.id).length }}
-              </span>
-            </button>
-          </div>
-
-          <!-- Right-Click Context Menu on Person -->
+          <!-- Person Context Menu (Click on avatar or right-click anywhere on person) -->
           <div
             v-if="contextMenuPerson"
+            id="personContextMenu"
             class="person-context-menu dropdown-menu show shadow-lg border py-1"
             :style="contextMenuStyle"
             @click.stop
+            @mousedown.stop
+            @touchstart.stop
           >
-            <div class="px-3 py-1 border-bottom text-muted small fw-semibold">
-              {{ contextMenuPerson.first_name }} {{ contextMenuPerson.last_name }}
+            <!-- Header avec Nom et Dates/Lieux de naissance et décès -->
+            <div class="px-3 py-2 border-bottom bg-light bg-opacity-50">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="fw-bold text-dark text-truncate" style="font-size: 14px;">
+                  {{ contextMenuPerson.first_name }} {{ contextMenuPerson.last_name }}
+                </div>
+                <button
+                  type="button"
+                  class="btn-close shadow-none flex-shrink-0"
+                  style="font-size: 9px; opacity: 0.65; cursor: pointer;"
+                  title="Fermer (Échap)"
+                  aria-label="Close"
+                  @click.stop="closeContextMenu"
+                />
+              </div>
+              <div class="d-flex flex-column gap-1 mt-1 text-muted" style="font-size: 11px;">
+                <div v-if="contextMenuPerson.birth_date || getPersonBirthInfo(contextMenuPerson)" class="d-flex align-items-center gap-1">
+                  <i class="bi bi-star-fill text-warning flex-shrink-0" style="font-size: 9px;" />
+                  <span class="text-truncate">{{ formatPersonBirth(contextMenuPerson) }}</span>
+                </div>
+                <div v-if="contextMenuPerson.death_date || getPersonDeathInfo(contextMenuPerson)" class="d-flex align-items-center gap-1">
+                  <span class="text-secondary fw-bold flex-shrink-0" style="font-size: 10px; line-height: 1;">✝</span>
+                  <span class="text-truncate">{{ formatPersonDeath(contextMenuPerson) }}</span>
+                </div>
+                <div v-else-if="!contextMenuPerson.death_date_verified" class="d-flex align-items-center gap-1 text-success">
+                  <i class="bi bi-heart-pulse-fill flex-shrink-0" style="font-size: 10px;" />
+                  <span class="text-truncate">{{ $t('living') }}</span>
+                </div>
+              </div>
             </div>
 
             <!-- Voir profil -->
@@ -556,10 +479,6 @@ export default {
       expandedCousinIds: new Set(),
       pinnedPersonIds: new Set(),
       unfoldedPersonIds: new Set(),
-      hoveredPerson: null,
-      floatingToolbarStyle: {},
-      isHoveringToolbar: false,
-      hoverToolbarTimer: null,
       animatingExpansion: null,
       contextMenuPerson: null,
       contextMenuStyle: {}
@@ -1122,12 +1041,7 @@ export default {
 
     areAscendantsVisible (personId) {
       if (!personId) return false
-      if (this.expandedAscendantIds.has(personId)) return true
-      const parents = this.getPersonParents(personId)
-      if (parents.length === 0) return false
-      const visibleIds = this.getDynamicVisiblePersonIds()
-      const nonRootParents = parents.filter(p => p.id !== this.dynamicRootPersonId)
-      return nonRootParents.length > 0 && nonRootParents.some(p => visibleIds.has(p.id))
+      return this.expandedAscendantIds.has(personId)
     },
 
     areDescendantsVisible (personId) {
@@ -1158,7 +1072,6 @@ export default {
               if (this.pinnedPersonIds) this.pinnedPersonIds.delete(parent.id)
               this.expandedAscendantIds.delete(parent.id)
               this.expandedSpouseIds.delete(parent.id)
-              this.expandedDescendantIds.delete(parent.id)
               this.expandedSiblingIds.delete(parent.id)
               this.expandedUncleAuntIds.delete(parent.id)
               this.expandedCousinIds.delete(parent.id)
@@ -1439,7 +1352,6 @@ export default {
 
     toggleViewMode (mode) {
       this.viewMode = mode
-      this.hoveredPerson = null
       this.closeContextMenu()
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
@@ -1459,7 +1371,6 @@ export default {
       this.expandedUncleAuntIds.clear()
       this.expandedCousinIds.clear()
       this.pinnedPersonIds.clear()
-      this.hoveredPerson = null
       this.closeContextMenu()
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
@@ -1480,7 +1391,6 @@ export default {
       this.expandedUncleAuntIds.clear()
       this.expandedCousinIds.clear()
       this.pinnedPersonIds.clear()
-      this.hoveredPerson = null
       this.closeContextMenu()
       this.applyScaleBounds()
       this.$emit('data-loaded', 'timeline', {
@@ -1499,30 +1409,40 @@ export default {
     },
 
     openContextMenu (person, event) {
-      this.contextMenuPerson = person
-      if (this.hoverToolbarTimer) {
-        clearTimeout(this.hoverToolbarTimer)
-        this.hoverToolbarTimer = null
+      if (this.contextMenuPerson && this.contextMenuPerson.id === person.id) {
+        this.closeContextMenu()
+        return
       }
-      this.hoveredPerson = null
+      this.contextMenuPerson = person
 
       const wrapper = document.getElementById('timeline-wrapper')
-      if (wrapper) {
+      if (wrapper && event && typeof event.clientX === 'number') {
         const wrapperRect = wrapper.getBoundingClientRect()
         const mouseX = event.clientX - wrapperRect.left + wrapper.scrollLeft
         const mouseY = event.clientY - wrapperRect.top + wrapper.scrollTop
+        const menuWidth = 260
+        const posX = (mouseX + menuWidth > wrapperRect.width + wrapper.scrollLeft - 20)
+          ? Math.max(10, mouseX - menuWidth)
+          : Math.max(10, mouseX)
 
         this.contextMenuStyle = {
           position: 'absolute',
-          left: `${Math.max(10, mouseX)}px`,
+          left: `${posX}px`,
           top: `${Math.max(10, mouseY)}px`,
           zIndex: 1050
         }
-      } else {
+      } else if (event && typeof event.clientX === 'number') {
         this.contextMenuStyle = {
           position: 'fixed',
           left: `${event.clientX}px`,
           top: `${event.clientY}px`,
+          zIndex: 1050
+        }
+      } else {
+        this.contextMenuStyle = {
+          position: 'absolute',
+          left: '50px',
+          top: '50px',
           zIndex: 1050
         }
       }
@@ -1568,51 +1488,26 @@ export default {
       }
     },
 
-    onPersonMouseEnter (person, event) {
-      if (this.hoverToolbarTimer) {
-        clearTimeout(this.hoverToolbarTimer)
-        this.hoverToolbarTimer = null
+    formatPersonBirth (person) {
+      if (!person) return ''
+      const bEv = (person.events || []).find(e => (e.event_type || '').toLowerCase() === 'birth')
+      const dateStr = person.birth_date || (bEv ? bEv.event_date : null)
+      const placeStr = bEv && bEv.event_place ? bEv.event_place : null
+      if (dateStr && placeStr) {
+        return `${dateStr} • ${placeStr}`
       }
-      this.hoveredPerson = person
-
-      // Positionner la toolbar à droite de l'avatar (sur la ligne de vie)
-      const wrapper = document.getElementById('timeline-wrapper')
-      if (!wrapper) return
-      const wrapperRect = wrapper.getBoundingClientRect()
-      const avatarRect = event.currentTarget.getBoundingClientRect()
-
-      // Top : aligné légèrement au-dessus de l'avatar pour un menu vertical
-      const top = avatarRect.top - wrapperRect.top + wrapper.scrollTop - 6
-      // Left : juste à droite de l'avatar (bord droit + 6px de marge)
-      const left = avatarRect.right - wrapperRect.left + wrapper.scrollLeft + 6
-
-      this.floatingToolbarStyle = {
-        top: `${Math.max(8, top)}px`,
-        left: `${Math.min(left, wrapperRect.width - 230)}px`
-      }
+      return dateStr || placeStr || ''
     },
 
-    onPersonMouseLeave () {
-      this.hoverToolbarTimer = setTimeout(() => {
-        if (!this.isHoveringToolbar) {
-          this.hoveredPerson = null
-        }
-      }, 350)
-    },
-
-    onToolbarMouseEnter () {
-      if (this.hoverToolbarTimer) {
-        clearTimeout(this.hoverToolbarTimer)
-        this.hoverToolbarTimer = null
+    formatPersonDeath (person) {
+      if (!person) return ''
+      const dEv = (person.events || []).find(e => (e.event_type || '').toLowerCase() === 'death')
+      const dateStr = person.death_date || (dEv ? dEv.event_date : null)
+      const placeStr = dEv && dEv.event_place ? dEv.event_place : null
+      if (dateStr && placeStr) {
+        return `${dateStr} • ${placeStr}`
       }
-      this.isHoveringToolbar = true
-    },
-
-    onToolbarMouseLeave () {
-      this.isHoveringToolbar = false
-      this.hoverToolbarTimer = setTimeout(() => {
-        this.hoveredPerson = null
-      }, 300)
+      return dateStr || placeStr || ''
     },
 
     getPersonBirthInfo (person) {
@@ -2057,6 +1952,15 @@ export default {
     },
 
     onPointerStart(event, type) {
+      // Ignorer si on clique dans le menu contextuel
+      if (event.target && event.target.closest('.person-context-menu')) {
+        return;
+      }
+
+      if (this.contextMenuPerson) {
+        this.closeContextMenu();
+      }
+
       // Ignorer si on clique sur un élément interactif (personne, pastille, bouton...)
       if (event.target && event.target.closest('.person, .place-marker, .marriage-bar-badge, button, a, input, select, .action-btn')) {
         return;
@@ -2217,11 +2121,13 @@ export default {
     },
 
     drawTimelineHeader (width, margin, yearStart, yearStop) {
+      const headerHeight = 46;
       const timelineHeader = d3.select('#timeline-header')
         .attr('width', width)
-        .attr('height', 60)
+        .attr('height', headerHeight)
+        .html('')
         .append('g')
-        .attr('transform', `translate(${margin.left},${margin.top+15})`)
+        .attr('transform', `translate(${margin.left}, 34)`)
 
       const xScale = d3.scaleLinear()
         .domain([yearStart, yearStop])
@@ -2229,10 +2135,53 @@ export default {
 
       const xAxis = d3.axisTop(xScale).tickFormat(d3.format('d'))
 
-      timelineHeader.append('g')
+      const axisGroup = timelineHeader.append('g')
         .attr('class', 'x axis')
         .call(xAxis)
-        .attr('transform', 'translate(0, 0)')
+
+      // Sleek baseline
+      axisGroup.select('.domain')
+        .attr('stroke', '#e2e8f0')
+        .attr('stroke-width', 1.5)
+
+      // Custom tick styling & modern typography
+      axisGroup.selectAll('.tick').each(function(d) {
+        const isCentury = d % 100 === 0;
+        const isDecade = d % 10 === 0;
+        const tick = d3.select(this);
+
+        if (isCentury) {
+          tick.select('line')
+            .attr('y2', -9)
+            .attr('stroke', '#2563eb')
+            .attr('stroke-width', 2);
+          tick.select('text')
+            .attr('font-weight', '700')
+            .attr('fill', '#2563eb')
+            .attr('font-size', '12px')
+            .attr('y', -12);
+        } else if (isDecade) {
+          tick.select('line')
+            .attr('y2', -6)
+            .attr('stroke', '#94a3b8')
+            .attr('stroke-width', 1.5);
+          tick.select('text')
+            .attr('font-weight', '700')
+            .attr('fill', '#0f172a')
+            .attr('font-size', '11px')
+            .attr('y', -10);
+        } else {
+          tick.select('line')
+            .attr('y2', -4)
+            .attr('stroke', '#cbd5e1')
+            .attr('stroke-width', 1);
+          tick.select('text')
+            .attr('font-weight', '500')
+            .attr('fill', '#64748b')
+            .attr('font-size', '10px')
+            .attr('y', -8);
+        }
+      });
     },
 
     drawTimelineBackground (xScale, yearStart, yearStop, height, margin) {
@@ -2242,24 +2191,47 @@ export default {
         intervalYears = 10;
       }
 
+      const tickValues = d3.range(yearStart - intervalYears * 5, yearStop + intervalYears * 5, intervalYears);
       const xAxisTicks = d3.axisTop(xScale)
         .tickFormat('')
         .tickSize(-(height + margin.top))
-        .tickValues(d3.range(yearStart-intervalYears*5, yearStop+intervalYears*5, intervalYears))
+        .tickValues(tickValues);
 
       // Add a group for the vertical lines
       const grahSvg = d3.select('#timeline-graph');
       const xAxisTicksGroup = grahSvg.append('g')
-        .call(xAxisTicks)
+        .attr('class', 'grid-lines-group')
+        .call(xAxisTicks);
 
       // remove border
       xAxisTicksGroup.select('path').remove();
 
-      // Modify the style of the vertical lines
-      xAxisTicksGroup.selectAll('line')
-        .attr('stroke', '#ccc')
-        .attr('stroke-dasharray', '1,1');
+      // Modify the style of the vertical lines: subtle solid grid lines
+      xAxisTicksGroup.selectAll('line').each(function(d) {
+        const isCentury = d % 100 === 0;
+        const isDecade = d % 10 === 0;
+        const line = d3.select(this);
 
+        if (isCentury) {
+          line
+            .attr('stroke', '#cbd5e1')
+            .attr('stroke-width', 1)
+            .attr('stroke-dasharray', 'none')
+            .attr('stroke-opacity', 0.8);
+        } else if (isDecade) {
+          line
+            .attr('stroke', '#e2e8f0')
+            .attr('stroke-width', 1)
+            .attr('stroke-dasharray', 'none')
+            .attr('stroke-opacity', 0.65);
+        } else {
+          line
+            .attr('stroke', '#f1f5f9')
+            .attr('stroke-width', 1)
+            .attr('stroke-dasharray', 'none')
+            .attr('stroke-opacity', 0.9);
+        }
+      });
     },
 
     drawRoundedRect (x, y, width, height, radius, roundLeft, roundRight) {
@@ -2395,17 +2367,18 @@ export default {
         ? dataUrl + person.picture
         : (person.gender === 'Male' ? 'profile_men.png' : 'profile_women.png')
 
+      const pillWidth = 175
       const avatarCx = xScale(birthYear) + 20
 
       if (!isUnfolded) {
         // ── MODE COMPACT (par défaut) ─────────────────────────────────────────
-        // Pastille arrondie de ~180px centrée sur la date de naissance
-        const pillWidth = 170
+        // Pastille arrondie centrée sur la date de naissance
         const pillX = xScale(birthYear)
         const pillRadius = height / 2
 
-        // Ombre portée / fond de la pastille
+        // Fond et ombre de la pastille compacte
         personGroup.append('rect')
+          .attr('class', 'person-compact-pill')
           .attr('x', pillX)
           .attr('y', y)
           .attr('width', pillWidth)
@@ -2413,23 +2386,38 @@ export default {
           .attr('rx', pillRadius)
           .attr('ry', pillRadius)
           .attr('fill', periods.length > 0 ? periods[0].color : '#e2e8f0')
-          .attr('stroke', 'rgba(15, 23, 42, 0.12)')
+          .attr('stroke', 'rgba(255, 255, 255, 0.35)')
           .attr('stroke-width', 1.5)
           .style('cursor', 'pointer')
-          .style('filter', 'drop-shadow(0 2px 6px rgba(15,23,42,0.1))')
+          .style('filter', 'drop-shadow(0 3px 8px rgba(15, 23, 42, 0.14))')
           .on('click', () => this.togglePersonBar(person.id))
 
-        // Cercle blanc derrière l'avatar (zone de survol pour la toolbar)
+        // Ligne de surbrillance supérieure discrète (effet de verre/volume)
+        personGroup.append('line')
+          .attr('x1', pillX + pillRadius)
+          .attr('y1', y + 1.5)
+          .attr('x2', pillX + pillWidth - pillRadius)
+          .attr('y2', y + 1.5)
+          .attr('stroke', 'rgba(255, 255, 255, 0.4)')
+          .attr('stroke-width', 1)
+          .attr('stroke-linecap', 'round')
+          .style('pointer-events', 'none')
+
+        // Cercle blanc derrière l'avatar pour le détacher nettement
         const avatarCircle = personGroup.append('circle')
           .attr('cx', avatarCx)
           .attr('cy', y + height / 2)
           .attr('r', 16)
           .attr('fill', '#ffffff')
           .attr('stroke', '#ffffff')
-          .attr('stroke-width', 2)
-          .style('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.15))')
+          .attr('stroke-width', 2.5)
+          .style('filter', 'drop-shadow(0 2px 5px rgba(15, 23, 42, 0.2))')
           .style('cursor', 'pointer')
-          .on('click', () => this.togglePersonBar(person.id))
+          .on('click', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
           .on('contextmenu', (event) => {
             event.preventDefault()
             event.stopPropagation()
@@ -2445,24 +2433,20 @@ export default {
           .attr('height', 30)
           .attr('clip-path', 'circle(15px at 15px 15px)')
           .style('cursor', 'pointer')
-          .on('click', () => this.togglePersonBar(person.id))
+          .on('click', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
           .on('contextmenu', (event) => {
             event.preventDefault()
             event.stopPropagation()
             this.openContextMenu(person, event)
           })
 
-        // Toolbar sur survol de l'avatar uniquement
-        if (this.viewMode === 'dynamic') {
-          const attachAvatarHover = (el) => {
-            el.on('mouseenter', (event) => this.onPersonMouseEnter(person, event))
-              .on('mouseleave', () => this.onPersonMouseLeave())
-          }
-          attachAvatarHover(avatarCircle)
-          attachAvatarHover(avatarImage)
-        }
-
-        // Prénom (texte tronqué)
+        // Prénom et nom (texte blanc net avec ombre portée pour lisibilité parfaite sur toutes couleurs)
+        const fullName = `${person.first_name} ${person.last_name}`
+        const displayName = fullName.length > 13 ? fullName.substring(0, 13) + '…' : fullName
         personGroup.append('text')
           .attr('x', avatarCx + 22)
           .attr('y', y + height / 2)
@@ -2470,91 +2454,161 @@ export default {
           .attr('text-anchor', 'start')
           .attr('font-size', '12px')
           .attr('font-weight', '700')
-          .attr('fill', '#1e293b')
+          .attr('font-family', 'var(--ft-font)')
+          .attr('fill', '#ffffff')
+          .style('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.45)')
           .style('user-select', 'none')
           .style('cursor', 'pointer')
-          .text(`${person.first_name} ${person.last_name}`.substring(0, 13) + ((`${person.first_name} ${person.last_name}`).length > 13 ? '…' : ''))
+          .text(displayName)
           .on('click', () => this.togglePersonBar(person.id))
 
-        // Icône chevron droit ▶ pour indiquer qu'on peut déplier
-        personGroup.append('text')
-          .attr('class', 'expand-toggle-icon')
-          .attr('x', pillX + pillWidth - 14)
-          .attr('y', y + height / 2)
-          .attr('dy', '.35em')
-          .attr('text-anchor', 'middle')
-          .attr('font-size', '11px')
-          .attr('fill', '#64748b')
-          .style('user-select', 'none')
+        // Bouton déplier élégant à l'extrémité droite avec chevron SVG
+        const expandBtn = personGroup.append('g')
+          .attr('class', 'expand-btn-group')
+          .attr('transform', `translate(${pillX + pillWidth - 14}, ${y + height / 2})`)
           .style('cursor', 'pointer')
-          .text('▶')
-          .on('click', () => this.togglePersonBar(person.id))
+          .on('mousedown', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          })
+          .on('touchstart', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          })
+          .on('click', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.togglePersonBar(person.id)
+          })
+
+        // Zone de clic étendue transparente
+        expandBtn.append('circle')
+          .attr('r', 14)
+          .attr('fill', 'transparent')
+          .style('cursor', 'pointer')
+
+        expandBtn.append('circle')
+          .attr('class', 'expand-btn-bg')
+          .attr('r', 8.5)
+          .attr('fill', 'rgba(255, 255, 255, 0.22)')
+          .attr('stroke', 'rgba(255, 255, 255, 0.45)')
+          .attr('stroke-width', 1)
+
+        expandBtn.append('path')
+          .attr('class', 'expand-toggle-icon')
+          .attr('d', 'M -1.5,-3 L 1.8,0 L -1.5,3')
+          .attr('fill', 'none')
+          .attr('stroke', '#ffffff')
+          .attr('stroke-width', 1.8)
+          .attr('stroke-linecap', 'round')
+          .attr('stroke-linejoin', 'round')
+
+        expandBtn.append('title').text('Déplier la barre de vie')
 
       } else {
         // ── MODE DÉPLIÉ (barre de vie complète) ───────────────────────────────
-        // Create a timeline group for all periods
-        const periodsGroup = personGroup.append('g')
+        // Groupe pour les tranches temporelles de la personne
+        const periodsGroup = personGroup.append('g').attr('class', 'person-periods-group')
 
-        // draw each period for this person
-        periods.forEach(period => {
+        // Tracé de chaque période avec extrémités arrondies et bordures douces
+        periods.forEach((period, pIndex) => {
           const x = xScale(period.start)
           const width = xScale(period.end) - xScale(period.start)
 
-          // Determine the filter to apply
           let filter = 'none'
           if (!period.birthDateVerified || !period.deathDateVerified) {
             filter = 'url(#blur-filter)'
           }
 
+          const roundLeft = pIndex === 0
+          const roundRight = pIndex === periods.length - 1
+          const radius = Math.max(0, Math.min(height / 2, width / 2, 8))
+
           const periodPath = periodsGroup.append('path')
-            .attr('d', this.drawRoundedRect(x, y, width, height, 0, false, false))
+            .attr('class', 'person-period' + (period.isRelationship ? ' period-relationship' : ''))
+            .attr('d', this.drawRoundedRect(x, y, width, height, radius, roundLeft, roundRight))
             .attr('fill', period.color)
-            .attr('stroke', 'rgba(15, 23, 42, 0.1)')
+            .attr('stroke', 'rgba(255, 255, 255, 0.25)')
             .attr('stroke-width', 1)
             .style('cursor', 'pointer')
             .style('filter', filter)
             .on('click', () => this.showPersonProfile(person))
 
+          // Ligne de brillance subtile sur le dessus de la période
+          if (width > 6) {
+            const hx1 = x + (roundLeft ? radius : 0)
+            const hx2 = x + width - (roundRight ? radius : 0)
+            if (hx2 > hx1) {
+              periodsGroup.append('line')
+                .attr('x1', hx1)
+                .attr('y1', y + 1)
+                .attr('x2', hx2)
+                .attr('y2', y + 1)
+                .attr('stroke', 'rgba(255, 255, 255, 0.35)')
+                .attr('stroke-width', 1)
+                .attr('stroke-linecap', 'round')
+                .style('pointer-events', 'none')
+            }
+          }
+
           if (period.isRelationship) {
             const typeLabel = period.relationshipType === 'marriage' ? 'Mariage' : 'Union'
             const periodDates = period.divorceYear ? `(${period.start} - ${period.divorceYear})` : `(depuis ${period.start})`
-            // Lieu de l'union s'il est renseigné dans les événements
             const unionEv = person.events ? person.events.find(e => ['marriage', 'civil union', 'civil_union'].includes((e.event_type || '').toLowerCase()) && e.event_place) : null
             const placeSuffix = (unionEv && unionEv.event_place) ? `\n📍 ${unionEv.event_place}` : ''
             const relTooltip = `💍 ${typeLabel} avec ${period.spouseName} ${periodDates}${placeSuffix}`
             periodPath.append('title').text(relTooltip)
 
-            // Anneaux d'alliance dorés discrets au début de la tranche de mariage
-            if (width >= 24) {
+            // Badge bijou raffiné avec alliances dorées au début de la tranche de mariage
+            if (width >= 28) {
               const ringG = periodsGroup.append('g')
                 .attr('class', 'marriage-bar-badge')
-                .attr('transform', `translate(${x + 12}, ${y + height / 2})`)
+                .attr('transform', `translate(${x + 15}, ${y + height / 2})`)
                 .style('cursor', 'pointer')
                 .on('click', () => this.showPersonProfile(person))
 
-              ringG.append('circle').attr('cx', -3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#fbbf24').attr('stroke-width', 1.8)
-              ringG.append('circle').attr('cx', 3).attr('cy', 0).attr('r', 4.5).attr('fill', 'none').attr('stroke', '#f59e0b').attr('stroke-width', 1.8)
+              // Capsule badge de fond
+              ringG.append('rect')
+                .attr('x', -13)
+                .attr('y', -9)
+                .attr('width', 26)
+                .attr('height', 18)
+                .attr('rx', 9)
+                .attr('fill', 'rgba(255, 255, 255, 0.92)')
+                .attr('stroke', 'rgba(245, 158, 11, 0.5)')
+                .attr('stroke-width', 1)
+                .style('filter', 'drop-shadow(0 1px 3px rgba(0,0,0,0.15))')
+
+              // Deux anneaux entrelacés dorés
+              ringG.append('circle').attr('cx', -3.2).attr('cy', 0).attr('r', 4.2).attr('fill', 'none').attr('stroke', '#d97706').attr('stroke-width', 1.8)
+              ringG.append('circle').attr('cx', 3.2).attr('cy', 0).attr('r', 4.2).attr('fill', 'none').attr('stroke', '#f59e0b').attr('stroke-width', 1.8)
               ringG.append('title').text(relTooltip)
             }
           }
         })
 
-        // Cercle de fond blanc pour détacher l'avatar (zone de survol pour la toolbar)
+        // Cercle de fond blanc pour détacher l'avatar
         const avatarCircleExp = personGroup.append('circle')
           .attr('cx', avatarCx)
           .attr('cy', y + height / 2)
           .attr('r', 16)
           .attr('fill', '#ffffff')
           .attr('stroke', '#ffffff')
-          .attr('stroke-width', 2)
-          .style('filter', 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))')
+          .attr('stroke-width', 2.5)
+          .style('filter', 'drop-shadow(0 2px 6px rgba(15, 23, 42, 0.22))')
+          .style('cursor', 'pointer')
+          .on('click', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
           .on('contextmenu', (event) => {
             event.preventDefault()
             event.stopPropagation()
             this.openContextMenu(person, event)
           })
 
-        // Append the image inside the circle
+        // Avatar (image de profil)
         const avatarImageExp = personGroup.append('image')
           .attr('xlink:href', imageUrl)
           .attr('x', avatarCx - 15)
@@ -2564,37 +2618,71 @@ export default {
           .attr('height', 30)
           .attr('clip-path', 'circle(15px at 15px 15px)')
           .style('cursor', 'pointer')
-          .on('click', () => this.showPersonProfile(person))
+          .on('click', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.openContextMenu(person, event)
+          })
           .on('contextmenu', (event) => {
             event.preventDefault()
             event.stopPropagation()
             this.openContextMenu(person, event)
           })
 
-        // Toolbar sur survol de l'avatar uniquement (mode déplié)
-        if (this.viewMode === 'dynamic') {
-          const attachAvatarHoverExp = (el) => {
-            el.on('mouseenter', (event) => this.onPersonMouseEnter(person, event))
-              .on('mouseleave', () => this.onPersonMouseLeave())
-          }
-          attachAvatarHoverExp(avatarCircleExp)
-          attachAvatarHoverExp(avatarImageExp)
-        }
-
-        // Add the person's name on the bar (texte blanc net)
+        // Nom de la personne sur la barre (texte blanc net avec ombre)
         personGroup.append('text')
+          .attr('class', 'person-bar-name')
           .attr('x', xScale(birthYear) + 44)
           .attr('y', y + height / 2)
           .attr('dy', '.35em')
           .attr('text-anchor', 'start')
           .attr('font-size', '13px')
           .attr('font-weight', '700')
+          .attr('font-family', 'var(--ft-font)')
           .attr('fill', '#ffffff')
-          .style('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.4)')
+          .style('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.45)')
           .text(`${person.first_name} ${person.last_name}`)
           .style('cursor', 'pointer')
           .style('user-select', 'none')
           .on('click', () => this.showPersonProfile(person))
+
+        // Dates vitales et âge affichés à l'extrémité droite de la barre si l'espace le permet
+        const lastPeriod = periods[periods.length - 1]
+        const totalBarWidth = lastPeriod ? (xScale(lastPeriod.end) - xScale(birthYear)) : 0
+        const barEndPixel = lastPeriod ? xScale(lastPeriod.end) : (xScale(birthYear) + 180)
+
+        if (totalBarWidth >= 200) {
+          const bYear = this.getYearFromDate(person.birth_date)
+          const dYear = person.death_date ? this.getYearFromDate(person.death_date) : null
+          let vitalText = ''
+          if (bYear && dYear) {
+            const age = dYear - bYear
+            vitalText = totalBarWidth >= 260 ? `${bYear} – ${dYear} (${age} ans)` : `${bYear} – ${dYear}`
+          } else if (bYear && person.death_date === null) {
+            const currentYear = new Date().getFullYear()
+            const age = currentYear - bYear
+            vitalText = totalBarWidth >= 260 ? `depuis ${bYear} (${age} ans)` : `depuis ${bYear}`
+          } else if (bYear) {
+            vitalText = `${bYear} – …`
+          }
+
+          if (vitalText) {
+            personGroup.append('text')
+              .attr('class', 'person-bar-dates')
+              .attr('x', barEndPixel - 14)
+              .attr('y', y + height / 2)
+              .attr('dy', '.35em')
+              .attr('text-anchor', 'end')
+              .attr('font-size', '11px')
+              .attr('font-weight', '600')
+              .attr('font-family', 'var(--ft-font)')
+              .attr('fill', 'rgba(255, 255, 255, 0.9)')
+              .style('text-shadow', '0 1px 2px rgba(0, 0, 0, 0.45)')
+              .style('user-select', 'none')
+              .style('pointer-events', 'none')
+              .text(vitalText)
+          }
+        }
 
         // ── Marqueurs de lieux géolocalisés sur la barre de vie ────────────────
         if (this.showPlaces && person.events && person.events.length > 0) {
@@ -2660,32 +2748,50 @@ export default {
           }
         }
 
-        // Bouton de repli ◀ à l'extrémité droite de la barre
-        const lastPeriod = periods[periods.length - 1]
+        // Bouton de repli élégant avec chevron SVG à l'extrémité droite de la barre
         const collapseX = lastPeriod ? xScale(lastPeriod.end) + 6 : xScale(birthYear) + 180
-        personGroup.append('circle')
-          .attr('class', 'collapse-btn-bg')
-          .attr('cx', collapseX + 10)
-          .attr('cy', y + height / 2)
-          .attr('r', 10)
-          .attr('fill', '#f1f5f9')
-          .attr('stroke', '#cbd5e1')
-          .attr('stroke-width', 1)
+        const collapseBtn = personGroup.append('g')
+          .attr('class', 'collapse-btn-group')
+          .attr('transform', `translate(${collapseX + 11}, ${y + height / 2})`)
           .style('cursor', 'pointer')
-          .on('click', () => this.togglePersonBar(person.id))
+          .on('mousedown', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          })
+          .on('touchstart', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          })
+          .on('click', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            this.togglePersonBar(person.id)
+          })
 
-        personGroup.append('text')
-          .attr('class', 'collapse-toggle-icon')
-          .attr('x', collapseX + 10)
-          .attr('y', y + height / 2)
-          .attr('dy', '.35em')
-          .attr('text-anchor', 'middle')
-          .attr('font-size', '11px')
-          .attr('fill', '#64748b')
-          .style('user-select', 'none')
+        // Zone de clic étendue transparente (facilite grandement le clic sans bouger)
+        collapseBtn.append('circle')
+          .attr('r', 16)
+          .attr('fill', 'transparent')
           .style('cursor', 'pointer')
-          .text('◀')
-          .on('click', () => this.togglePersonBar(person.id))
+
+        collapseBtn.append('circle')
+          .attr('class', 'collapse-btn-bg')
+          .attr('r', 10)
+          .attr('fill', '#ffffff')
+          .attr('stroke', '#cbd5e1')
+          .attr('stroke-width', 1.2)
+          .style('filter', 'drop-shadow(0 1px 3px rgba(15, 23, 42, 0.12))')
+
+        collapseBtn.append('path')
+          .attr('class', 'collapse-toggle-icon')
+          .attr('d', 'M 1.5,-3.5 L -2,0 L 1.5,3.5')
+          .attr('fill', 'none')
+          .attr('stroke', '#64748b')
+          .attr('stroke-width', 1.6)
+          .attr('stroke-linecap', 'round')
+          .attr('stroke-linejoin', 'round')
+
+        collapseBtn.append('title').text('Replier la barre de vie')
       }
 
       // set this person as displayed to avoid duplication
@@ -2694,20 +2800,15 @@ export default {
       // Store rendered coordinates for family links and search focus
       const actualYTop = y * 2
       const actualYBottom = actualYTop + height
-      // Note: chaque groupe SVG a transform(0, y) ET les éléments internes utilisent y dans leurs attributs,
-      // donc la position absolue réelle = 2*y. actualYTop + height/2 est le vrai centre absolu SVG.
       const actualYCenter = actualYTop + height / 2
-      // Points d'ancrage pour les liens de filiation :
-      //   anchorXOut = point de départ (centre de l'avatar du parent)
-      //   anchorXIn  = point d'arrivée (à gauche de l'avatar de l'enfant)
       const avatarCenterX = xScale(birthYear) + 20
-      const avatarLeftX   = xScale(birthYear) + 4  // cx(20) - r(16)
+      const avatarLeftX   = xScale(birthYear) + 4
 
       // Position X de fin de barre (en pixels) — pour le pont de mariage
       // Compact : fin du pill fixe ; Déplié : fin de la dernière période
       const barEndX = isUnfolded
         ? (() => { const lp = periods[periods.length - 1]; return lp?.end ? xScale(lp.end) : null })()
-        : xScale(birthYear) + 170
+        : xScale(birthYear) + pillWidth
 
 
 
@@ -2942,7 +3043,7 @@ export default {
           // Infobulle native SVG au survol
           band.append('title').text(fullLabelWithDates)
 
-          // Ligne séparatrice au début de la période
+          // Ligne séparatrice au début de la période: discrète et douce
           if (xStart >= 0 && xStart <= this.timelineWidth) {
             historyGroup.append('line')
               .attr('x1', xStart)
@@ -2950,52 +3051,72 @@ export default {
               .attr('x2', xStart)
               .attr('y2', height)
               .attr('stroke', period.borderColor)
-              .attr('stroke-width', 1.5)
-              .attr('stroke-dasharray', '4,4')
+              .attr('stroke-width', 1)
+              .attr('stroke-opacity', 0.4)
           }
 
-          // Label textuel étagé sur 2 niveaux pour éviter toute superposition
-          if (clampedWidth >= 30 && xStart < this.timelineWidth) {
-            const yLevel = (index % 2 === 0) ? 18 : 34
+          // Label textuel étagé sous forme de badge pilule flottant élégant
+          if (clampedWidth >= 28 && xStart < this.timelineWidth) {
+            const yLevel = (index % 2 === 0) ? 8 : 34
 
             // Choisir le texte le plus approprié selon la largeur réelle de la colonne
             let displayText
-            if (clampedWidth >= 220) {
+            if (clampedWidth >= 230) {
               displayText = fullLabelWithDates
-            } else if (clampedWidth >= 110) {
+            } else if (clampedWidth >= 120) {
               displayText = `${shortName} (${period.startYear}-${period.endYear})`
-            } else if (clampedWidth >= 50) {
+            } else if (clampedWidth >= 55) {
               displayText = shortName
             } else {
               displayText = `${period.startYear}`
             }
 
-            const textEl = historyGroup.append('text')
-              .attr('class', 'history-label')
-              .attr('x', clampedX + 6)
-              .attr('y', yLevel)
-              .attr('font-size', '12px')
-              .attr('font-weight', '700')
-              .attr('fill', '#0f172a')
-              .style('user-select', 'none')
+            const badgeGroup = historyGroup.append('g')
+              .attr('class', 'history-pill-badge')
+              .attr('transform', `translate(${clampedX + 6}, ${yLevel})`)
               .style('cursor', 'default')
-              .text(displayText)
 
-            textEl.append('title').text(fullLabelWithDates)
+            const approxTextWidth = displayText.length * 6.5 + 24
+            const badgeWidth = Math.min(approxTextWidth, clampedWidth - 12)
+
+            if (badgeWidth > 18) {
+              // Fond pilule blanc avec micro-ombre
+              badgeGroup.append('rect')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('width', badgeWidth)
+                .attr('height', 20)
+                .attr('rx', 6)
+                .attr('ry', 6)
+                .attr('fill', '#ffffff')
+                .attr('stroke', period.borderColor)
+                .attr('stroke-width', 1)
+                .attr('stroke-opacity', 0.55)
+                .style('filter', 'drop-shadow(0 1px 2px rgba(15, 23, 42, 0.07))')
+
+              // Point indicateur de couleur
+              badgeGroup.append('circle')
+                .attr('cx', 8)
+                .attr('cy', 10)
+                .attr('r', 3)
+                .attr('fill', period.borderColor)
+
+              // Libellé texte net
+              badgeGroup.append('text')
+                .attr('x', 15)
+                .attr('y', 14)
+                .attr('font-size', '10.5px')
+                .attr('font-weight', '600')
+                .attr('fill', '#1e293b')
+                .attr('font-family', 'var(--ft-font)')
+                .style('user-select', 'none')
+                .text(displayText)
+
+              badgeGroup.append('title').text(fullLabelWithDates)
+            }
           }
         }
       })
-
-      // Ligne séparatrice horizontale discrète sous le bandeau d'en-tête historique
-      historyGroup.append('line')
-        .attr('class', 'history-header-border')
-        .attr('x1', 0)
-        .attr('y1', 46)
-        .attr('x2', this.timelineWidth)
-        .attr('y2', 46)
-        .attr('stroke', 'rgba(148, 163, 184, 0.35)')
-        .attr('stroke-width', 1)
-        .attr('stroke-dasharray', '3,3')
     },
 
     drawMarriageBridges (graphSvg, xScale) {
@@ -3082,13 +3203,16 @@ export default {
           // Pas de gap visible → rien à dessiner
           if (gapHeight <= 0) return
 
-          // Couleur de la bande : couleur du couple depuis familyColorsMap
+          // Couleur de la bande : couleur douce et translucide du couple
           const familyKey = this.getFamilyKey(personData.id, spouse.id)
           const bandColor = this.familyColorsMap.get(familyKey) || '#e2e8f0'
-          // Ajout d'une légère transparence pour rester discret
-          const bandFill = bandColor.startsWith('#')
-            ? bandColor + '99'  // hex + alpha 60%
-            : bandColor.replace(/rgba?\(([^)]+)\)/, (_, g) => `rgba(${g.split(',').slice(0,3).join(',')}, 0.55)`)
+          const parsedColor = d3.color(bandColor)
+          const bandFill = parsedColor
+            ? `rgba(${parsedColor.r}, ${parsedColor.g}, ${parsedColor.b}, 0.16)`
+            : 'rgba(245, 158, 11, 0.16)'
+          const bandStroke = parsedColor
+            ? `rgba(${parsedColor.r}, ${parsedColor.g}, ${parsedColor.b}, 0.35)`
+            : 'rgba(245, 158, 11, 0.35)'
 
           // Enregistrer les métadonnées du pont pour le tracé des liens d'enfants
           this.coupleBridges.set(pairKey, {
@@ -3112,15 +3236,30 @@ export default {
             (!this.animatingExpansion.prevIds.has(personData.person.id) || !this.animatingExpansion.prevIds.has(spouseData.person.id))
           )
 
-          // Bande translucide dans le gap pendant l'union / parentalité
+          // Bande translucide élégante dans le gap reliant les époux
+          const bridgeWidth = xEnd - xStart
           const mBand = bridgeLayer.append('rect')
             .attr('class', 'marriage-band')
             .attr('x', xStart)
             .attr('y', gapTop)
-            .attr('width', xEnd - xStart)
+            .attr('width', bridgeWidth)
             .attr('height', gapHeight)
             .attr('fill', bandFill)
-            .attr('rx', 2)
+            .attr('stroke', bandStroke)
+            .attr('stroke-width', 1)
+            .attr('rx', 6)
+            .attr('ry', 6)
+
+          // Anneaux délicats dorés au centre du pont
+          if (bridgeWidth >= 40 && gapHeight >= 14) {
+            const bridgeCenterG = bridgeLayer.append('g')
+              .attr('class', 'marriage-bridge-center-badge')
+              .attr('transform', `translate(${xStart + Math.min(22, bridgeWidth / 2)}, ${gapCenterY})`)
+              .style('pointer-events', 'none')
+
+            bridgeCenterG.append('circle').attr('cx', -2.5).attr('cy', 0).attr('r', 3).attr('fill', 'none').attr('stroke', '#d97706').attr('stroke-width', 1.2)
+            bridgeCenterG.append('circle').attr('cx', 2.5).attr('cy', 0).attr('r', 3).attr('fill', 'none').attr('stroke', '#f59e0b').attr('stroke-width', 1.2)
+          }
 
           if (isNewCouple) {
             mBand
@@ -3510,21 +3649,249 @@ export default {
 /* Toolbar */
 .timeline-toolbar {
   z-index: 10;
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
 }
 
+/* Search Box in Toolbar */
 .search-box-wrapper {
-  min-width: 250px;
-  max-width: 380px;
+  min-width: 240px;
+  max-width: 360px;
   flex: 1;
 }
 
+.search-pill-group {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px !important;
+  height: 34px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.search-pill-group:focus-within {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.search-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.search-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 8px 0 0 !important;
+  height: 100%;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.search-clear-btn {
+  background: transparent;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.search-clear-btn:hover {
+  color: #0f172a !important;
+}
+
 .search-dropdown {
-  max-height: 280px;
+  max-height: 320px;
   overflow-y: auto;
+  border-radius: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16) !important;
+  padding: 6px !important;
+}
+
+.search-result-item {
+  border-radius: 9px !important;
+  transition: all 0.15s ease;
 }
 
 .search-result-item:hover {
+  background-color: #f1f5f9 !important;
+  transform: translateX(2px);
+}
+
+/* Segmented Tree Mode Control */
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
   background-color: #f1f5f9;
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid #e2e8f0;
+}
+
+.segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.segmented-btn:hover {
+  color: #0f172a;
+}
+
+.segmented-btn.active {
+  background-color: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.segmented-btn.active i {
+  color: #2563eb;
+}
+
+/* Tool Buttons (Pills) */
+.btn-tool-pill {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-color: #e2e8f0 !important;
+  transition: all 0.15s ease;
+  height: 32px;
+}
+
+.btn-tool-pill:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.btn-tool-active-primary {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
+}
+
+.btn-tool-active-primary:hover {
+  background-color: #dbeafe !important;
+}
+
+.btn-tool-active-danger {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+
+.btn-tool-active-danger:hover {
+  background-color: #fee2e2 !important;
+}
+
+.btn-tool-active-info {
+  background-color: #f0fdfa !important;
+  border-color: #99f6e4 !important;
+  color: #0d9488 !important;
+}
+
+.btn-tool-active-info:hover {
+  background-color: #ccfbf1 !important;
+}
+
+.dynamic-root-badge {
+  background-color: #eff6ff;
+  border-color: #bfdbfe !important;
+  font-size: 12px;
+  height: 32px;
+}
+
+/* Mini status badge inside toggle buttons */
+.mini-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+.status-on {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.status-on-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+.status-off {
+  background-color: #e2e8f0;
+  color: #64748b;
+}
+
+/* Zoom Pill Group */
+.zoom-pill-group {
+  height: 32px;
+  border-color: #e2e8f0 !important;
+}
+
+.zoom-btn {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  padding: 4px 8px;
+  height: 100%;
+  border-radius: 0;
+  transition: all 0.15s ease;
+}
+
+.zoom-btn:first-child {
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+  padding-left: 10px;
+}
+
+.zoom-btn:last-child {
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+  padding-right: 10px;
+}
+
+.zoom-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.zoom-divider {
+  width: 1px;
+  height: 16px;
+  background-color: #e2e8f0;
 }
 
 #timeline-wrapper {
@@ -3545,8 +3912,12 @@ export default {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch; 
-  height: 60px;
+  height: 46px;
   cursor: grab;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  z-index: 5;
 }
 
 #timeline-wrapper.is-dragging #timeline-header-container {
@@ -3556,10 +3927,21 @@ export default {
 #timeline-header {
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid #e2e8f0;
-  font-weight: 600;
-  color: #475569;
+  background: #ffffff;
+}
+
+#timeline-header .x.axis {
+  font-family: var(--ft-font);
+}
+
+#timeline-header .x.axis .domain {
+  stroke: #e2e8f0;
+  stroke-width: 1.5px;
+}
+
+#timeline-header .x.axis .tick text {
+  font-family: var(--ft-font);
+  user-select: none;
 }
 
 #timeline-graph-container {
@@ -3650,40 +4032,6 @@ export default {
   fill: #fef08a;
 }
 
-/* Floating Action Toolbar on Person Hover */
-.person-floating-toolbar {
-  position: absolute;
-  z-index: 1000;
-  pointer-events: auto;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(8px);
-  min-width: 200px;
-  animation: fadeInToolbar 0.15s ease-out;
-}
-
-/* Zone invisible de transition vers l'avatar pour ne jamais perdre le survol */
-.person-floating-toolbar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -12px;
-  width: 12px;
-  pointer-events: auto;
-}
-
-@keyframes fadeInToolbar {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Highlight pulse on search focus */
 @keyframes personPulse {
   0% {
@@ -3718,54 +4066,182 @@ export default {
   animation: newlyDeployedGlow 1.2s ease-out;
 }
 
-.person-floating-toolbar .btn {
-  transition: all 0.18s ease;
+/* Person life bars aesthetic */
+.person-period {
+  filter: drop-shadow(0 2px 5px rgba(15, 23, 42, 0.08));
+  transition: filter 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
-.person-floating-toolbar .btn:active {
-  transform: scale(0.96);
+.person:hover .person-period {
+  filter: drop-shadow(0 3px 8px rgba(15, 23, 42, 0.16)) brightness(1.03);
 }
 
-/* Compact pill mode */
-.person .expand-toggle-icon,
-.person .collapse-toggle-icon {
-  transition: fill 0.15s ease, transform 0.15s ease;
+.person-compact-pill {
+  transition: filter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.person:hover .expand-toggle-icon,
-.person:hover .collapse-toggle-icon {
-  fill: #2563eb;
+.person:hover .person-compact-pill {
+  filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.2)) brightness(1.03);
 }
 
-.collapse-btn-bg {
-  transition: fill 0.15s ease;
+.expand-btn-group circle {
+  transition: fill 0.15s ease, stroke 0.15s ease;
 }
 
-.person:hover .collapse-btn-bg {
-  fill: #dbeafe;
+.expand-btn-group:hover circle.expand-btn-bg {
+  fill: rgba(255, 255, 255, 0.45);
+  stroke: rgba(255, 255, 255, 0.85);
+}
+
+.collapse-btn-group circle {
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.collapse-btn-group path {
+  transition: stroke 0.15s ease;
+}
+
+.collapse-btn-group:hover circle.collapse-btn-bg {
+  fill: #eff6ff;
+  stroke: #3b82f6;
+}
+
+.collapse-btn-group:hover path {
   stroke: #2563eb;
 }
 
-/* Person Context Menu on Right Click */
-.person-context-menu {
-  min-width: 230px;
-  background-color: #ffffff;
+.marriage-bar-badge rect {
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.marriage-bar-badge:hover rect {
+  fill: #ffffff;
+  stroke: #f59e0b;
+}
+
+.marriage-band {
+  transition: fill-opacity 0.2s ease, stroke-opacity 0.2s ease;
+}
+
+.marriage-band:hover {
+  fill-opacity: 0.85;
+}
+
+/* Timeline Interactive Toolbar Aesthetic */
+.timeline-toolbar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.search-box-wrapper .input-group {
   border-radius: 8px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.search-box-wrapper .input-group:focus-within {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.search-box-wrapper .input-group-text {
+  background: transparent;
+  border: none;
+}
+
+.search-box-wrapper input.form-control {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.search-box-wrapper input.form-control:focus {
+  box-shadow: none;
+}
+
+.search-dropdown {
+  min-width: 280px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 14px 35px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  background: #ffffff;
+  animation: fadeInContextMenu 0.15s ease-out;
+}
+
+.search-result-item {
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.search-result-item:hover {
+  background-color: #f1f5f9;
+}
+
+/* Person Context Menu (Magnifique style harmonisé) */
+.person-context-menu {
+  min-width: 245px;
+  max-width: 320px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 14px 35px -5px rgba(0, 0, 0, 0.14), 0 8px 12px -6px rgba(0, 0, 0, 0.06);
   border: 1px solid #e2e8f0;
   font-size: 13px;
   z-index: 1050;
   user-select: none;
+  overflow: hidden;
+  animation: fadeInContextMenu 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInContextMenu {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .person-context-menu .dropdown-item {
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  padding: 7px 12px;
+  margin: 1px 4px;
+  width: calc(100% - 8px);
+  border-radius: 8px;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
   font-size: 13px;
+  font-weight: 500;
+  color: #334155;
 }
 
 .person-context-menu .dropdown-item:hover {
   background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.person-context-menu .dropdown-item:active {
+  transform: scale(0.98);
+}
+
+.person-context-menu .dropdown-divider {
+  border-top: 1px solid #f1f5f9;
+  margin: 4px 0;
+}
+
+.person-context-menu .badge.rounded-pill {
+  font-weight: 600;
+  font-size: 11px;
+  padding: 2px 7px;
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 .text-purple {

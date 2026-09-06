@@ -1,6 +1,9 @@
 # Use the official Node.js image as a base
 FROM node:26.8.1
 
+# Upgrade npm to latest version
+RUN npm install -g npm@latest
+
 # Set the working directory in the container
 WORKDIR /app
 

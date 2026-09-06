@@ -2,25 +2,32 @@
   <div id="personsModal" class="modal fade" tabindex="-1" aria-labelledby="personsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 id="personsModalLabel" class="modal-title">
-            {{ $t('manage-persons') }}
-            <span v-if="!isEditing && !personToDelete">
-              - {{ totalPersonsCount }} {{ $t('persons') }}
-            </span>
-            <span v-if="isEditing">
-              - {{ personBeingEdited.id ? $t('edit') : $t('add') }}
-            </span>
-            <span v-if="personToDelete">
-              - {{ $t('delete') }}
-            </span>
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+        <div class="modal-header d-flex align-items-center justify-content-between px-4 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-people-fill fs-5" />
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <h5 id="personsModalLabel" class="modal-title mb-0 fw-bold text-dark">
+                {{ $t('manage-persons') }}
+              </h5>
+              <span v-if="!isEditing && !personToDelete" class="badge bg-light text-secondary border rounded-pill fw-normal">
+                {{ totalPersonsCount }} {{ $t('persons') }}
+              </span>
+              <span v-if="isEditing" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fw-semibold">
+                {{ personBeingEdited.id ? $t('edit') : $t('add') }}
+              </span>
+              <span v-if="personToDelete" class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill fw-semibold">
+                {{ $t('delete') }}
+              </span>
+            </div>
+          </div>
+          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close" />
         </div>
         <!-- Modal Body -->
-        <div class="modal-body">
+        <div class="modal-body p-4">
           <!-- Add/Edit Person Form -->
-          <div v-if="isEditing" class="container">
+          <div v-if="isEditing" class="container px-0">
             <form class="needs-validation was-validated" @submit.prevent="savePerson">
               <!-- First and Last Name -->
               <div class="row mb-3">
@@ -89,50 +96,57 @@
                 <textarea id="notes" v-model="personBeingEdited.notes" class="form-control" rows="3" />
               </div>
 
-
               <!-- Picture Upload -->
               <div class="mb-3">
                 <label for="picture" class="form-label">{{ $t('picture') }}</label>
                 <input id="picture" type="file" class="form-control" @change="handleFileUpload">
-                <div class="mt-2 text-center">
-                  <img v-if="personBeingEdited.picture" :src="displayedPicture" alt="Profile Picture" class="img-thumbnail" style="max-width: 150px;">
+                <div v-if="personBeingEdited.picture" class="mt-3 p-3 bg-light rounded-3 border text-center">
+                  <img :src="displayedPicture" alt="Profile Picture" class="img-thumbnail rounded-4 shadow-sm" style="max-width: 140px; max-height: 140px; object-fit: cover;">
                 </div>
               </div>
             </form>
           </div>
 
           <!-- Delete confirmation -->
-          <div v-else-if="personToDelete">
-            <p>{{ $t('delete-warning') }} <strong>{{ personToDelete.first_name }} {{ personToDelete.last_name }}</strong> ?</p>
+          <div v-else-if="personToDelete" class="text-center py-4">
+            <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+              <i class="bi bi-exclamation-triangle fs-3" />
+            </div>
+            <h5 class="fw-bold text-dark mb-2">
+              {{ $t('delete') }}
+            </h5>
+            <p class="text-muted mb-0">
+              {{ $t('delete-warning') }} <strong class="text-dark">{{ personToDelete.first_name }} {{ personToDelete.last_name }}</strong> ?
+            </p>
           </div>
 
           <!-- Persons List -->
           <div v-else>
             <!-- Title and Add Button -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <!-- Title -->
-              <p class="text-muted mb-0">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+              <p class="text-muted small mb-0">
                 {{ $t('crud-warning') }}
               </p>
-              <!-- Add Button -->
-              <button class="btn btn-primary d-flex align-items-center" type="button" @click="startAddPerson">
+              <button class="btn btn-primary rounded-pill px-3 shadow-xs d-flex align-items-center gap-1 align-self-start align-self-sm-auto" type="button" @click="startAddPerson">
+                <i class="bi bi-plus-lg" />
                 <span>{{ $t('add') }}</span>
               </button>
             </div>
 
-            <!-- Persons Table -->
-            <div class="table-responsive">
-              <!-- Search Input -->
-              <div class="d-flex align-items-center mb-2">
-                <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-search" /></span>
-                  <input v-model="searchQuery" type="text" class="form-control" :placeholder="$t('search-by-name')">
-                </div>
+            <!-- Search Input -->
+            <div class="mb-3">
+              <div class="input-group search-input-group">
+                <span class="input-group-text"><i class="bi bi-search text-muted" /></span>
+                <input v-model="searchQuery" type="text" class="form-control" :placeholder="$t('search-by-name')">
               </div>
-              <table class="table table-hover bg-white mb-4">
+            </div>
+
+            <!-- Persons Table -->
+            <div class="table-responsive border rounded-3 overflow-hidden shadow-xs mb-3">
+              <table class="table table-hover align-middle mb-0">
                 <thead>
                   <tr>
-                    <th scope="col">
+                    <th scope="col" style="width: 50px;">
                       #
                     </th>
                     <th style="cursor: pointer;" @click="sortByLastName">
@@ -140,27 +154,36 @@
                     </th>
                     <th>{{ $t('first-name') }}</th>
                     <th>{{ $t('middle-names') }}</th>
-                    <th>{{ $t('actions') }}</th>
+                    <th class="text-end" style="width: 100px;">
+                      {{ $t('actions') }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   <!-- Data Rows -->
                   <tr v-for="person in paginatedPersons" :key="person.id">
-                    <td>{{ person.id }}</td>
-                    <td>{{ person.last_name }}</td>
+                    <td class="text-muted small">{{ person.id }}</td>
+                    <td class="fw-semibold text-dark">{{ person.last_name }}</td>
                     <td>{{ person.first_name }}</td>
                     <td>
-                      <table class="mb-0">
-                        <tbody>
-                          <tr v-for="middleName in getMiddleNames(person.id)" :key="middleName.id">
-                            <td>{{ middleName.middle_name }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      <span v-for="middleName in getMiddleNames(person.id)" :key="middleName.id" class="badge bg-light text-secondary border me-1">
+                        {{ middleName.middle_name }}
+                      </span>
                     </td>
-                    <td>
-                      <a href="#" class="text-dark me-2" @click.prevent="startEditPerson(person)"><i class="bi bi-pencil-fill" /></a>
-                      <a href="#" class="text-dark" @click.prevent="deletePerson(person)"><i class="bi bi-trash-fill" /></a>
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-1">
+                        <button class="btn btn-action-icon text-primary" type="button" :title="$t('edit')" @click.prevent="startEditPerson(person)">
+                          <i class="bi bi-pencil-fill" />
+                        </button>
+                        <button class="btn btn-action-icon text-danger" type="button" :title="$t('delete')" @click.prevent="deletePerson(person)">
+                          <i class="bi bi-trash-fill" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="!paginatedPersons.length">
+                    <td colspan="5" class="text-center py-4 text-muted">
+                      {{ $t('no-result') }}
                     </td>
                   </tr>
                 </tbody>
@@ -168,10 +191,10 @@
             </div>
 
             <!-- Pagination and Controls -->
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 mb-2 pt-1">
               <!-- Pagination -->
               <nav aria-label="Page navigation">
-                <ul class="pagination mb-3 mb-sm-0">
+                <ul class="pagination mb-0">
                   <li class="page-item" :class="{ disabled: currentPage === 1 }">
                     <a class="page-link" href="#" aria-label="Previous" @click.prevent="previousPage">
                       <span aria-hidden="true">&laquo;</span>
@@ -195,9 +218,9 @@
               </nav>
 
               <!-- Items Per Page -->
-              <div class="d-flex align-items-center mt-3 mt-sm-0">
-                <label for="itemsPerPage" class="me-2 mb-0">{{ $t('items-per-page') }}</label>
-                <select id="itemsPerPage" v-model="itemsPerPage" class="form-select d-inline-block w-auto">
+              <div class="d-flex align-items-center">
+                <label for="itemsPerPage" class="me-2 mb-0 small text-muted">{{ $t('items-per-page') }}</label>
+                <select id="itemsPerPage" v-model="itemsPerPage" class="form-select form-select-sm d-inline-block w-auto">
                   <option v-for="size in [5, 10, 15, 20]" :key="size" :value="size">
                     {{ size }}
                   </option>
@@ -208,20 +231,20 @@
         </div>
 
         <!-- Footer -->
-        <div v-if="isEditing || personToDelete" class="modal-footer">
+        <div v-if="isEditing || personToDelete" class="modal-footer d-flex justify-content-end gap-2 px-4 py-3">
           <template v-if="isEditing">
-            <button type="submit" class="btn btn-primary" @click="handleSubmit">
-              {{ personBeingEdited.id ? $t('save-changes') : $t('save') }}
-            </button>
-            <button type="button" class="btn btn-secondary" @click="cancelEdit">
+            <button type="button" class="btn btn-light border rounded-pill px-3" @click="cancelEdit">
               {{ $t('cancel') }}
+            </button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-xs" @click="handleSubmit">
+              {{ personBeingEdited.id ? $t('save-changes') : $t('save') }}
             </button>
           </template>
           <template v-else-if="personToDelete">
-            <button type="button" class="btn btn-secondary" @click="cancelDelete">
+            <button type="button" class="btn btn-light border rounded-pill px-3" @click="cancelDelete">
               {{ $t('cancel') }}
             </button>
-            <button type="button" class="btn btn-danger" @click="confirmDelete">
+            <button type="button" class="btn btn-danger rounded-pill px-4 shadow-xs" @click="confirmDelete">
               {{ $t('delete') }}
             </button>
           </template>

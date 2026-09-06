@@ -395,6 +395,30 @@ describe('Timeline Methods', () => {
     expect(wrapper.vm.contextMenuPerson).toBeNull()
   })
 
+  test('formatPersonBirth and formatPersonDeath should format date and place correctly', () => {
+    const person = {
+      id: 1,
+      first_name: 'George',
+      last_name: 'Windsor',
+      birth_date: '1865-06-03',
+      death_date: '1936-01-20',
+      events: [
+        { event_type: 'birth', event_date: '1865-06-03', event_place: 'Londres' },
+        { event_type: 'death', event_date: '1936-01-20', event_place: 'Sandringham' }
+      ]
+    }
+    expect(wrapper.vm.formatPersonBirth(person)).toBe('1865-06-03 • Londres')
+    expect(wrapper.vm.formatPersonDeath(person)).toBe('1936-01-20 • Sandringham')
+
+    const personNoPlace = {
+      id: 2,
+      birth_date: '1900-01-01',
+      death_date: null
+    }
+    expect(wrapper.vm.formatPersonBirth(personNoPlace)).toBe('1900-01-01')
+    expect(wrapper.vm.formatPersonDeath(personNoPlace)).toBe('')
+  })
+
   test('toggleDescendants and areDescendantsVisible should reliably expand and hide children even if pinned or expanded via siblings', () => {
     wrapper.vm.drawTimeline = vi.fn()
     // Setup Father (1) + Mother (2) with children Child 1 (3), Child 2 (4), and grandchild (5) under Child 1
@@ -499,5 +523,46 @@ describe('Timeline Methods', () => {
     expect(visible.has(100)).toBe(true)
     expect(visible.has(10)).toBe(true)
     expect(visible.has(1)).toBe(true)
+  })
+
+  test('toggleAscendants should expand and hide ascendants without hiding person or their descendants', () => {
+    wrapper.vm.drawTimeline = vi.fn()
+    // Setup tree: Grandparent (100) -> Parent (10) -> Child (1) -> Grandchild (5)
+    wrapper.vm.dataPersons = [
+      { id: 100, relatives: [{ id: 10, relation_type: 'child' }] },
+      { id: 10, relatives: [{ id: 100, relation_type: 'father' }, { id: 1, relation_type: 'child' }] },
+      { id: 1, relatives: [{ id: 10, relation_type: 'father' }, { id: 5, relation_type: 'child' }] },
+      { id: 5, relatives: [{ id: 1, relation_type: 'father' }] }
+    ]
+    wrapper.vm.dynamicRootPersonId = 100
+
+    // Expand descendants from Grandparent 100 down to Grandchild 5
+    wrapper.vm.toggleDescendants(100)
+    wrapper.vm.toggleDescendants(10)
+    wrapper.vm.toggleDescendants(1)
+
+    let visible = wrapper.vm.getDynamicVisiblePersonIds()
+    expect(visible.has(100)).toBe(true)
+    expect(visible.has(10)).toBe(true)
+    expect(visible.has(1)).toBe(true)
+    expect(visible.has(5)).toBe(true)
+
+    // Child (1) has not explicitly expanded ascendants upward
+    expect(wrapper.vm.areAscendantsVisible(1)).toBe(false)
+
+    // Expand ascendants on Child (1)
+    wrapper.vm.toggleAscendants(1)
+    expect(wrapper.vm.areAscendantsVisible(1)).toBe(true)
+
+    // Now hide ascendants on Child (1)
+    wrapper.vm.toggleAscendants(1)
+    expect(wrapper.vm.areAscendantsVisible(1)).toBe(false)
+
+    visible = wrapper.vm.getDynamicVisiblePersonIds()
+    // Grandparent (100), Parent (10), Child (1) and Grandchild (5) must all remain visible!
+    expect(visible.has(100)).toBe(true)
+    expect(visible.has(10)).toBe(true)
+    expect(visible.has(1)).toBe(true)
+    expect(visible.has(5)).toBe(true)
   })
 })

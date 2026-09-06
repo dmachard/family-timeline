@@ -1,75 +1,120 @@
 <template>
-  <div id="eventsModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="profileLabel" aria-hidden="true">
+  <div id="eventsModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="eventsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <!-- Modal Header -->
-        <div class="modal-header">
-          <h5 id="eventsModalLabel" class="modal-title">
-            {{ $t('manage-events') }}
-            <span v-if="isDeleting">
-              - {{ $t('delete') }}
-            </span>
-            <span v-if="isAttachmentsEditing">
-              - {{ $t('attachments') }}
-            </span>
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @click="handleModalClose" />
+        <div class="modal-header d-flex align-items-center justify-content-between px-4 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-calendar-event-fill fs-5" />
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <h5 id="eventsModalLabel" class="modal-title mb-0 fw-bold text-dark">
+                {{ $t('manage-events') }}
+              </h5>
+              <span v-if="isDeleting" class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill fw-semibold">
+                {{ $t('delete') }}
+              </span>
+              <span v-else-if="isAttachmentsEditing" class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill fw-semibold">
+                {{ $t('attachments') }}
+              </span>
+              <span v-else-if="isAssociatingPeople" class="badge bg-info-subtle text-info border border-info-subtle rounded-pill fw-semibold">
+                {{ $t('relatives') }}
+              </span>
+              <span v-else-if="isEditing" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fw-semibold">
+                {{ eventBeingEdited.id ? $t('edit') : $t('add') }}
+              </span>
+            </div>
+          </div>
+          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close" @click="handleModalClose" />
         </div>
 
         <!-- Modal Body -->
-        <div class="modal-body">
+        <div class="modal-body p-4">
           <!-- Events Table -->
           <div v-if="!isEditing && !isDeleting && !isAttachmentsEditing && !isAssociatingPeople">
             <!-- Person Selector -->
-            <div class="row">
-              <!-- Autocomplete for select Person -->
-              <div class="mb-3 position-relative">
-                <label for="personSelect" class="form-label">{{ $t('selected-person') }}</label>
-                <input
-                  id="personInput"
-                  v-model="personInput"
-                  class="form-control"
-                  autocomplete="off"
-                  required
-                  :placeholder="$t('select-related-person')"
-                  @input="filterPersons"
-                >
-              </div>
-              <div class="mb-3 position-relative mb-4">
-                <div class="list-group list-group-flush scrollable-list">
-                  <a
-                    v-for="person in filteredPersons"
-                    :key="person.id"
-                    href="#"
-                    class="list-group-item list-group-item-action"
-                    @mousedown="selectPersonFromList(person)"
-                  >
-                    {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
-                  </a>
+            <div class="mb-3">
+              <label for="personInput" class="form-label">{{ $t('selected-person') }}</label>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="input-group search-input-group">
+                    <span class="input-group-text"><i class="bi bi-search text-muted" /></span>
+                    <input
+                      id="personInput"
+                      v-model="personInput"
+                      class="form-control"
+                      autocomplete="off"
+                      required
+                      :placeholder="$t('select-related-person')"
+                      @input="filterPersons"
+                    >
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="list-group list-group-flush scrollable-list border rounded-3 shadow-xs">
+                    <div v-if="filteredPersons.length === 0" class="list-group-item text-muted small py-2">
+                      {{ $t('no-result') }}
+                    </div>
+                    <a
+                      v-for="person in filteredPersons"
+                      :key="person.id"
+                      href="#"
+                      class="list-group-item list-group-item-action py-2 small"
+                      @mousedown="selectPersonFromList(person)"
+                    >
+                      <i class="bi bi-person me-1 text-primary" /><strong>{{ getPersonName(person.id) }}</strong>
+                      <span class="text-muted ms-1">({{ formatDate(person.birth_date) }})</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div class="table-responsive">
-              <label class="form-label">{{ $t('events') }}</label>
-              <table class="table table-hover bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+              <label class="form-label mb-0">{{ $t('events') }}</label>
+              <span v-if="selectedPersonId" class="badge bg-light text-secondary border">
+                {{ getPersonName(selectedPersonId) }}
+              </span>
+            </div>
+
+            <div class="table-responsive border rounded-3 overflow-hidden shadow-xs mb-2">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>{{ $t('event-type') }}</th>
+                    <th>{{ $t('event-date') }}</th>
+                    <th class="text-end" style="width: 140px;">{{ $t('actions') }}</th>
+                  </tr>
+                </thead>
                 <tbody>
                   <tr v-for="event in filteredEvents" :key="event.id">
-                    <td>{{ $t(event.event_type) }}</td>
-                    <td>{{ event.event_date }}</td>
                     <td>
-                      <a href="#" class="text-dark me-2" @click.prevent="startEditEvent(event)">
-                        <i class="bi bi-pencil-fill" />
-                      </a>
-                      <a href="#" class="text-dark me-2" @click.prevent="manageAttachments(event)">
-                        <i class="bi bi-paperclip" />
-                      </a>
-                      <a v-if="event.event_type !== 'birth' && event.event_type !== 'death'" href="#" class="text-dark me-2" @click.prevent="manageAssociations(event)">
-                        <i class="bi bi-person-plus-fill" />
-                      </a>
-                      <a href="#" class="text-dark me-2" @click.prevent="deleteEvent(event)">
-                        <i class="bi bi-trash-fill" />
-                      </a>
+                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                        {{ $t(event.event_type) }}
+                      </span>
+                    </td>
+                    <td class="text-dark fw-semibold">{{ event.event_date }}</td>
+                    <td class="text-end">
+                      <div class="d-flex justify-content-end gap-1">
+                        <button class="btn btn-action-icon text-primary" type="button" :title="$t('edit')" @click.prevent="startEditEvent(event)">
+                          <i class="bi bi-pencil-fill" />
+                        </button>
+                        <button class="btn btn-action-icon text-warning" type="button" :title="$t('attachments')" @click.prevent="manageAttachments(event)">
+                          <i class="bi bi-paperclip" />
+                        </button>
+                        <button v-if="event.event_type !== 'birth' && event.event_type !== 'death'" class="btn btn-action-icon text-info" type="button" :title="$t('add')" @click.prevent="manageAssociations(event)">
+                          <i class="bi bi-person-plus-fill" />
+                        </button>
+                        <button class="btn btn-action-icon text-danger" type="button" :title="$t('delete')" @click.prevent="deleteEvent(event)">
+                          <i class="bi bi-trash-fill" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="!filteredEvents || !filteredEvents.length">
+                    <td colspan="3" class="text-center py-4 text-muted">
+                      {{ $t('no-result') }}
                     </td>
                   </tr>
                 </tbody>
@@ -127,11 +172,14 @@
             <div class="row mb-3 align-items-center">
               <div class="col-md-6">
                 <label for="eventPlace" class="form-label">{{ $t('event-place') }}</label>
-                <input id="eventPlace" v-model="eventBeingEdited.event_place" type="text" class="form-control">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-geo-alt-fill text-danger" /></span>
+                  <input id="eventPlace" v-model="eventBeingEdited.event_place" type="text" class="form-control">
+                </div>
               </div>
 
-              <div class="col-md-6 d-flex align-items-center">
-                <div class="form-check">
+              <div class="col-md-6 d-flex align-items-center pt-md-4">
+                <div class="form-check form-switch">
                   <input id="eventVerified" v-model="eventBeingEdited.event_verified" class="form-check-input" type="checkbox">
                   <label class="form-check-label ms-2" for="eventVerified">
                     {{ $t('event-verified') }}
@@ -143,15 +191,21 @@
             <!-- Event Notes -->
             <div class="mb-3">
               <label for="eventNotes" class="form-label">{{ $t('event-notes') }}</label>
-              <textarea id="eventNotes" v-model="eventBeingEdited.event_notes" class="form-control" />
+              <textarea id="eventNotes" v-model="eventBeingEdited.event_notes" class="form-control" rows="3" />
             </div>
           </div>
 
           <!-- Deletion Confirmation - Visible only when an event is selected for deletion -->
-          <div v-if="isDeleting">
-            <div class="alert alert-warning" role="alert">
-              {{ $t('delete-event-confirmation-message') }} "{{ $t(selectedEvent.event_type) }}" {{ $t('for') }} {{ getPersonName(selectedPersonId) }}?
+          <div v-if="isDeleting" class="text-center py-4">
+            <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+              <i class="bi bi-exclamation-triangle fs-3" />
             </div>
+            <h5 class="fw-bold text-dark mb-2">
+              {{ $t('delete') }}
+            </h5>
+            <p class="text-muted mb-0">
+              {{ $t('delete-event-confirmation-message') }} <strong class="text-dark">"{{ $t(selectedEvent.event_type) }}"</strong> {{ $t('for') }} <strong class="text-dark">{{ getPersonName(selectedPersonId) }}</strong> ?
+            </p>
           </div>
 
           <!-- Attachments Table -->
@@ -197,27 +251,30 @@
             </div>
 
             <!-- Upload Progress Indicator -->
-            <div v-if="uploadInProgress" class="progress mt-3">
-              <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: uploadProgress + '%' }">
+            <div v-if="uploadInProgress" class="progress mb-3 rounded-pill" style="height: 10px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" :style="{ width: uploadProgress + '%' }">
                 {{ uploadProgress }}%
               </div>
             </div>
 
             <!-- Drag & Drop Area for Adding Attachments -->
-            <div class="drop-zone mb-3" @drop.prevent="handleDrop($event)" @dragover.prevent>
-              <p>{{ $t('drag-drop-files-here') }}</p>
+            <div class="drop-zone mb-3 rounded-3" @drop.prevent="handleDrop($event)" @dragover.prevent>
+              <div class="d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="bi bi-cloud-arrow-up text-primary fs-2 mb-2" />
+                <p class="mb-0 fw-medium text-muted">{{ $t('drag-drop-files-here') }}</p>
+              </div>
             </div>
 
             <!-- Grid of Attachments -->
-            <div class="d-flex flex-wrap">
-              <div v-for="attachment in filteredAttachments" :key="attachment.id" class="position-relative m-2">
+            <div class="d-flex flex-wrap gap-3">
+              <div v-for="attachment in filteredAttachments" :key="attachment.id" class="position-relative attachment-item-card">
                 <!-- Thumbnail Image -->
-                <img :src="getDataUrl + attachment.file_path" class="img-thumbnail" width="100" height="100">
+                <img :src="getDataUrl + attachment.file_path" class="img-thumbnail rounded-3 shadow-xs" width="100" height="100">
 
                 <!-- Delete Icon (appears on hover) -->
-                <div class="delete-icon" @click.prevent="deleteAttachment(attachment)">
-                  <i class="bi bi-trash-fill text-danger" />
-                </div>
+                <button class="delete-icon btn btn-danger btn-sm rounded-circle p-1 position-absolute top-0 end-0 translate-middle" type="button" @click.prevent="deleteAttachment(attachment)">
+                  <i class="bi bi-trash-fill" style="font-size: 11px;" />
+                </button>
               </div>
             </div>
           </div>
@@ -275,60 +332,62 @@
               </div>
             </div>
             <!-- Grid of Associations -->
-            <div class="d-flex flex-wrap">
-              <div v-for="person in associatedPersons" :key="person.id" class="position-relative text-center m-2">
+            <div class="d-flex flex-wrap gap-3">
+              <div v-for="person in associatedPersons" :key="person.id" class="position-relative text-center p-3 bg-light border rounded-3 shadow-xs" style="width: 140px;">
                 <!-- Logo or Placeholder Image -->
-                <img :src="person.gender === 'Male' ? '/profile_men.png' : '/profile_women.png'" class="img-thumbnail mb-2" width="100" height="100" alt="Person Logo">
+                <img :src="person.gender === 'Male' ? '/profile_men.png' : '/profile_women.png'" class="img-thumbnail rounded-circle mb-2" width="70" height="70" alt="Person Logo">
 
                 <!-- Person's Name -->
-                <div>{{ person.first_name }} {{ person.last_name }} - {{ formatDate(person.birth_date) }}</div>
+                <div class="small fw-semibold text-dark">{{ person.first_name }} {{ person.last_name }}</div>
+                <div class="text-muted" style="font-size: 11px;">{{ formatDate(person.birth_date) }}</div>
 
                 <!-- Delete Icon -->
-                <div class="delete-icon position-absolute top-0 end-0" @click.prevent="removeAssociatedPerson(person.associationId)">
-                  <i class="bi bi-trash-fill text-danger" />
-                </div>
+                <button class="btn btn-danger btn-sm rounded-circle p-1 position-absolute top-0 end-0 translate-middle" type="button" @click.prevent="removeAssociatedPerson(person.associationId)">
+                  <i class="bi bi-trash-fill" style="font-size: 11px;" />
+                </button>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Footer -->
-        <div class="modal-footer">
+        <div class="modal-footer d-flex justify-content-end gap-2 px-4 py-3">
           <template v-if="isEditing">
-            <button type="submit" class="btn btn-primary" @click="saveEvent">
-              {{ eventBeingEdited.id ? $t('save-changes') : $t('save') }}
-            </button>
-            <button type="button" class="btn btn-secondary" @click="cancelEdit">
+            <button type="button" class="btn btn-light border rounded-pill px-3" @click="cancelEdit">
               {{ $t('cancel') }}
+            </button>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-xs" @click="saveEvent">
+              {{ eventBeingEdited.id ? $t('save-changes') : $t('save') }}
             </button>
           </template>
 
           <template v-else-if="isDeleting">
-            <button type="button" class="btn btn-danger" @click="confirmDelete">
-              {{ $t('delete') }}
-            </button>
-            <button type="button" class="btn btn-secondary" @click="cancelDelete">
+            <button type="button" class="btn btn-light border rounded-pill px-3" @click="cancelDelete">
               {{ $t('cancel') }}
+            </button>
+            <button type="button" class="btn btn-danger rounded-pill px-4 shadow-xs" @click="confirmDelete">
+              {{ $t('delete') }}
             </button>
           </template>
 
           <template v-else-if="isAttachmentsEditing">
-            <button type="submit" class="btn btn-secondary" @click="cancelEditAttachment">
+            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-xs" @click="cancelEditAttachment">
               {{ $t('terminate') }}
             </button>
           </template>
 
           <template v-else-if="isAssociatingPeople">
-            <button type="button" class="btn btn-primary" :disabled="!selectedPersonToAssociate" @click="associatePerson">
+            <button type="button" class="btn btn-outline-primary rounded-pill px-3" :disabled="!selectedPersonToAssociate" @click="associatePerson">
               {{ $t('add') }}
             </button>
-            <button type="submit" class="btn btn-secondary" @click="cancelEditAssociate">
+            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-xs" @click="cancelEditAssociate">
               {{ $t('terminate') }}
             </button>
           </template>
 
           <template v-else>
-            <button class="btn btn-primary d-flex" type="button" :disabled="!selectedPersonId" @click="startAddEvent">
+            <button class="btn btn-primary rounded-pill px-3 shadow-xs d-flex align-items-center gap-1" type="button" :disabled="!selectedPersonId" @click="startAddEvent">
+              <i class="bi bi-plus-lg" />
               <span>{{ $t('add') }}</span>
             </button>
           </template>
@@ -755,10 +814,12 @@ export default {
 }
 
 .drop-zone {
-  border: 2px dashed #ccc;
-  padding: 20px;
+  border: 2px dashed #93c5fd;
+  background-color: #f8fafc;
+  padding: 24px;
   text-align: center;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .drop-zone input[type='file'] {
@@ -766,7 +827,12 @@ export default {
 }
 
 .drop-zone:hover {
-  background-color: #e8e8e8;
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.attachment-item-card img {
+  object-fit: cover;
 }
 
 .img-thumbnail {
@@ -776,11 +842,23 @@ export default {
 
 .delete-icon {
   cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.delete-icon:hover {
+  opacity: 1;
+  transform: scale(1.1) translate(-50%, -50%) !important;
 }
 
 .scrollable-list {
-  max-height: 150px;
+  max-height: 160px;
   overflow-y: auto;
-  overflow-x: hidden; 
+  overflow-x: hidden;
+  background: #ffffff;
+}
+
+.scrollable-list .list-group-item-action:hover {
+  background-color: #f0f7ff;
 }
 </style>

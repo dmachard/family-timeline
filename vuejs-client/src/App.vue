@@ -2,118 +2,168 @@
 <template>
   <div id="app">
     <!-- Header / Top bar -->
-    <nav v-if="isAuthenticated" class="navbar navbar-dark bg-dark fixed-top">
-      <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/">
-          <img src="/favicon.png" width="30" height="30" class="d-inline-block align-top" alt="">
-          Family Timeline
+    <nav v-if="isAuthenticated" class="navbar navbar-light bg-white fixed-top border-bottom app-navbar shadow-sm py-0">
+      <div class="container-fluid px-3 h-100 d-flex align-items-center justify-content-between">
+        <!-- Brand Logo & Name -->
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-dark m-0" href="/">
+          <img src="/favicon.png" width="28" height="28" class="d-inline-block align-top" alt="Logo">
+          <span class="brand-title">Family Timeline</span>
         </a>
 
-        <button v-if="isAuthenticated" class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
-          <span class="navbar-toggler-icon" />
-        </button>
-        <div v-if="isAuthenticated" id="offcanvasDarkNavbar" class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" aria-labelledby="offcanvasDarkNavbarLabel">
-          <div class="offcanvas-header">
-            <h5 id="offcanvasDarkNavbarLabel" class="offcanvas-title">
-              {{ $t('menu') }}
-            </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close" />
-          </div>
-          <div class="offcanvas-body">
-            <div v-if="userName" class="text-light mb-3">
-              <strong>{{ userName }}</strong>
-            </div>
-            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-              <!-- Activity -->
-              <li class="nav-item">
-                <a class="nav-link" href="#" @click.prevent="openModal('activities')">
-                  <i class="bi bi-calendar-event-fill me-2" /> {{ $t('activity-logs') }}
+        <!-- Right Side Controls -->
+        <div class="d-flex align-items-center gap-2">
+          <!-- Quick Language Selector -->
+          <div class="dropdown">
+            <button
+              class="btn btn-sm lang-selector-btn d-flex align-items-center gap-1 py-1 px-2 border rounded-pill bg-white shadow-xs"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+              title="Language"
+            >
+              <i class="bi bi-globe text-muted" style="font-size: 13px;" />
+              <span class="fw-semibold text-uppercase" style="font-size: 11px; letter-spacing: 0.03em;">{{ selectedLanguage }}</span>
+              <i class="bi bi-chevron-down text-muted" style="font-size: 9px;" />
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border rounded-3 p-1" style="min-width: 135px;">
+              <li>
+                <a
+                  class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center justify-content-between"
+                  :class="{ 'active fw-bold': selectedLanguage === 'fr' }"
+                  href="#"
+                  @click.prevent="setLanguage('fr')"
+                >
+                  <span class="d-flex align-items-center gap-2">
+                    <span style="font-size: 14px;">🇫🇷</span>
+                    <span>{{ $t('french') }}</span>
+                  </span>
+                  <i v-if="selectedLanguage === 'fr'" class="bi bi-check2 text-primary" />
                 </a>
               </li>
-
-              <!-- Genealogy -->
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-gear-fill me-2" /> {{ $t('genealogy') }}
-                </a>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="openModal('persons')">
-                      <i class="bi bi-people-fill me-2" /> {{ $t('persons') }}
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="openModal('relatives')">
-                      <i class="bi bi-people me-2" /> {{ $t('relatives') }}
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="openModal('events')">
-                      <i class="bi bi-calendar3 me-2" /> {{ $t('events') }}
-                    </a>
-                  </li>
-                </ul>
-              </li>
-
-              <!-- Timeline -->
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-clock-history me-2" /> {{ $t('timeline') }}
-                </a>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                  <li>
-                    <label for="startViewYear" class="dropdown-item text-light">
-                      {{ $t('startYear') }}
-                      <select id="startViewYear" v-model="startViewYear" class="form-select mt-1">
-                        <option v-for="year in availableYears" :key="year" :value="year">
-                          {{ year }}
-                        </option>
-                      </select>
-                    </label>
-                  </li>
-                  <li>
-                    <label for="stopViewYear" class="dropdown-item text-light mt-2">
-                      {{ $t('endYear') }}
-                      <select id="stopViewYear" v-model="stopViewYear" class="form-select mt-1">
-                        <option v-for="year in filteredEndYears" :key="year" :value="year">
-                          {{ year }}
-                        </option>
-                      </select>
-                    </label>
-                  </li>
-                </ul>
-              </li>
-
-              <!-- Language -->
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-globe me-2" /> {{ $t('language') }}
-                </a>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="setLanguage('en')">
-                      {{ $t('english') }}
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="setLanguage('fr')">
-                      {{ $t('french') }}
-                    </a>
-                  </li>
-                </ul>
-              </li>
-
-              <!-- Logout -->
-              <li class="nav-item">
-                <a class="nav-link" href="#" @click="logout">
-                  <i class="bi bi-box-arrow-right me-2" /> {{ $t('logout') }}
+              <li>
+                <a
+                  class="dropdown-item py-1 px-2 rounded-2 d-flex align-items-center justify-content-between"
+                  :class="{ 'active fw-bold': selectedLanguage === 'en' }"
+                  href="#"
+                  @click.prevent="setLanguage('en')"
+                >
+                  <span class="d-flex align-items-center gap-2">
+                    <span style="font-size: 14px;">🇬🇧</span>
+                    <span>{{ $t('english') }}</span>
+                  </span>
+                  <i v-if="selectedLanguage === 'en'" class="bi bi-check2 text-primary" />
                 </a>
               </li>
             </ul>
+          </div>
 
-            <!-- Adding the client version -->
-            <div class="mt-4 text-end">
-              <span class="text-ligth">v{{ clientVersion }}</span>
+          <!-- User Profile & Admin Menu Dropdown -->
+          <div class="dropdown">
+            <button
+              id="userMenuDropdown"
+              class="btn user-profile-btn d-flex align-items-center gap-2 py-1 ps-2 pe-3 border rounded-pill bg-white shadow-xs"
+              type="button"
+              data-bs-toggle="dropdown"
+              data-bs-auto-close="outside"
+              aria-expanded="false"
+            >
+              <div class="user-avatar-circle">
+                <i class="bi bi-person-fill text-primary" />
+              </div>
+              <div class="d-none d-sm-flex flex-column text-start lh-1">
+                <span class="user-name-label fw-bold text-dark">{{ userName || 'Admin' }}</span>
+                <span class="user-role-label text-muted">{{ $t('menu') }}</span>
+              </div>
+              <i class="bi bi-chevron-down text-muted small ms-1" style="font-size: 10px;" />
+            </button>
+
+            <div class="dropdown-menu dropdown-menu-end user-dropdown-panel shadow-lg border p-2 mt-2" aria-labelledby="userMenuDropdown">
+              <!-- User Header Card -->
+              <div class="user-dropdown-header px-3 py-2 border-bottom mb-2 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="user-avatar-circle">
+                    <i class="bi bi-person-circle fs-5 text-primary" />
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark lh-sm" style="font-size: 13px;">{{ userName }}</div>
+                    <div class="text-muted" style="font-size: 11px;">Connecté</div>
+                  </div>
+                </div>
+                <span class="badge bg-light text-muted border rounded-pill" style="font-size: 10px;">v{{ clientVersion }}</span>
+              </div>
+
+              <!-- Genealogy & Management Section -->
+              <div class="dropdown-section-title px-3 pt-1 pb-1 text-uppercase text-muted fw-bold">
+                {{ $t('genealogy') }}
+              </div>
+              <div class="d-flex flex-column gap-1">
+                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2 menu-entry" href="#" @click.prevent="openModal('persons')">
+                  <div class="menu-icon-wrap bg-primary-subtle text-primary me-2">
+                    <i class="bi bi-people-fill" />
+                  </div>
+                  <span class="fw-medium text-dark">{{ $t('persons') }}</span>
+                </a>
+
+                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2 menu-entry" href="#" @click.prevent="openModal('relatives')">
+                  <div class="menu-icon-wrap bg-info-subtle text-info me-2">
+                    <i class="bi bi-diagram-3-fill" />
+                  </div>
+                  <span class="fw-medium text-dark">{{ $t('relatives') }}</span>
+                </a>
+
+                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2 menu-entry" href="#" @click.prevent="openModal('events')">
+                  <div class="menu-icon-wrap bg-success-subtle text-success me-2">
+                    <i class="bi bi-calendar-check-fill" />
+                  </div>
+                  <span class="fw-medium text-dark">{{ $t('events') }}</span>
+                </a>
+
+                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2 menu-entry" href="#" @click.prevent="openModal('activities')">
+                  <div class="menu-icon-wrap bg-secondary-subtle text-secondary me-2">
+                    <i class="bi bi-clock-history" />
+                  </div>
+                  <span class="fw-medium text-dark">{{ $t('activity-logs') }}</span>
+                </a>
+              </div>
+
+              <!-- Timeline View Range Section -->
+              <div class="dropdown-divider my-2" />
+              <div class="dropdown-section-title px-3 pt-1 pb-1 text-uppercase text-muted fw-bold">
+                {{ $t('timeline') }}
+              </div>
+              <div class="px-3 py-1">
+                <div class="row g-2 align-items-center">
+                  <div class="col-6">
+                    <label for="startViewYear" class="form-label text-muted small fw-semibold mb-1" style="font-size: 11px;">
+                      {{ $t('startYear') }}
+                    </label>
+                    <select id="startViewYear" v-model="startViewYear" class="form-select form-select-sm">
+                      <option v-for="year in availableYears" :key="year" :value="year">
+                        {{ year }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label for="stopViewYear" class="form-label text-muted small fw-semibold mb-1" style="font-size: 11px;">
+                      {{ $t('endYear') }}
+                    </label>
+                    <select id="stopViewYear" v-model="stopViewYear" class="form-select form-select-sm">
+                      <option v-for="year in filteredEndYears" :key="year" :value="year">
+                        {{ year }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Logout Section -->
+              <div class="dropdown-divider my-2" />
+              <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2 text-danger logout-entry" href="#" @click.prevent="logout">
+                <div class="menu-icon-wrap bg-danger-subtle text-danger me-2">
+                  <i class="bi bi-box-arrow-right" />
+                </div>
+                <span class="fw-semibold">{{ $t('logout') }}</span>
+              </a>
             </div>
           </div>
         </div>
@@ -136,7 +186,7 @@
 
 <script>
 import { mapGetters, mapMutations } from 'vuex';
-import { Offcanvas, Modal } from 'bootstrap'
+import { Modal, Dropdown } from 'bootstrap';
 
 import LoadingModal from './components/ModalLoading.vue';
 import ModalActivities from './components/ModalActivities.vue'
@@ -289,11 +339,12 @@ export default {
       }
     },
     closeMenu(){
-      // close menu
-      const offcanvasElement = document.getElementById('offcanvasDarkNavbar')
-      const bsOffcanvas = Offcanvas.getInstance(offcanvasElement)
-      if (bsOffcanvas) {
-        bsOffcanvas.hide()
+      const dropdownToggle = document.getElementById('userMenuDropdown');
+      if (dropdownToggle) {
+        const bsDropdown = Dropdown.getInstance(dropdownToggle);
+        if (bsDropdown) {
+          bsDropdown.hide();
+        }
       }
     },
     async logout() {
@@ -315,9 +366,450 @@ export default {
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --ft-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  font-family: var(--ft-font);
+  color: #1e293b;
+  background-color: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  font-family: var(--ft-font);
+}
+
+/* App Navbar */
+.app-navbar {
+  height: 56px;
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  z-index: 1030;
+}
+
+.brand-title {
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+/* User Capsule & Controls */
+.shadow-xs {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.user-profile-btn {
+  border-color: #e2e8f0 !important;
+  transition: all 0.15s ease;
+  height: 38px;
+}
+
+.user-profile-btn:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+.user-profile-btn:focus, .user-profile-btn:active, .user-profile-btn.show {
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  background-color: #ffffff !important;
+}
+
+.user-avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.user-name-label {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.user-role-label {
+  font-size: 10px;
+}
+
+/* User Dropdown Panel */
+.user-dropdown-panel {
+  width: 290px;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.16), 0 8px 16px -6px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.user-dropdown-header {
+  background: #f8fafc;
+  border-radius: 10px;
+  border-color: #e2e8f0 !important;
+}
+
+.dropdown-section-title {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: #94a3b8 !important;
+}
+
+.menu-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.bg-primary-subtle { background-color: #eff6ff !important; }
+.bg-info-subtle { background-color: #f0fdfa !important; }
+.bg-success-subtle { background-color: #f0fdf4 !important; }
+.bg-secondary-subtle { background-color: #f8fafc !important; border: 1px solid #e2e8f0; }
+.bg-danger-subtle { background-color: #fef2f2 !important; }
+
+.menu-entry {
+  transition: all 0.15s ease;
+}
+
+.menu-entry:hover {
+  background-color: #f8fafc !important;
+  transform: translateX(2px);
+}
+
+.logout-entry {
+  transition: all 0.15s ease;
+}
+
+.logout-entry:hover {
+  background-color: #fef2f2 !important;
+}
+
+.lang-selector-btn {
+  height: 38px;
+  border-color: #e2e8f0 !important;
+  color: #475569;
+  transition: all 0.15s ease;
+}
+
+.lang-selector-btn:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a;
+}
+
+/* Global Modals Aesthetic */
+.modal-content {
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.18), 0 10px 18px -6px rgba(15, 23, 42, 0.08) !important;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.modal-header {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 16px 24px !important;
+  background-color: #ffffff;
+}
+
+.modal-header .btn-close {
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.modal-header .btn-close:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.modal-body {
+  padding: 24px !important;
+  color: #334155;
+}
+
+.modal-footer {
+  border-top: 1px solid #f1f5f9 !important;
+  padding: 14px 24px !important;
+  background-color: #f8fafc;
+}
+
+/* Global Form Elements */
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.form-control, .form-select {
+  border-radius: 9px;
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  background-color: #ffffff !important;
+}
+
+.input-group-text {
+  border-radius: 9px;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* Proper Input Group corner handling: no inner rounded borders */
+.input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.input-group > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu):not(.form-floating) {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.input-group > :not(:first-child):not(:last-child) {
+  border-radius: 0 !important;
+}
+
+/* Seamless search input groups across all modals */
+.search-input-group {
+  border-radius: 9px !important;
+  overflow: hidden !important;
+  border: 1px solid #cbd5e1 !important;
+  background-color: #ffffff !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-input-group:focus-within {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+.search-input-group .input-group-text {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding-left: 0.85rem !important;
+  padding-right: 0.35rem !important;
+}
+
+.search-input-group .form-control {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding-left: 0.35rem !important;
+}
+
+/* Global Modern Tables */
+.table {
+  --bs-table-bg: transparent;
+  vertical-align: middle;
+  border-color: #f1f5f9;
+}
+
+.table thead th {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  padding: 11px 16px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+.table tbody tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+/* Action Icon Buttons */
+.btn-action-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-action-icon:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.btn-action-icon.text-primary:hover {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
+}
+
+.btn-action-icon.text-danger:hover {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+
+.btn-action-icon.text-info:hover {
+  background: #f0fdfa !important;
+  border-color: #99f6e4 !important;
+  color: #0d9488 !important;
+}
+
+.btn-action-icon.text-warning:hover {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #d97706 !important;
+}
+
+/* Global Pagination */
+.pagination {
+  gap: 4px;
+  margin-bottom: 0;
+}
+
+.pagination .page-item .page-link {
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  background-color: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.pagination .page-item:not(.disabled):hover .page-link {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #cbd5e1;
+  background-color: #f8fafc;
+  border-color: #f1f5f9;
+}
+
+/* Global Dropdowns & Menus */
+.dropdown-menu {
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.05) !important;
+  padding: 6px !important;
+}
+
+.dropdown-item {
+  border-radius: 8px !important;
+  padding: 7px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Global Buttons & Badges */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.badge.rounded-pill {
+  padding-left: 0.65em;
+  padding-right: 0.65em;
+}
+
+/* Global Alerts & Toasts */
+.alert {
+  border-radius: 12px;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+}
+
+.alert-danger {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-color: #fee2e2;
+}
+
+.alert-warning {
+  background-color: #fffbeb;
+  color: #92400e;
+  border-color: #fef3c7;
+}
+
+.toast {
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15) !important;
+  background-color: #ffffff !important;
+  overflow: hidden;
 }
 </style>

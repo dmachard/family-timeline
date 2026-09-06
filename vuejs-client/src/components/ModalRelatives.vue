@@ -2,64 +2,83 @@
   <div id="relativesModal" class="modal fade" tabindex="-1" aria-labelledby="relativesModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 id="relativesModalLabel" class="modal-title">
-            {{ $t('manage-relatives') }}
-            <span v-if="relativeToDelete">
-              - {{ $t('delete') }}
-            </span>
-            <span v-if="isAddingRelative">
-              - {{ $t('add') }}
-            </span>
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+        <div class="modal-header d-flex align-items-center justify-content-between px-4 py-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle bg-info-subtle text-info d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+              <i class="bi bi-diagram-3-fill fs-5" />
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <h5 id="relativesModalLabel" class="modal-title mb-0 fw-bold text-dark">
+                {{ $t('manage-relatives') }}
+              </h5>
+              <span v-if="relativeToDelete" class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill fw-semibold">
+                {{ $t('delete') }}
+              </span>
+              <span v-if="isAddingRelative" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fw-semibold">
+                {{ $t('add') }}
+              </span>
+            </div>
+          </div>
+          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close" />
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body p-4">
           <!-- Error Message -->
-          <div v-if="error" class="alert alert-danger" role="alert">
-            {{ error }}
+          <div v-if="error" class="alert alert-danger mb-4" role="alert">
+            <i class="bi bi-exclamation-circle me-2" />{{ error }}
           </div>
 
           <!-- Delete confirmation -->
-          <div v-if="relativeToDelete">
-            <p>{{ $t('delete-warning-relative') }} <strong>{{ getPersonName(relativeToDelete.related_person_id) }}</strong> {{ $t("relative-"+relativeToDelete.relation_type) }} <strong>{{ getPersonName(relativeToDelete.person_id) }}</strong> ?</p>
+          <div v-if="relativeToDelete" class="text-center py-4">
+            <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+              <i class="bi bi-exclamation-triangle fs-3" />
+            </div>
+            <h5 class="fw-bold text-dark mb-2">
+              {{ $t('delete') }}
+            </h5>
+            <p class="text-muted mb-0">
+              {{ $t('delete-warning-relative') }} <strong class="text-dark">{{ getPersonName(relativeToDelete.related_person_id) }}</strong> {{ $t("relative-"+relativeToDelete.relation_type) }} <strong class="text-dark">{{ getPersonName(relativeToDelete.person_id) }}</strong> ?
+            </p>
           </div>
 
           <!-- Add Relative Form -->
           <div v-else-if="isAddingRelative">
             <form class="needs-validation was-validated" @submit.prevent="confirmAdd">
-              <div class="row">
-                <div class="col-md-6">
-                  <!-- Autocomplete for Related Person -->
-                  <div class="mb-3 position-relative">
-                    <input
-                      id="relatedPersonInput"
-                      v-model="relatedPersonInput"
-                      class="form-control"
-                      autocomplete="off"
-                      required
-                      @input="filterRelativePersons"
-                    >
+              <!-- Related Person Selection -->
+              <div class="mb-3">
+                <label for="relatedPersonInput" class="form-label">{{ $t('select-related-person') }}</label>
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-person-fill" /></span>
+                      <input
+                        id="relatedPersonInput"
+                        v-model="relatedPersonInput"
+                        class="form-control"
+                        autocomplete="off"
+                        required
+                        :placeholder="$t('search-by-name')"
+                        @input="filterRelativePersons"
+                      >
+                    </div>
                     <div class="invalid-feedback">
                       {{ $t('select-related-person') }}
                     </div>
                   </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3 position-relative">
-                    <div class="list-group list-group-flush scrollable-list">
-                      <a v-if="filteredPersons.length === 0" class="list-group-item" hred="#">
+                  <div class="col-md-6">
+                    <div class="list-group list-group-flush scrollable-list border rounded-3 shadow-xs">
+                      <div v-if="filteredPersons.length === 0" class="list-group-item text-muted small py-2">
                         {{ $t('no-result') }}
-                      </a>
+                      </div>
                       <a
                         v-for="person in filteredPersons"
                         :key="person.id"
                         href="#"
-                        class="list-group-item list-group-item-action"
+                        class="list-group-item list-group-item-action py-2 small"
                         @mousedown="selectRelatedPerson(person)"
                       >
-                        {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
+                        <i class="bi bi-person me-1 text-primary" /><strong>{{ getPersonName(person.id) }}</strong>
+                        <span class="text-muted ms-1">({{ formatDate(person.birth_date) }})</span>
                       </a>
                     </div>
                   </div>
@@ -67,71 +86,73 @@
               </div>
 
               <!-- Relation Type Selection -->
-              <div class="row">
+              <div class="row mb-3">
                 <div class="col-md-6">
-                  <div class="mb-3">
-                    <select id="relationType" v-model="newRelative.relation_type" class="form-select" required>
-                      <option value="father">
-                        {{ $t("relative-"+'father') }}
-                      </option>
-                      <option value="mother">
-                        {{ $t("relative-"+'mother') }}
-                      </option>
-                      <option value="child">
-                        {{ $t("relative-"+'child') }}
-                      </option>
-                      <option value="sister">
-                        {{ $t("relative-"+'sister') }}
-                      </option>
-                      <option value="brother">
-                        {{ $t("relative-"+'brother') }}
-                      </option>
-                      <option value="spouse">
-                        {{ $t("relative-"+'spouse') }}
-                      </option>
-                      <option value="ex-spouse">
-                        {{ $t("relative-"+'ex-spouse') }}
-                      </option>
-                    </select>
-                    <div class="invalid-feedback">
-                      {{ $t('select-type-relation') }}
-                    </div>
+                  <label for="relationType" class="form-label">{{ $t('relation-type') || 'Relation' }}</label>
+                  <select id="relationType" v-model="newRelative.relation_type" class="form-select" required>
+                    <option value="father">
+                      {{ $t("relative-"+'father') }}
+                    </option>
+                    <option value="mother">
+                      {{ $t("relative-"+'mother') }}
+                    </option>
+                    <option value="child">
+                      {{ $t("relative-"+'child') }}
+                    </option>
+                    <option value="sister">
+                      {{ $t("relative-"+'sister') }}
+                    </option>
+                    <option value="brother">
+                      {{ $t("relative-"+'brother') }}
+                    </option>
+                    <option value="spouse">
+                      {{ $t("relative-"+'spouse') }}
+                    </option>
+                    <option value="ex-spouse">
+                      {{ $t("relative-"+'ex-spouse') }}
+                    </option>
+                  </select>
+                  <div class="invalid-feedback">
+                    {{ $t('select-type-relation') }}
                   </div>
                 </div>
               </div>
 
               <!-- Autocomplete for Primary Person -->
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3 position-relative">
-                    <input
-                      id="primaryPersonInput"
-                      v-model="primaryPersonInput"
-                      class="form-control"
-                      autocomplete="off"
-                      required
-                      @input="filterPrimaryPersons"
-                    >
+              <div class="mb-3">
+                <label for="primaryPersonInput" class="form-label">{{ $t('select-primary-person') }}</label>
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-person-check-fill" /></span>
+                      <input
+                        id="primaryPersonInput"
+                        v-model="primaryPersonInput"
+                        class="form-control"
+                        autocomplete="off"
+                        required
+                        :placeholder="$t('search-by-name')"
+                        @input="filterPrimaryPersons"
+                      >
+                    </div>
                     <div class="invalid-feedback">
                       {{ $t('select-primary-person') }}
                     </div>
                   </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3 position-relative">
-                    <!-- Dropdown list -->
-                    <div class="list-group list-group-flush scrollable-list">
-                      <a v-if="filteredPrimaryPersons.length === 0" class="list-group-item" hred="#">
+                  <div class="col-md-6">
+                    <div class="list-group list-group-flush scrollable-list border rounded-3 shadow-xs">
+                      <div v-if="filteredPrimaryPersons.length === 0" class="list-group-item text-muted small py-2">
                         {{ $t('no-result') }}
-                      </a>
+                      </div>
                       <a
                         v-for="person in filteredPrimaryPersons"
                         :key="person.id"
-                        class="list-group-item list-group-item-action"
+                        class="list-group-item list-group-item-action py-2 small"
                         href="#"
                         @mousedown="selectPrimaryPerson(person)"
                       >
-                        {{ getPersonName(person.id) }} - {{ formatDate(person.birth_date) }}
+                        <i class="bi bi-person me-1 text-primary" /><strong>{{ getPersonName(person.id) }}</strong>
+                        <span class="text-muted ms-1">({{ formatDate(person.birth_date) }})</span>
                       </a>
                     </div>
                   </div>
@@ -142,42 +163,63 @@
 
           <!-- Relatives List -->
           <div v-else>
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <p class="text-muted mb-0">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+              <p class="text-muted small mb-0">
                 {{ $t('crud-warning') }}
               </p>
-              <button class="btn btn-primary d-flex align-items-center" type="button" @click="startAddRelative">
+              <button class="btn btn-primary rounded-pill px-3 shadow-xs d-flex align-items-center gap-1 align-self-start align-self-sm-auto" type="button" @click="startAddRelative">
+                <i class="bi bi-plus-lg" />
                 <span>{{ $t('add') }}</span>
               </button>
             </div>
 
-            <div class="table-responsive">
-              <div class="d-flex align-items-center mb-2">
-                <div class="input-group">
-                  <span class="input-group-text"><i class="bi bi-search" /></span>
-                  <input v-model="searchQuery" type="text" class="form-control" :placeholder="$t('search-by-name')">
-                </div>
+            <!-- Search Input -->
+            <div class="mb-3">
+              <div class="input-group search-input-group">
+                <span class="input-group-text"><i class="bi bi-search text-muted" /></span>
+                <input v-model="searchQuery" type="text" class="form-control" :placeholder="$t('search-by-name')">
               </div>
-              <table class="table table-hover bg-white mb-4">
+            </div>
+
+            <div class="table-responsive border rounded-3 overflow-hidden shadow-xs mb-3">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col" style="width: 50px;">#</th>
+                    <th>{{ $t('person') || 'Person' }}</th>
+                    <th>{{ $t('relation-type') || 'Relation' }}</th>
+                    <th>{{ $t('related-person') || 'Related' }}</th>
+                    <th class="text-end" style="width: 70px;">{{ $t('actions') }}</th>
+                  </tr>
+                </thead>
                 <tbody>
                   <tr v-for="relative in paginatedRelatives" :key="relative.id">
-                    <td>{{ relative.id }}</td>
-                    <td>{{ getPersonName(relative.related_person_id) }}</td>
-                    <td>{{ $t("relative-"+relative.relation_type) }}</td>
-                    <td>{{ getPersonName(relative.person_id) }}</td>
+                    <td class="text-muted small">{{ relative.id }}</td>
+                    <td class="fw-semibold text-dark">{{ getPersonName(relative.related_person_id) }}</td>
                     <td>
-                      <a href="#" class="text-dark" @click.prevent="deleteRelative(relative)">
+                      <span class="badge bg-light text-primary border px-2 py-1">
+                        {{ $t("relative-"+relative.relation_type) }}
+                      </span>
+                    </td>
+                    <td class="fw-semibold text-dark">{{ getPersonName(relative.person_id) }}</td>
+                    <td class="text-end">
+                      <button class="btn btn-action-icon text-danger" type="button" :title="$t('delete')" @click.prevent="deleteRelative(relative)">
                         <i class="bi bi-trash-fill" />
-                      </a>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="!paginatedRelatives.length">
+                    <td colspan="5" class="text-center py-4 text-muted">
+                      {{ $t('no-result') }}
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-3">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 mb-2 pt-1">
               <nav aria-label="Page navigation">
-                <ul class="pagination mb-3 mb-sm-0">
+                <ul class="pagination mb-0">
                   <li class="page-item" :class="{ disabled: currentPage === 1 }">
                     <a class="page-link" href="#" aria-label="Previous" @click.prevent="previousPage">
                       <span aria-hidden="true">&laquo;</span>
@@ -200,9 +242,9 @@
                 </ul>
               </nav>
 
-              <div class="d-flex align-items-center mt-3 mt-sm-0">
-                <label for="itemsPerPage" class="me-2 mb-0">{{ $t('items-per-page') }}</label>
-                <select id="itemsPerPage" v-model="itemsPerPage" class="form-select d-inline-block w-auto">
+              <div class="d-flex align-items-center">
+                <label for="itemsPerPage" class="me-2 mb-0 small text-muted">{{ $t('items-per-page') }}</label>
+                <select id="itemsPerPage" v-model="itemsPerPage" class="form-select form-select-sm d-inline-block w-auto">
                   <option v-for="size in [5, 10, 15, 20]" :key="size" :value="size">
                     {{ size }}
                   </option>
@@ -213,15 +255,15 @@
         </div>
 
         <!-- Footer -->
-        <div v-if="relativeToDelete || isAddingRelative" class="modal-footer">
-          <button v-if="relativeToDelete" type="button" class="btn btn-danger" @click="confirmDelete">
+        <div v-if="relativeToDelete || isAddingRelative" class="modal-footer d-flex justify-content-end gap-2 px-4 py-3">
+          <button type="button" class="btn btn-light border rounded-pill px-3" @click="resetState">
+            {{ $t('cancel') }}
+          </button>
+          <button v-if="relativeToDelete" type="button" class="btn btn-danger rounded-pill px-4 shadow-xs" @click="confirmDelete">
             {{ $t('delete') }}
           </button>
-          <button v-if="isAddingRelative" type="submit" class="btn btn-primary" @click="handleSubmit">
+          <button v-if="isAddingRelative" type="submit" class="btn btn-primary rounded-pill px-4 shadow-xs" @click="handleSubmit">
             {{ $t('add') }}
-          </button>
-          <button type="button" class="btn btn-secondary" @click="resetState">
-            {{ $t('cancel') }}
           </button>
         </div>
 
@@ -514,8 +556,13 @@ export default {
 
 <style scoped>
 .scrollable-list {
-  max-height: 150px;
+  max-height: 160px;
   overflow-y: auto;
-  overflow-x: hidden; 
+  overflow-x: hidden;
+  background: #ffffff;
+}
+
+.scrollable-list .list-group-item-action:hover {
+  background-color: #f0f7ff;
 }
 </style>
