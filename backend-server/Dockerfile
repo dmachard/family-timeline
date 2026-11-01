@@ -1,5 +1,5 @@
 # Use the official Node.js image as a base
-FROM node:26.10.0
+FROM node:26.13.0
 
 # Upgrade npm to latest version
 RUN npm install -g npm@latest
